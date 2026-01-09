@@ -1,0 +1,8 @@
+MusicApp-Nightly.code-workspace
+MusicApp Nightly Release.exe
+MusicApp/.vs
+MusicApp/bin
+MusicApp/obj
+.vs/
+obj/
+MusicApp/bin/
