@@ -381,7 +381,7 @@
                             CornerRadius="3"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
-                            Margin="0,0,-95,0"
+                            Margin="0,0,-91,0"
                             Panel.ZIndex="1"
                             MouseLeftButtonDown="BtnQueue_Click"
                             MouseLeftButtonUp="BtnQueue_MouseLeftButtonUp"
@@ -395,6 +395,70 @@
                                 <StaticResource ResourceKey="di_queue"/>
                             </Image.Source>
                         </Image>
+                    </Border>
+
+                    <!-- Search Bar - Positioned to the right of the queue button with fixed distance -->
+                    <Border x:Name="searchBarBorder"
+                            Grid.Column="1"
+                            Background="#2D2D2D"
+                            BorderBrush="#404040"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="0,0,-280,0"
+                            Padding="8,4"
+                            Width="150"
+                            Height="28"
+                            Panel.ZIndex="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Search Icon -->
+                            <materialDesign:PackIcon Grid.Column="0"
+                                                   Kind="Magnify"
+                                                   Width="16"
+                                                   Height="16"
+                                                   Foreground="#CCCCCC"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,6,0"/>
+
+                            <!-- Search Text Box -->
+                            <TextBox Grid.Column="1"
+                                    x:Name="txtSearch"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="#CCCCCC"
+                                    CaretBrush="White"
+                                    FontSize="12"
+                                    VerticalContentAlignment="Center"
+                                    Padding="0,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="TextBox">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="0">
+                                                        <ScrollViewer x:Name="PART_ContentHost"
+                                                                    Margin="{TemplateBinding Padding}"
+                                                                    Focusable="false"
+                                                                    HorizontalScrollBarVisibility="Hidden"
+                                                                    VerticalScrollBarVisibility="Hidden"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </Grid>
                     </Border>
 
                     <!-- Seek Bar - Now a direct child of the main Grid -->
@@ -536,70 +600,6 @@
                 </Grid>
             </Border>
 
-            <!-- ===========================================
-                 SEARCH BAR SECTION (integrated resize like song info bar, offset to right)
-                 =========================================== -->
-            <Border Grid.ColumnSpan="4"
-                    Background="#2D2D2D"
-                    BorderBrush="#404040"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    VerticalAlignment="Top"
-                    HorizontalAlignment="Right"
-                    Margin="0,8,120,0"
-                    Padding="8,4"
-                    MinWidth="150"
-                    MaxWidth="300"
-                    Height="28"
-                    Panel.ZIndex="20">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Search Icon -->
-                    <materialDesign:PackIcon Grid.Column="0"
-                                           Kind="Magnify"
-                                           Width="16"
-                                           Height="16"
-                                           Foreground="#CCCCCC"
-                                           VerticalAlignment="Center"
-                                           Margin="0,0,6,0"/>
-
-                    <!-- Search Text Box -->
-                    <TextBox Grid.Column="1"
-                            x:Name="txtSearch"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Foreground="#CCCCCC"
-                            FontSize="12"
-                            VerticalContentAlignment="Center"
-                            Padding="0,0,0,0"
-                            VerticalAlignment="Center">
-                        <TextBox.Style>
-                            <Style TargetType="TextBox">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="TextBox">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="0">
-                                                <ScrollViewer x:Name="PART_ContentHost"
-                                                            Margin="{TemplateBinding Padding}"
-                                                            Focusable="false"
-                                                            HorizontalScrollBarVisibility="Hidden"
-                                                            VerticalScrollBarVisibility="Hidden"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </TextBox.Style>
-                    </TextBox>
-                </Grid>
-            </Border>
 
         </Grid>
     </Border>
