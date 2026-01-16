@@ -47,6 +47,16 @@ namespace MusicApp.TitleBarWithPlayerControls
         private SettingsManager.RepeatMode repeatMode = SettingsManager.RepeatMode.Off;
 
         // ===========================================
+        // DYNAMIC SPACING CONSTANTS
+        // ===========================================
+        private const double MIN_SPACING_FROM_EDGE = 20;
+        private const double MAX_SPACING_FROM_EDGE = 50;
+        private const double MIN_SPACING_BETWEEN_CONTROLS = 20;
+        private const double MAX_SPACING_BETWEEN_CONTROLS = 50;
+        private const double MIN_WINDOW_WIDTH_FOR_SPACING = 1039;
+        private const double MAX_WINDOW_WIDTH_FOR_SPACING = 1600;
+
+        // ===========================================
         // PROPERTIES
         // ===========================================
         public bool IsPlaying
@@ -205,6 +215,13 @@ namespace MusicApp.TitleBarWithPlayerControls
                 _ = Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => {
                     UpdateSeekBarWidth();
                     UpdateGradientMask(); // Ensure gradient mask is positioned correctly after layout
+                    
+                    // Update control spacing and volume slider width after layout is complete
+                    var window = Window.GetWindow(this);
+                    if (window != null)
+                    {
+                        UpdateControlSpacing(window.ActualWidth);
+                    }
                 }));
 
                 // Load player settings
@@ -349,6 +366,70 @@ namespace MusicApp.TitleBarWithPlayerControls
             NextTrackRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        // Mouse event handlers for playback control buttons (following queue button pattern)
+        private void BtnPlayPause_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling to parent
+
+            // Animate button to pressed state
+            AnimateButtonPress(btnPlayPauseTransform);
+        }
+
+        private void BtnPlayPause_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling to parent
+
+            // Animate button back to normal size
+            AnimateButtonRelease(btnPlayPauseTransform);
+        }
+
+        private void BtnPlayPause_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling
+        }
+
+        private void BtnPrevious_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling to parent
+
+            // Animate button to pressed state
+            AnimateButtonPress(btnPreviousTransform);
+        }
+
+        private void BtnPrevious_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling to parent
+
+            // Animate button back to normal size
+            AnimateButtonRelease(btnPreviousTransform);
+        }
+
+        private void BtnPrevious_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling
+        }
+
+        private void BtnNext_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling to parent
+
+            // Animate button to pressed state
+            AnimateButtonPress(btnNextTransform);
+        }
+
+        private void BtnNext_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling to parent
+
+            // Animate button back to normal size
+            AnimateButtonRelease(btnNextTransform);
+        }
+
+        private void BtnNext_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            e.Handled = true; // Prevent event bubbling
+        }
+
         // ===========================================
         // SHUFFLE AND REPEAT BUTTON EVENTS
         // ===========================================
@@ -401,10 +482,22 @@ namespace MusicApp.TitleBarWithPlayerControls
         {
             if (transform != null)
             {
+                // Stop any existing animation and set base value
+                transform.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                transform.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                
+                // Ensure we have a base value to animate from
+                if (transform.ScaleX == 0)
+                {
+                    transform.ScaleX = 1.0;
+                    transform.ScaleY = 1.0;
+                }
+                
                 var animation = new System.Windows.Media.Animation.DoubleAnimation
                 {
                     To = 0.90,
                     Duration = TimeSpan.FromMilliseconds(50),
+                    FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd,
                     EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
                 };
 
@@ -417,10 +510,15 @@ namespace MusicApp.TitleBarWithPlayerControls
         {
             if (transform != null)
             {
+                // Stop any existing animation
+                transform.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                transform.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                
                 var animation = new System.Windows.Media.Animation.DoubleAnimation
                 {
                     To = 1.0,
                     Duration = TimeSpan.FromMilliseconds(100),
+                    FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd,
                     EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
                 };
 
@@ -1036,6 +1134,9 @@ namespace MusicApp.TitleBarWithPlayerControls
 
             // Update the gradient mask position and width
             UpdateGradientMask();
+
+            // Update control spacing
+            UpdateControlSpacing(windowWidth);
         }
 
         /// <summary>
@@ -1052,38 +1153,16 @@ namespace MusicApp.TitleBarWithPlayerControls
 
         /// <summary>
         /// Updates the song info section position based on window width
+        /// Always centers the song info viewport
         /// </summary>
         private void UpdateSongInfoPosition(double windowWidth, double songInfoWidth)
         {
-            const double PIN_WINDOW_WIDTH = 1039;
-
             var songInfoBorder = this.FindName("songInfoBorder") as Border;
             if (songInfoBorder == null) return;
 
-            if (windowWidth < PIN_WINDOW_WIDTH)
-            {
-                // Pin the song info at the position it would be at 1039px window width
-                double pinnedPosition = CalculateSongInfoPosition(PIN_WINDOW_WIDTH, songInfoWidth);
-                songInfoBorder.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                songInfoBorder.Margin = new Thickness(pinnedPosition, 5, 0, 5);
-            }
-            else
-            {
-                // Use normal centering
-                songInfoBorder.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
-                songInfoBorder.Margin = new Thickness(0, 5, 0, 5);
-            }
-        }
-
-        /// <summary>
-        /// Calculates the left position of the song info section for a given window width
-        /// </summary>
-        private double CalculateSongInfoPosition(double windowWidth, double songInfoWidth)
-        {
-            // Calculate the center position of the window
-            double windowCenter = windowWidth / 2;
-            // Calculate the left edge of the song info section when centered
-            return windowCenter - (songInfoWidth / 2);
+            // Always center the song info viewport
+            songInfoBorder.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+            songInfoBorder.Margin = new Thickness(0, 5, 0, 5);
         }
 
         /// <summary>
@@ -1113,6 +1192,159 @@ namespace MusicApp.TitleBarWithPlayerControls
                 double widthRange = MAX_WIDTH - MIN_WIDTH;
                 double progress = (windowWidth - MIN_WINDOW_WIDTH) / windowRange;
                 return MIN_WIDTH + (widthRange * progress);
+            }
+        }
+
+        /// <summary>
+        /// Calculates the responsive width for the volume slider based on window size
+        /// Only starts shrinking when the song info viewport is at its minimum width
+        /// </summary>
+        /// <param name="windowWidth">Current window width in pixels</param>
+        /// <returns>Calculated width for the volume slider</returns>
+        private double CalculateVolumeSliderWidth(double windowWidth)
+        {
+            const double MIN_SLIDER_WIDTH = 60;
+            const double MAX_SLIDER_WIDTH = 100;
+            const double SONG_INFO_MIN_WINDOW_WIDTH = 1039; // Window width where song info reaches minimum
+            const double VOLUME_SLIDER_MIN_WINDOW_WIDTH = 800; // Window width where volume slider reaches minimum
+
+            // Keep slider at max width until song info viewport is at minimum
+            if (windowWidth >= SONG_INFO_MIN_WINDOW_WIDTH)
+            {
+                return MAX_SLIDER_WIDTH;
+            }
+            // Start shrinking only when window is smaller than song info minimum threshold
+            else if (windowWidth <= VOLUME_SLIDER_MIN_WINDOW_WIDTH)
+            {
+                return MIN_SLIDER_WIDTH;
+            }
+            else
+            {
+                // Linear interpolation between min and max
+                // Shrinks from SONG_INFO_MIN_WINDOW_WIDTH (1039px) to VOLUME_SLIDER_MIN_WINDOW_WIDTH (800px)
+                double windowRange = SONG_INFO_MIN_WINDOW_WIDTH - VOLUME_SLIDER_MIN_WINDOW_WIDTH;
+                double widthRange = MAX_SLIDER_WIDTH - MIN_SLIDER_WIDTH;
+                double progress = (windowWidth - VOLUME_SLIDER_MIN_WINDOW_WIDTH) / windowRange;
+                return MIN_SLIDER_WIDTH + (widthRange * progress);
+            }
+        }
+
+        /// <summary>
+        /// Calculates the spacing from the window edge based on window width
+        /// </summary>
+        /// <param name="windowWidth">Current window width in pixels</param>
+        /// <returns>Calculated spacing from edge</returns>
+        private double CalculateSpacingFromEdge(double windowWidth)
+        {
+            if (windowWidth <= MIN_WINDOW_WIDTH_FOR_SPACING)
+            {
+                return MIN_SPACING_FROM_EDGE;
+            }
+            else if (windowWidth >= MAX_WINDOW_WIDTH_FOR_SPACING)
+            {
+                return MAX_SPACING_FROM_EDGE;
+            }
+            else
+            {
+                // Linear interpolation between min and max
+                double windowRange = MAX_WINDOW_WIDTH_FOR_SPACING - MIN_WINDOW_WIDTH_FOR_SPACING;
+                double spacingRange = MAX_SPACING_FROM_EDGE - MIN_SPACING_FROM_EDGE;
+                double progress = (windowWidth - MIN_WINDOW_WIDTH_FOR_SPACING) / windowRange;
+                return MIN_SPACING_FROM_EDGE + (spacingRange * progress);
+            }
+        }
+
+        /// <summary>
+        /// Calculates the spacing between controls based on window width
+        /// </summary>
+        /// <param name="windowWidth">Current window width in pixels</param>
+        /// <returns>Calculated spacing between controls</returns>
+        private double CalculateSpacingBetweenControls(double windowWidth)
+        {
+            if (windowWidth <= MIN_WINDOW_WIDTH_FOR_SPACING)
+            {
+                return MIN_SPACING_BETWEEN_CONTROLS;
+            }
+            else if (windowWidth >= MAX_WINDOW_WIDTH_FOR_SPACING)
+            {
+                return MAX_SPACING_BETWEEN_CONTROLS;
+            }
+            else
+            {
+                // Linear interpolation between min and max
+                double windowRange = MAX_WINDOW_WIDTH_FOR_SPACING - MIN_WINDOW_WIDTH_FOR_SPACING;
+                double spacingRange = MAX_SPACING_BETWEEN_CONTROLS - MIN_SPACING_BETWEEN_CONTROLS;
+                double progress = (windowWidth - MIN_WINDOW_WIDTH_FOR_SPACING) / windowRange;
+                return MIN_SPACING_BETWEEN_CONTROLS + (spacingRange * progress);
+            }
+        }
+
+        /// <summary>
+        /// Updates the spacing and positions of playback and volume controls based on window width
+        /// </summary>
+        /// <param name="windowWidth">Current window width in pixels</param>
+        private void UpdateControlSpacing(double windowWidth)
+        {
+            if (playbackControlsPanel == null || volumeControlsPanel == null) return;
+            if (windowWidth <= 0) return; // Safety check
+
+            // Calculate spacing values
+            double spacingFromEdge = CalculateSpacingFromEdge(windowWidth);
+            double spacingBetweenControls = CalculateSpacingBetweenControls(windowWidth);
+
+            // Get the actual widths of the control panels
+            playbackControlsPanel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            volumeControlsPanel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            
+            double playbackControlsWidth = playbackControlsPanel.DesiredSize.Width;
+            double volumeControlsWidth = volumeControlsPanel.DesiredSize.Width;
+
+            // If widths are 0, use fallback values (shouldn't happen, but safety check)
+            if (playbackControlsWidth <= 0) playbackControlsWidth = 146; // Approximate: 3 buttons * 48px + 2px spacing
+            if (volumeControlsWidth <= 0) volumeControlsWidth = 129; // Approximate: 100px slider + 5px + 24px icon
+
+            // Get song info border to calculate its position
+            var songInfoBorder = this.FindName("songInfoBorder") as Border;
+            if (songInfoBorder == null) return;
+
+            double songInfoPadding = 15; // Padding from the border
+            double songInfoWidth = songInfoBorder.ActualWidth > 0 ? songInfoBorder.ActualWidth : CalculateResponsiveWidth(windowWidth);
+            
+            // Safety check - ensure we have valid dimensions
+            if (songInfoWidth <= 0) return;
+
+            // The song info border is centered, so calculate its left edge
+            double songInfoBorderLeftEdge = (windowWidth - songInfoWidth) / 2.0;
+            
+            // The grid column 0 (where controls are) starts at: songInfoBorderLeftEdge + songInfoPadding
+            double gridColumnLeftEdge = songInfoBorderLeftEdge + songInfoPadding;
+
+            // Calculate desired positions from window left edge:
+            // Playback controls left edge: spacingFromEdge
+            double playbackLeftEdge = spacingFromEdge;
+            
+            // Volume controls left edge: spacingFromEdge + playbackControlsWidth + spacingBetweenControls
+            double volumeLeftEdge = spacingFromEdge + playbackControlsWidth + spacingBetweenControls;
+
+            // Calculate negative margins from grid column left edge:
+            // The margin should position the control so its left edge is at the desired position
+            // If gridColumnLeftEdge is at position X, and we want playback at position Y (where Y < X),
+            // then margin = -(X - Y) = Y - X
+            double playbackMarginLeft = playbackLeftEdge - gridColumnLeftEdge;
+            
+            // Calculate volume margin to ensure it's always positioned to the right of playback
+            // Volume should be: playback position + playback width + spacing
+            double volumeMarginLeft = playbackMarginLeft + playbackControlsWidth + spacingBetweenControls;
+
+            // Update margins (they should already be negative if positioned to the left)
+            playbackControlsPanel.Margin = new Thickness(playbackMarginLeft, 0, 0, 0);
+            volumeControlsPanel.Margin = new Thickness(volumeMarginLeft, 0, 0, 0);
+
+            // Update volume slider width dynamically
+            if (sliderVolume != null)
+            {
+                double sliderWidth = CalculateVolumeSliderWidth(windowWidth);
+                sliderVolume.Width = sliderWidth;
             }
         }
 

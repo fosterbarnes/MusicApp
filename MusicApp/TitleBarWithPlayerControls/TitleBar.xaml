@@ -32,41 +32,9 @@
                                     CornerRadius="24"
                                     Width="{TemplateBinding Width}"
                                     Height="{TemplateBinding Height}">
-                                <Grid>
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="2"/>
-                                    <Ellipse x:Name="Ripple" Fill="#705399" Opacity="0" Width="48" Height="48" 
-                                            HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="1">
-                                        <Ellipse.RenderTransform>
-                                            <ScaleTransform x:Name="RippleScale" ScaleX="0" ScaleY="0" CenterX="24" CenterY="24"/>
-                                        </Ellipse.RenderTransform>
-                                    </Ellipse>
-                                </Grid>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <EventTrigger RoutedEvent="Button.PreviewMouseDown">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="Ripple" 
-                                                             Storyboard.TargetProperty="Opacity" 
-                                                             To="0.3" Duration="0:0:0.15"/>
-                                            <DoubleAnimation Storyboard.TargetName="RippleScale" 
-                                                             Storyboard.TargetProperty="ScaleX" 
-                                                             To="1" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="RippleScale" 
-                                                             Storyboard.TargetProperty="ScaleY" 
-                                                             To="1" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="Ripple" 
-                                                             Storyboard.TargetProperty="Opacity" 
-                                                             To="0" Duration="0:0:0.2" BeginTime="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="RippleScale" 
-                                                             Storyboard.TargetProperty="ScaleX" 
-                                                             To="0" Duration="0:0:0.1" BeginTime="0:0:0.4"/>
-                                            <DoubleAnimation Storyboard.TargetName="RippleScale" 
-                                                             Storyboard.TargetProperty="ScaleY" 
-                                                             To="0" Duration="0:0:0.1" BeginTime="0:0:0.4"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Background" Value="#2D2D2D"/>
                                 </Trigger>
@@ -167,86 +135,16 @@
         <Grid>
             <!-- Title Bar Grid Definitions -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <!-- Playback Controls -->
-                <ColumnDefinition Width="Auto"/>
-                <!-- Volume Controls -->
                 <ColumnDefinition Width="*"/>
-                <!-- Spacer / Search Bar (fills unused space) -->
+                <!-- Spacer (fills unused space) -->
                 <ColumnDefinition Width="Auto"/>
                 <!-- Window Controls -->
             </Grid.ColumnDefinitions>
 
             <!-- ===========================================
-                 PLAYBACK CONTROLS SECTION
-                 =========================================== -->
-            <StackPanel Grid.Column="0" 
-                        Orientation="Horizontal" 
-                        VerticalAlignment="Center" 
-                        Margin="20,15,0,10">
-
-                <!-- Previous Track Button -->
-                <Button x:Name="btnPrevious" 
-                        Style="{StaticResource CustomMediaButton}" 
-                        Foreground="White" 
-                        Margin="0,0" 
-                        Click="BtnPrevious_Click">
-                    <materialDesign:PackIcon Kind="SkipPrevious" Width="24" Height="24"/>
-                </Button>
-
-                <!-- Play/Pause Button -->
-                <Button x:Name="btnPlayPause" 
-                        Style="{StaticResource CustomMediaButton}" 
-                        Foreground="White"  
-                        Margin="2,0" 
-                        Click="BtnPlayPause_Click">
-                    <materialDesign:PackIcon x:Name="iconPlayPause" Kind="Play" Width="24" Height="24"/>
-                </Button>
-
-                <!-- Next Track Button -->
-                <Button x:Name="btnNext" 
-                        Style="{StaticResource CustomMediaButton}" 
-                        Foreground="White" 
-                        Margin="0,0" 
-                        Click="BtnNext_Click">
-                    <materialDesign:PackIcon Kind="SkipNext" Width="24" Height="24"/>
-                </Button>
-            </StackPanel>
-
-            <!-- ===========================================
-                 VOLUME CONTROLS SECTION
-                 =========================================== -->
-            <StackPanel Grid.Column="1" 
-                        Orientation="Horizontal" 
-                        VerticalAlignment="Center" 
-                        Margin="30,15,0,10">
-
-                <!-- Volume Slider -->
-                <Slider x:Name="sliderVolume" 
-                        Width="100" 
-                        Minimum="0" 
-                        Maximum="100" 
-                        Value="100" 
-                        VerticalAlignment="Center" 
-                        ValueChanged="SliderVolume_ValueChanged"
-                        Style="{StaticResource CustomVolumeSlider}"
-                        Foreground="#705399" 
-                        Background="Transparent"/>
-
-                <!-- Volume Icon Button -->
-                <Border Background="Transparent" 
-                        Padding="8" 
-                        VerticalAlignment="Center" 
-                        Margin="5,0,0,0" 
-                        MouseLeftButtonDown="IconVolume_MouseLeftButtonDown">
-                    <materialDesign:PackIcon x:Name="iconVolume" Kind="VolumeHigh" Foreground="White"/>
-                </Border>
-            </StackPanel>
-
-            <!-- ===========================================
                  WINDOW CONTROLS SECTION
                  =========================================== -->
-            <StackPanel Grid.Column="3" 
+            <StackPanel Grid.Column="1" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Right" 
                         VerticalAlignment="Top"
@@ -278,7 +176,7 @@
                  CURRENT SONG INFO SECTION (Overlay - Centered across entire window)
                  =========================================== -->
             <Border x:Name="songInfoBorder"
-                    Grid.ColumnSpan="4"
+                    Grid.ColumnSpan="2"
                     Background="#0A0A0A" 
                     CornerRadius="8" 
                     VerticalAlignment="Center" 
@@ -293,6 +191,93 @@
                         <ColumnDefinition Width="*"/>
                         <!-- Song Info (fills available space) -->
                     </Grid.ColumnDefinitions>
+
+                    <!-- Playback Controls - Positioned outside and to the left of the song info viewport -->
+                    <StackPanel x:Name="playbackControlsPanel"
+                                Grid.Column="0"
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center" 
+                                HorizontalAlignment="Left"
+                                Margin="-375,0,0,0"
+                                Panel.ZIndex="1">
+
+                        <!-- Previous Track Button -->
+                        <Button x:Name="btnPrevious" 
+                                Style="{StaticResource CustomMediaButton}" 
+                                Foreground="White" 
+                                Margin="0,0" 
+                                Click="BtnPrevious_Click"
+                                MouseLeftButtonDown="BtnPrevious_MouseLeftButtonDown"
+                                MouseLeftButtonUp="BtnPrevious_MouseLeftButtonUp"
+                                MouseMove="BtnPrevious_MouseMove"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Button.RenderTransform>
+                                <ScaleTransform x:Name="btnPreviousTransform" ScaleX="1" ScaleY="1"/>
+                            </Button.RenderTransform>
+                            <materialDesign:PackIcon Kind="SkipPrevious" Width="24" Height="24"/>
+                        </Button>
+
+                        <!-- Play/Pause Button -->
+                        <Button x:Name="btnPlayPause" 
+                                Style="{StaticResource CustomMediaButton}" 
+                                Foreground="White"  
+                                Margin="2,0" 
+                                Click="BtnPlayPause_Click"
+                                MouseLeftButtonDown="BtnPlayPause_MouseLeftButtonDown"
+                                MouseLeftButtonUp="BtnPlayPause_MouseLeftButtonUp"
+                                MouseMove="BtnPlayPause_MouseMove"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Button.RenderTransform>
+                                <ScaleTransform x:Name="btnPlayPauseTransform" ScaleX="1" ScaleY="1"/>
+                            </Button.RenderTransform>
+                            <materialDesign:PackIcon x:Name="iconPlayPause" Kind="Play" Width="24" Height="24"/>
+                        </Button>
+
+                        <!-- Next Track Button -->
+                        <Button x:Name="btnNext" 
+                                Style="{StaticResource CustomMediaButton}" 
+                                Foreground="White" 
+                                Margin="0,0" 
+                                Click="BtnNext_Click"
+                                MouseLeftButtonDown="BtnNext_MouseLeftButtonDown"
+                                MouseLeftButtonUp="BtnNext_MouseLeftButtonUp"
+                                MouseMove="BtnNext_MouseMove"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Button.RenderTransform>
+                                <ScaleTransform x:Name="btnNextTransform" ScaleX="1" ScaleY="1"/>
+                            </Button.RenderTransform>
+                            <materialDesign:PackIcon Kind="SkipNext" Width="24" Height="24"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Volume Controls - Positioned outside and to the left of the song info viewport -->
+                    <StackPanel x:Name="volumeControlsPanel"
+                                Grid.Column="0"
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center" 
+                                HorizontalAlignment="Left"
+                                Margin="-190,0,0,0"
+                                Panel.ZIndex="1">
+                        <!-- Volume Slider -->
+                        <Slider x:Name="sliderVolume" 
+                                Minimum="0" 
+                                Maximum="100" 
+                                Value="100" 
+                                VerticalAlignment="Center" 
+                                ValueChanged="SliderVolume_ValueChanged"
+                                Style="{StaticResource CustomVolumeSlider}"
+                                Foreground="#705399" 
+                                Background="Transparent"/>
+
+                        <!-- Volume Icon Button -->
+                        <Border Background="Transparent" 
+                                Padding="8" 
+                                VerticalAlignment="Center" 
+                                Margin="5,0,0,0" 
+                                MouseLeftButtonDown="IconVolume_MouseLeftButtonDown">
+                            <materialDesign:PackIcon x:Name="iconVolume" Kind="VolumeHigh" Foreground="White"/>
+                        </Border>
+                    </StackPanel>
 
                     <!-- Album Art Container -->
                     <Border Grid.Column="0"
