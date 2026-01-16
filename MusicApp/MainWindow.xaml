@@ -13,7 +13,7 @@
         WindowStyle="None"
         AllowsTransparency="False"
         ResizeMode="CanResize"
-        MinWidth="820" MinHeight="500">
+        MinWidth="1000" MinHeight="500">
 
     <!-- Remove white bar on top of window-->
     <WindowChrome.WindowChrome>

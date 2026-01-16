@@ -1,4 +1,5 @@
-MusicApp-Nightly.code-workspace
+*.code-workspace
+*.csproj.lnk
 MusicApp Nightly Release.exe
 MusicApp/.vs
 MusicApp/bin
