@@ -338,8 +338,6 @@ namespace MusicApp.TitleBarWithPlayerControls
 
         private void BtnMaximize_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("TitleBar: Maximize button clicked!");
-            System.Diagnostics.Debug.WriteLine($"TitleBar: Current icon state: {iconMaximize.Kind}");
             WindowMaximizeRequested?.Invoke(this, EventArgs.Empty);
         }
 
@@ -859,20 +857,14 @@ namespace MusicApp.TitleBarWithPlayerControls
         /// </summary>
         public void UpdateWindowStateIcon(WindowState state)
         {
-            System.Diagnostics.Debug.WriteLine($"TitleBar: UpdateWindowStateIcon called with state: {state}");
-
             if (state == WindowState.Maximized)
             {
                 iconMaximize.Kind = PackIconKind.WindowRestore;
-                System.Diagnostics.Debug.WriteLine("TitleBar: Icon set to WindowRestore (restore button)");
             }
             else
             {
                 iconMaximize.Kind = PackIconKind.WindowMaximize;
-                System.Diagnostics.Debug.WriteLine("TitleBar: Icon set to WindowMaximize (maximize button)");
             }
-
-            System.Diagnostics.Debug.WriteLine($"TitleBar: Final icon state: {iconMaximize.Kind}");
         }
 
         /// <summary>

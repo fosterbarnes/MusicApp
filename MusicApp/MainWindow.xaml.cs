@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -960,7 +960,6 @@ namespace MusicApp
 
         private void TitleBarPlayer_WindowMaximizeRequested(object? sender, EventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("MainWindow: WindowMaximizeRequested event received");
             windowManager.ToggleMaximize();
         }
 
@@ -1018,39 +1017,6 @@ namespace MusicApp
             windowManager.OnSizeChanged();
         }
 
-        /// <summary>
-        /// Debug method to test window state
-        /// </summary>
-        public void DebugWindowState()
-        {
-            System.Diagnostics.Debug.WriteLine("MainWindow: DebugWindowState called");
-            windowManager.DebugWindowState();
-
-            // Also check the title bar button state
-            var currentIcon = titleBarPlayer.GetCurrentWindowStateIcon();
-            System.Diagnostics.Debug.WriteLine($"MainWindow: Title bar button icon: {currentIcon}");
-        }
-
-        /// <summary>
-        /// Test method to manually test maximize/restore functionality
-        /// </summary>
-        public void TestMaximizeRestore()
-        {
-            System.Diagnostics.Debug.WriteLine("MainWindow: TestMaximizeRestore called");
-            DebugWindowState();
-
-            // Simulate the maximize button click
-            System.Diagnostics.Debug.WriteLine("MainWindow: Simulating maximize button click");
-            TitleBarPlayer_WindowMaximizeRequested(this, EventArgs.Empty);
-
-            // Wait a moment and check the state again
-            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, (DispatcherOperationCallback)delegate (object unused)
-            {
-                System.Diagnostics.Debug.WriteLine("MainWindow: After maximize click - checking state");
-                DebugWindowState();
-                return null;
-            }, null);
-        }
 
         /// <summary>
         /// Handles window state changes from the WindowManager

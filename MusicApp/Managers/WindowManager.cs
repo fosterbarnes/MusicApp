@@ -74,6 +74,7 @@ namespace MusicApp
         private DispatcherTimer? saveTimer;
         private bool isDirty = false;
         private bool isRestoring = false; // Flag to prevent bounds updates during restore
+        private bool isMaximizing = false; // Flag to prevent bounds updates during maximize
 
         // Event to notify when window state should be saved
         public event EventHandler? WindowStateChanged;
@@ -146,8 +147,6 @@ namespace MusicApp
         /// </summary>
         public void SetInitialPosition(double left, double top, double width, double height)
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: SetInitialPosition - Setting initial position: Left={left}, Top={top}, Width={width}, Height={height}");
-            
             window.Left = left;
             window.Top = top;
             window.Width = width;
@@ -163,23 +162,15 @@ namespace MusicApp
         /// </summary>
         public void InitializeWindowState()
         {
-            System.Diagnostics.Debug.WriteLine("WindowManager: InitializeWindowState - Starting window state initialization");
-            
             // Store initial window bounds
             normalWindowBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
             normalWindowBoundsRestored = false;
-            System.Diagnostics.Debug.WriteLine($"WindowManager: InitializeWindowState - Initial bounds: {normalWindowBounds}, WindowState: {window.WindowState}");
             
             // Check if window starts maximized
             if (window.WindowState == WindowState.Maximized)
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: InitializeWindowState - Window starts maximized, setting custom maximized flag");
                 isCustomMaximized = true;
                 UpdateWindowStateIcon(WindowState.Maximized);
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("WindowManager: InitializeWindowState - Window starts in normal state");
             }
         }
 
@@ -228,24 +219,14 @@ namespace MusicApp
         /// </summary>
         public void ToggleMaximize()
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: ToggleMaximize - Current state: isCustomMaximized={isCustomMaximized}, WindowState={window.WindowState}");
-            LogCurrentState();
-            
             if (isCustomMaximized)
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: ToggleMaximize - Restoring window from maximized state");
-                // Restore to normal state
                 RestoreWindow();
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: ToggleMaximize - Maximizing window to work area");
-                // Maximize to work area (excluding taskbar)
                 MaximizeToWorkArea();
             }
-            
-            System.Diagnostics.Debug.WriteLine($"WindowManager: ToggleMaximize - After toggle: isCustomMaximized={isCustomMaximized}, WindowState={window.WindowState}");
-            LogCurrentState();
         }
 
         /// <summary>
@@ -253,19 +234,16 @@ namespace MusicApp
         /// </summary>
         public void MaximizeToWorkArea()
         {
-            System.Diagnostics.Debug.WriteLine("WindowManager: MaximizeToWorkArea - Starting custom maximize");
+            // Set maximizing flag to prevent OnLocationChanged/OnSizeChanged from updating normalWindowBounds
+            isMaximizing = true;
             
-            // Always store current window bounds for restoration before maximizing
-            // This ensures we can restore to the current position, not just the saved position
+            // Store current window bounds for restoration before maximizing
             normalWindowBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
-            System.Diagnostics.Debug.WriteLine($"WindowManager: MaximizeToWorkArea - Stored normal bounds: {normalWindowBounds}");
             
             // Get the work area (screen area excluding taskbar)
             RECT workArea = new RECT();
             if (SystemParametersInfo(SPI_GETWORKAREA, 0, ref workArea, 0))
             {
-                System.Diagnostics.Debug.WriteLine($"WindowManager: MaximizeToWorkArea - Work area: Left={workArea.Left}, Top={workArea.Top}, Right={workArea.Right}, Bottom={workArea.Bottom}");
-                
                 // Ensure we're in normal state for custom positioning
                 window.WindowState = WindowState.Normal;
                 
@@ -281,15 +259,21 @@ namespace MusicApp
                 window.Height = (workArea.Bottom - workArea.Top) + (gapCompensation * 2) + bottomExtraCompensation;
                 
                 isCustomMaximized = true;
-                System.Diagnostics.Debug.WriteLine($"WindowManager: MaximizeToWorkArea - Window positioned to: Left={window.Left}, Top={window.Top}, Width={window.Width}, Height={window.Height}");
                 UpdateWindowStateIcon(WindowState.Maximized);
+                
+                // Clear the maximizing flag after a short delay
+                Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, (DispatcherOperationCallback)delegate (object unused)
+                {
+                    isMaximizing = false;
+                    return null;
+                }, null);
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: MaximizeToWorkArea - Fallback to standard maximize");
                 // Fallback to standard maximize
                 window.WindowState = WindowState.Maximized;
                 UpdateWindowStateIcon(WindowState.Maximized);
+                isMaximizing = false;
             }
         }
 
@@ -298,15 +282,22 @@ namespace MusicApp
         /// </summary>
         public void RestoreWindow()
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindow - Starting restore operation");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindow - Current state: isCustomMaximized={isCustomMaximized}, WindowState={window.WindowState}");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindow - Restoring to normal bounds: {normalWindowBounds}");
+            // Validate that normalWindowBounds has valid values
+            if (normalWindowBounds.Width <= 0 || normalWindowBounds.Height <= 0 || 
+                double.IsNaN(normalWindowBounds.Width) || double.IsNaN(normalWindowBounds.Height) ||
+                double.IsInfinity(normalWindowBounds.Width) || double.IsInfinity(normalWindowBounds.Height))
+            {
+                // Use default bounds if stored bounds are invalid
+                normalWindowBounds = new Rect(100, 100, 1200, 700);
+            }
             
             // Set the restoring flag to prevent bounds updates during restore
             isRestoring = true;
+            isCustomMaximized = false;
             
             // Ensure we're in normal state first
             window.WindowState = WindowState.Normal;
+            window.UpdateLayout();
             
             // Restore to previous bounds
             window.Left = normalWindowBounds.Left;
@@ -314,26 +305,15 @@ namespace MusicApp
             window.Width = normalWindowBounds.Width;
             window.Height = normalWindowBounds.Height;
             
-            // Update the flag BEFORE updating the icon
-            isCustomMaximized = false;
+            window.UpdateLayout();
             
-            System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindow - Window restored to: Left={window.Left}, Top={window.Top}, Width={window.Width}, Height={window.Height}");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindow - isCustomMaximized set to: {isCustomMaximized}");
-            
-            // Force update the window state icon
+            // Update the window state icon
             UpdateWindowStateIcon(WindowState.Normal);
             
-            // Double-check the state after restoration
-            System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindow - Final state check: isCustomMaximized={isCustomMaximized}, WindowState={window.WindowState}");
-            
-            // Force refresh the icon to ensure it's updated
-            ForceRefreshWindowStateIcon();
-            
-            // Clear the restoring flag after a short delay to allow the restore to complete
+            // Clear the restoring flag after a short delay
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, (DispatcherOperationCallback)delegate (object unused)
             {
                 isRestoring = false;
-                System.Diagnostics.Debug.WriteLine("WindowManager: RestoreWindow - Restoring flag cleared");
                 return null;
             }, null);
         }
@@ -352,23 +332,21 @@ namespace MusicApp
         /// </summary>
         public void OnStateChanged()
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: OnStateChanged - Window state changed to: {window.WindowState}, isCustomMaximized: {isCustomMaximized}");
+            // Skip processing during restore operations
+            if (isRestoring)
+            {
+                return;
+            }
             
             // If the window state was changed externally (e.g., by double-clicking title bar),
             // update our custom tracking
             if (window.WindowState == WindowState.Normal && isCustomMaximized)
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: OnStateChanged - Window restored externally, updating tracking");
                 isCustomMaximized = false;
                 UpdateWindowStateIcon(WindowState.Normal);
             }
             else if (window.WindowState == WindowState.Maximized && !isCustomMaximized)
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: OnStateChanged - Window maximized externally, updating tracking");
-                // If window was maximized externally, we need to store the current bounds
-                // However, since we don't know what the previous normal bounds were,
-                // we'll use the saved bounds from settings as a fallback
-                // The user can manually restore and reposition if needed
                 isCustomMaximized = true;
                 UpdateWindowStateIcon(WindowState.Maximized);
             }
@@ -386,6 +364,12 @@ namespace MusicApp
         /// </summary>
         public void CheckIfWindowIsVisuallyMaximized()
         {
+            // Skip processing during restore operations
+            if (isRestoring)
+            {
+                return;
+            }
+            
             // Get the work area to compare against
             RECT workArea = new RECT();
             if (SystemParametersInfo(SPI_GETWORKAREA, 0, ref workArea, 0))
@@ -400,7 +384,7 @@ namespace MusicApp
                 double expectedHeight = (workArea.Bottom - workArea.Top) + (gapCompensation * 2) + bottomExtraCompensation;
                 
                 // Check if current window dimensions match maximized dimensions (with some tolerance)
-                const double tolerance = 5.0; // 5 pixel tolerance for rounding differences
+                const double tolerance = 5.0;
                 bool isVisuallyMaximized = Math.Abs(window.Width - expectedWidth) <= tolerance &&
                                          Math.Abs(window.Height - expectedHeight) <= tolerance &&
                                          Math.Abs(window.Left - workArea.Left) <= tolerance &&
@@ -408,13 +392,11 @@ namespace MusicApp
                 
                 if (isVisuallyMaximized && !isCustomMaximized)
                 {
-                    System.Diagnostics.Debug.WriteLine("WindowManager: CheckIfWindowIsVisuallyMaximized - Window appears to be visually maximized, updating tracking");
                     isCustomMaximized = true;
                     UpdateWindowStateIcon(WindowState.Maximized);
                 }
                 else if (!isVisuallyMaximized && isCustomMaximized)
                 {
-                    System.Diagnostics.Debug.WriteLine("WindowManager: CheckIfWindowIsVisuallyMaximized - Window is no longer visually maximized, updating tracking");
                     isCustomMaximized = false;
                     UpdateWindowStateIcon(WindowState.Normal);
                 }
@@ -426,28 +408,18 @@ namespace MusicApp
         /// </summary>
         public void OnLocationChanged()
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: OnLocationChanged - Window moved to: Left={window.Left}, Top={window.Top}, Width={window.Width}, Height={window.Height}");
-            
             // If the window is moved while custom maximized, it should be restored
             if (isCustomMaximized && window.WindowState != WindowState.Maximized)
             {
-                System.Diagnostics.Debug.WriteLine("WindowManager: OnLocationChanged - Window moved while maximized, restoring to normal state");
                 isCustomMaximized = false;
                 UpdateWindowStateIcon(WindowState.Normal);
             }
             
-            // Update normal window bounds when window is moved (but not during restore operations)
-            if (window.WindowState == WindowState.Normal && !isRestoring)
+            // Update normal window bounds when window is moved (but not during restore or maximize operations)
+            if (window.WindowState == WindowState.Normal && !isRestoring && !isMaximizing)
             {
                 normalWindowBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
-                System.Diagnostics.Debug.WriteLine($"WindowManager: OnLocationChanged - Updated normal bounds: {normalWindowBounds}");
-                
-                // Mark as dirty to trigger save
                 MarkDirty();
-            }
-            else if (isRestoring)
-            {
-                System.Diagnostics.Debug.WriteLine("WindowManager: OnLocationChanged - Skipping bounds update during restore operation");
             }
         }
 
@@ -456,20 +428,11 @@ namespace MusicApp
         /// </summary>
         public void OnSizeChanged()
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: OnSizeChanged - Window resized to: Width={window.Width}, Height={window.Height}");
-            
-            // Update normal window bounds when window is resized (but not during restore operations)
-            if (window.WindowState == WindowState.Normal && !isRestoring)
+            // Update normal window bounds when window is resized (but not during restore or maximize operations)
+            if (window.WindowState == WindowState.Normal && !isRestoring && !isMaximizing)
             {
                 normalWindowBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
-                System.Diagnostics.Debug.WriteLine($"WindowManager: OnSizeChanged - Updated normal bounds: {normalWindowBounds}");
-                
-                // Mark as dirty to trigger save
                 MarkDirty();
-            }
-            else if (isRestoring)
-            {
-                System.Diagnostics.Debug.WriteLine("WindowManager: OnSizeChanged - Skipping bounds update during restore operation");
             }
         }
 
@@ -541,18 +504,11 @@ namespace MusicApp
         /// </summary>
         private void UpdateWindowStateIcon(WindowState state)
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: UpdateWindowStateIcon - Updating icon to: {state}");
-            
             // Use reflection to call the UpdateWindowStateIcon method on the titleBarPlayer
             var method = titleBarPlayer.GetType().GetMethod("UpdateWindowStateIcon");
             if (method != null)
             {
                 method.Invoke(titleBarPlayer, new object[] { state });
-                System.Diagnostics.Debug.WriteLine($"WindowManager: UpdateWindowStateIcon - Icon updated successfully");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"WindowManager: UpdateWindowStateIcon - Warning: UpdateWindowStateIcon method not found on titleBarPlayer");
             }
         }
 
@@ -561,7 +517,7 @@ namespace MusicApp
         /// </summary>
         public SettingsManager.WindowStateSettings GetCurrentWindowState()
         {
-            var state = new SettingsManager.WindowStateSettings
+            return new SettingsManager.WindowStateSettings
             {
                 IsMaximized = isCustomMaximized,
                 Width = normalWindowBounds.Width,
@@ -569,53 +525,17 @@ namespace MusicApp
                 Left = normalWindowBounds.Left,
                 Top = normalWindowBounds.Top
             };
-            
-            System.Diagnostics.Debug.WriteLine($"WindowManager: GetCurrentWindowState - Returning state: IsMaximized={state.IsMaximized}, Bounds={state.Left},{state.Top},{state.Width}x{state.Height}");
-            return state;
         }
 
-        /// <summary>
-        /// Logs the current window state for debugging
-        /// </summary>
-        public void LogCurrentState()
-        {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: LogCurrentState - WindowState={window.WindowState}, isCustomMaximized={isCustomMaximized}");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: LogCurrentState - Current bounds: Left={window.Left}, Top={window.Top}, Width={window.Width}, Height={window.Height}");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: LogCurrentState - Normal bounds: {normalWindowBounds}");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: LogCurrentState - normalWindowBoundsRestored={normalWindowBoundsRestored}");
-            System.Diagnostics.Debug.WriteLine($"WindowManager: LogCurrentState - isRestoring={isRestoring}");
-        }
 
         /// <summary>
         /// Forces a refresh of the window state icon
         /// </summary>
         public void ForceRefreshWindowStateIcon()
         {
-            System.Diagnostics.Debug.WriteLine($"WindowManager: ForceRefreshWindowStateIcon - Current state: isCustomMaximized={isCustomMaximized}");
-            
-            if (isCustomMaximized)
-            {
-                System.Diagnostics.Debug.WriteLine("WindowManager: ForceRefreshWindowStateIcon - Updating to maximized icon");
-                UpdateWindowStateIcon(WindowState.Maximized);
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("WindowManager: ForceRefreshWindowStateIcon - Updating to normal icon");
-                UpdateWindowStateIcon(WindowState.Normal);
-            }
+            UpdateWindowStateIcon(isCustomMaximized ? WindowState.Maximized : WindowState.Normal);
         }
 
-        /// <summary>
-        /// Debug method to test the current window state
-        /// </summary>
-        public void DebugWindowState()
-        {
-            System.Diagnostics.Debug.WriteLine("=== WINDOW STATE DEBUG ===");
-            LogCurrentState();
-            System.Diagnostics.Debug.WriteLine($"IsWindowMaximized() returns: {IsWindowMaximized()}");
-            System.Diagnostics.Debug.WriteLine($"Window.ActualWidth: {window.ActualWidth}, Window.ActualHeight: {window.ActualHeight}");
-            System.Diagnostics.Debug.WriteLine("=== END DEBUG ===");
-        }
 
         /// <summary>
         /// Marks the window state as dirty and starts the save timer
@@ -645,10 +565,6 @@ namespace MusicApp
             {
                 isDirty = false;
                 saveTimer?.Stop();
-                
-                // Notify that the window state has changed and should be saved
-                // This will be handled by the MainWindow
-                System.Diagnostics.Debug.WriteLine("WindowManager: SaveTimer_Tick - Window state changed, should be saved");
                 WindowStateChanged?.Invoke(this, EventArgs.Empty);
             }
         }
