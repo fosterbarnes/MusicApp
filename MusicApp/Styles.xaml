@@ -169,6 +169,28 @@
     </Style>
 
     <!-- ===========================================
+         GRIDSPLITTER STYLES
+         =========================================== -->
+    
+    <!-- Custom GridSplitter Style -->
+    <Style x:Key="CustomGridSplitter" TargetType="GridSplitter">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GridSplitter">
+                    <Border Background="{TemplateBinding Background}">
+                        <Border x:Name="splitterLine"
+                               Background="#404040"
+                               Width="1"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Stretch"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===========================================
          LISTVIEW AND GRIDVIEW STYLES
          =========================================== -->
     
@@ -187,23 +209,48 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="GridViewColumnHeader">
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
-                        <Grid>
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                               Margin="{TemplateBinding Padding}"/>
-                            <!-- Custom vertical separator line -->
-                            <Border Width="1" 
-                                    Background="#525252" 
-                                    HorizontalAlignment="Right" 
-                                    VerticalAlignment="Stretch"/>
-                        </Grid>
-                    </Border>
+                        </Border>
+                        <!-- Resize gripper for column resizing -->
+                        <Thumb x:Name="PART_HeaderGripper"
+                               Width="8"
+                               HorizontalAlignment="Right"
+                               Cursor="SizeWE">
+                            <Thumb.Style>
+                                <Style TargetType="Thumb">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        Width="8"
+                                                        Cursor="SizeWE"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Thumb.Style>
+                        </Thumb>
+                        <!-- Custom vertical separator line -->
+                        <Border Width="1" 
+                                Background="#525252" 
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Stretch"/>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#404040"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- Custom ListView Item Style to control content padding -->

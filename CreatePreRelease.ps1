@@ -32,7 +32,6 @@ if (-not (Test-Path $buildPath)) {
 
 Set-Location $repoRoot
 
-# Create zip file using 7zip
 Write-Host "`nCreating zip file: $zipFileName" -ForegroundColor Cyan
 Write-Host "Source: $buildPath" -ForegroundColor Gray
 
@@ -47,19 +46,12 @@ try {
     exit 1
 }
 
-# Verify zip file was created
-if (-not (Test-Path $zipPath)) {
-    Write-Host "Error: Zip file was not created: $zipPath" -ForegroundColor Red
-    exit 1
-}
-
 Write-Host "`nGetting most recent commit message..." -ForegroundColor Cyan
 $commitMessageFull = git log -1 --pretty=%B
 $commitBody = $commitMessageFull | Select-Object -Skip 1 # Skip the first line and use only the extended description
 $releaseDescription = $commitBody -join "`n"
 Write-Host "Commit message retrieved successfully." -ForegroundColor Green
 
-# Display release information and wait for confirmation
 Write-Host "`n" -NoNewline
 Write-Host "Release Preview:" -ForegroundColor Cyan
 Write-Host "`n$releaseName" -ForegroundColor Yellow
@@ -67,11 +59,9 @@ Write-Host "$releaseDescription" -ForegroundColor White
 Write-Host "`nPress any key to create release..." -ForegroundColor Green
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
-# Create release on GitHub as pre-release
 Write-Host "`nCreating release on GitHub..." -ForegroundColor Cyan
 
 try {
-    # Create pre-release with the zip file attached
     & gh release create "v$currentDate" "$zipPath" `
         --repo "fosterbarnes/MusicApp" `
         --title "$releaseName" `
@@ -92,7 +82,6 @@ try {
     exit 1
 }
 
-# Clean up temporary zip file (optional - comment out if you want to keep it)
 Write-Host "`nCleaning up temporary zip file..." -ForegroundColor Gray
 Remove-Item -Path $zipPath -ErrorAction SilentlyContinue
 

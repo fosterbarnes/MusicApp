@@ -27,8 +27,13 @@ namespace MusicApp
         public string SampleRate { get; set; } = "";
         public long FileSize { get; set; }
         public DateTime DateAdded { get; set; } = DateTime.Now;
+        public DateTime DateModified { get; set; } = DateTime.MinValue;
         public DateTime LastPlayed { get; set; } = DateTime.MinValue;
         public int PlayCount { get; set; } = 0;
+        public string Category { get; set; } = "";
+        public string FileType { get; set; } = "";
+        public DateTime? ReleaseDate { get; set; }
+        public int BeatsPerMinute { get; set; } = 0;
 
         public override string ToString()
         {

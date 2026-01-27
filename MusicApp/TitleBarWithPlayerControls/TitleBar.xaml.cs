@@ -502,7 +502,6 @@ namespace MusicApp.TitleBarWithPlayerControls
                 isPlaying = false;
 
                 isDragging = false;
-                isMouseDown = false;
                 dragTargetPosition = TimeSpan.Zero;
 
                 UpdateSeekBar(TimeSpan.Zero, TimeSpan.Zero);
@@ -974,7 +973,6 @@ namespace MusicApp.TitleBarWithPlayerControls
         private double currentSeekBarWidth = 0;
         private bool wasMutedBeforeDrag = false;
         private double volumeBeforeDrag = 100;
-        private bool isMouseDown = false;
         private System.Windows.Point lastValidMousePosition;
         private DateTime lastMouseDownTime;
         private TimeSpan dragTargetPosition;
@@ -987,7 +985,6 @@ namespace MusicApp.TitleBarWithPlayerControls
             double clickPosition = ClampMousePosition(clickPoint.X, currentSeekBarWidth);
 
             lastValidMousePosition = clickPoint;
-            isMouseDown = true;
             lastMouseDownTime = DateTime.Now;
 
             double progress = Math.Max(0, Math.Min(1, clickPosition / currentSeekBarWidth));
@@ -1098,7 +1095,6 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
 
             isDragging = false;
-            isMouseDown = false;
             seekBarBackground.ReleaseMouseCapture();
         }
 

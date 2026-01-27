@@ -67,7 +67,6 @@ namespace MusicApp
         // ===========================================
         private bool isCustomMaximized = false;
         private Rect normalWindowBounds;
-        private bool normalWindowBoundsRestored = false;
         private Window window;
         private UserControl titleBarPlayer;
         private IntPtr hWnd; // Window handle for API calls
@@ -154,7 +153,6 @@ namespace MusicApp
             
             // Store these as initial bounds
             normalWindowBounds = new Rect(left, top, width, height);
-            normalWindowBoundsRestored = true;
         }
 
         /// <summary>
@@ -164,7 +162,6 @@ namespace MusicApp
         {
             // Store initial window bounds
             normalWindowBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
-            normalWindowBoundsRestored = false;
             
             // Check if window starts maximized
             if (window.WindowState == WindowState.Maximized)
@@ -472,7 +469,6 @@ namespace MusicApp
             
             // Store these bounds as our normal window bounds
             normalWindowBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
-            normalWindowBoundsRestored = true;
             System.Diagnostics.Debug.WriteLine($"WindowManager: RestoreWindowState - Stored normal bounds: {normalWindowBounds}");
             
             if (isMaximized)

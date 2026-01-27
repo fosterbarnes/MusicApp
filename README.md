@@ -1,33 +1,35 @@
 # ![Icon](https://i.postimg.cc/d3c9vxzF/Music-App-Icon24x24.png) MusicApp - An Offline Music Player ![Icon](https://i.postimg.cc/d3c9vxzF/Music-App-Icon24x24.png)
 
-![MusicAppScreenshot](https://i.postimg.cc/DzN7dWWm/Music-App-TB5-Ff-AUlm-R.png)
+<td><img src="Resources/scr1.png" alt="Screenshot" /></td>
 
 MusicApp is in very early development. This repo mainly exists as an archive/backup of my daily progress. If you somehow stumble upon this repo, feel free to try it out but don't expect a complete app. Bugs are expected.
+
+If you want to use it, [download the latest release](https://github.com/fosterbarnes/MusicApp/releases), unzip, then run MusicApp.exe
+
+## Introduction
 
 I hate streaming services. I have tried SO many music player apps like Foobar2000,
 Musicbee, AIMP, Clementine, Strawberry, etc. and just don't like them. No disrespect to the creators but they're just not for me. I tolerate iTunes, and while it is functional and has a UI that I find more functional than the alternatives, it's very out of date, sluggish overall and (for some reason????) makes my twitch stream lag when I play music with it lmao (I'm a twitch streamer).
 
 To be honest, this app is made so I can use as my daily music player. HOWEVER, if you agree with one or more of the previous statements, this app may also be for you too lol. It's made for Windows with WPF in C#, for this reason, Linux/macOS versions are not currently planned. My main concern is efficiency for my personal daily driver OS (Windows 10) not cross compatibility. The thought of making such a detailed and clean UI in Rust (my cross compat. language of choice) gives me goosebumps and shivers, ergo: WPF in C#, using XAML for styling.
 
-If you want to use it, download the latest [release.zip](https://github.com/fosterbarnes/MusicApp-Nightly/releases/latest), unzip, then run MusicApp.exe
-
 ## Implemented Features
 
 - Working audio playback with various file types. Lossless support
-- Working music library settings that save when the app closes.
-- Ability to remove music library folders and clear settings.
-- Auto-rescan music library folders when the app launches.
+- Working music library (add/remove/clear media folders)
+- Auto-rescan music library upon app launch.
 - Combined title/media control bar. Includes:
   - Reverse, play/pause and skip buttons.
   - Volume control slider
-  - Currently playing track viewport with working seek bar and song info. Clicking and dragging takes the user to the selected time.
+  - Currently playing track viewport with seek bar and song info.
   - Currently playing track section auto-centers and resizes based on window size.
+  - Queue button (placeholder)
+  - Search bar (placeholder)
   - Minimize, maximize, and close buttons
-- Ability to add a music library folder
 - Basic playlist menu
 - Basic recently played menu
 - Shuffle and repeat buttons
-- Queue view to see all songs in the current queue
+- Queue view for managing the current queue
 
 ## Planned Features
 
@@ -43,7 +45,7 @@ If you want to use it, download the latest [release.zip](https://github.com/fost
 - Ability to edit metadata
 - Visualizer
 - Playlist import support
-- _POSSIBLE_ iTunes library import support. I need to look into whether that's legal or not lmao
+- _POSSIBLE_ iTunes library import support
 - Audio file converting/compressing
 - Album art scraper
 - Optional metadata correction/cleanup

@@ -41,6 +41,10 @@ namespace MusicApp
             public double Height { get; set; } = 700;
             public double Left { get; set; } = 100;
             public double Top { get; set; } = 100;
+            public double SidebarWidth { get; set; } = 250;
+            public Dictionary<string, double> SongsViewColumnWidths { get; set; } = new Dictionary<string, double>();
+            public Dictionary<string, Dictionary<string, double>> ColumnWidths { get; set; } = new Dictionary<string, Dictionary<string, double>>();
+            public Dictionary<string, List<string>> ColumnVisibility { get; set; } = new Dictionary<string, List<string>>();
         }
 
         private static SettingsManager? _instance;
