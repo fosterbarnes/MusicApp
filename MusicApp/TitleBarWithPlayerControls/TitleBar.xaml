@@ -23,6 +23,12 @@
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Width" Value="48"/>
                 <Setter Property="Height" Value="48"/>
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -37,6 +43,47 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Background" Value="#2D2D2D"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Generic Scalable Button Style -->
+            <Style x:Key="ScalableButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{Binding Path=(materialDesign:ButtonAssist.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -126,24 +173,15 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!-- ===========================================
-         TITLE BAR SECTION
-         Contains: Playback Controls, Volume Controls, Song Info, Window Controls
-         =========================================== -->
     <Border Background="#1E1E1E" 
             VerticalAlignment="Top">
         <Grid>
-            <!-- Title Bar Grid Definitions -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <!-- Spacer (fills unused space) -->
                 <ColumnDefinition Width="Auto"/>
-                <!-- Window Controls -->
             </Grid.ColumnDefinitions>
 
-            <!-- ===========================================
-                 WINDOW CONTROLS SECTION
-                 =========================================== -->
+            <!-- Window Controls -->
             <StackPanel Grid.Column="1" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Right" 
@@ -172,9 +210,136 @@
                 </Button>
             </StackPanel>
 
-            <!-- ===========================================
-                 CURRENT SONG INFO SECTION (Overlay - Centered across entire window)
-                 =========================================== -->
+            <!-- Playback Controls -->
+            <StackPanel x:Name="playbackControlsPanel"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal" 
+                        VerticalAlignment="Center" 
+                        HorizontalAlignment="Left"
+                        Margin="20,0,0,0"
+                        Panel.ZIndex="10">
+
+                <!-- Previous Track Button -->
+                <Button x:Name="btnPrevious" 
+                        Style="{StaticResource CustomMediaButton}" 
+                        Foreground="White" 
+                        Margin="0,0" 
+                        Click="BtnPrevious_Click">
+                    <materialDesign:PackIcon Kind="SkipPrevious" Width="24" Height="24"/>
+                </Button>
+
+                <!-- Play/Pause Button -->
+                <Button x:Name="btnPlayPause" 
+                        Style="{StaticResource CustomMediaButton}" 
+                        Foreground="White"  
+                        Margin="2,0" 
+                        Click="BtnPlayPause_Click">
+                    <materialDesign:PackIcon x:Name="iconPlayPause" Kind="Play" Width="24" Height="24"/>
+                </Button>
+
+                <!-- Next Track Button -->
+                <Button x:Name="btnNext" 
+                        Style="{StaticResource CustomMediaButton}" 
+                        Foreground="White" 
+                        Margin="0,0" 
+                        Click="BtnNext_Click">
+                    <materialDesign:PackIcon Kind="SkipNext" Width="24" Height="24"/>
+                </Button>
+            </StackPanel>
+
+            <!-- Volume Controls -->
+            <StackPanel x:Name="volumeControlsPanel"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal" 
+                        VerticalAlignment="Center" 
+                        HorizontalAlignment="Left"
+                        Margin="180,0,0,0"
+                        Panel.ZIndex="10">
+                <!-- Volume Slider -->
+                <Slider x:Name="sliderVolume" 
+                        Minimum="0" 
+                        Maximum="100" 
+                        Value="100" 
+                        VerticalAlignment="Center" 
+                        ValueChanged="SliderVolume_ValueChanged"
+                        Style="{StaticResource CustomVolumeSlider}"
+                        Foreground="#705399" 
+                        Background="Transparent"/>
+
+                <!-- Volume Icon Button -->
+                <Border Background="Transparent" 
+                        Padding="8" 
+                        VerticalAlignment="Center" 
+                        Margin="5,0,0,0" 
+                        MouseLeftButtonDown="IconVolume_MouseLeftButtonDown">
+                    <materialDesign:PackIcon x:Name="iconVolume" Kind="VolumeHigh" Foreground="White"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Search Bar -->
+            <Border x:Name="searchBarBorder"
+                    Background="#2D2D2D"
+                    BorderBrush="#404040"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Margin="0,0,140,0"
+                    Padding="8,4"
+                    Width="150"
+                    Height="28"
+                    Panel.ZIndex="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Search Icon -->
+                    <materialDesign:PackIcon Grid.Column="0"
+                                           Kind="Magnify"
+                                           Width="16"
+                                           Height="16"
+                                           Foreground="#CCCCCC"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,6,0"/>
+
+                    <!-- Search Text Box -->
+                    <TextBox Grid.Column="1"
+                            x:Name="txtSearch"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="#CCCCCC"
+                            CaretBrush="White"
+                            FontSize="12"
+                            VerticalContentAlignment="Center"
+                            Padding="0,0,0,0"
+                            VerticalAlignment="Center">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="0">
+                                                <ScrollViewer x:Name="PART_ContentHost"
+                                                            Margin="{TemplateBinding Padding}"
+                                                            Focusable="false"
+                                                            HorizontalScrollBarVisibility="Hidden"
+                                                            VerticalScrollBarVisibility="Hidden"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                </Grid>
+            </Border>
+
+            <!-- Current Song Info Section -->
             <Border x:Name="songInfoBorder"
                     Grid.ColumnSpan="2"
                     Background="#0A0A0A" 
@@ -187,97 +352,8 @@
                 <Grid VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <!-- Album Art -->
                         <ColumnDefinition Width="*"/>
-                        <!-- Song Info (fills available space) -->
                     </Grid.ColumnDefinitions>
-
-                    <!-- Playback Controls - Positioned outside and to the left of the song info viewport -->
-                    <StackPanel x:Name="playbackControlsPanel"
-                                Grid.Column="0"
-                                Orientation="Horizontal" 
-                                VerticalAlignment="Center" 
-                                HorizontalAlignment="Left"
-                                Margin="-375,0,0,0"
-                                Panel.ZIndex="1">
-
-                        <!-- Previous Track Button -->
-                        <Button x:Name="btnPrevious" 
-                                Style="{StaticResource CustomMediaButton}" 
-                                Foreground="White" 
-                                Margin="0,0" 
-                                Click="BtnPrevious_Click"
-                                MouseLeftButtonDown="BtnPrevious_MouseLeftButtonDown"
-                                MouseLeftButtonUp="BtnPrevious_MouseLeftButtonUp"
-                                MouseMove="BtnPrevious_MouseMove"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Button.RenderTransform>
-                                <ScaleTransform x:Name="btnPreviousTransform" ScaleX="1" ScaleY="1"/>
-                            </Button.RenderTransform>
-                            <materialDesign:PackIcon Kind="SkipPrevious" Width="24" Height="24"/>
-                        </Button>
-
-                        <!-- Play/Pause Button -->
-                        <Button x:Name="btnPlayPause" 
-                                Style="{StaticResource CustomMediaButton}" 
-                                Foreground="White"  
-                                Margin="2,0" 
-                                Click="BtnPlayPause_Click"
-                                MouseLeftButtonDown="BtnPlayPause_MouseLeftButtonDown"
-                                MouseLeftButtonUp="BtnPlayPause_MouseLeftButtonUp"
-                                MouseMove="BtnPlayPause_MouseMove"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Button.RenderTransform>
-                                <ScaleTransform x:Name="btnPlayPauseTransform" ScaleX="1" ScaleY="1"/>
-                            </Button.RenderTransform>
-                            <materialDesign:PackIcon x:Name="iconPlayPause" Kind="Play" Width="24" Height="24"/>
-                        </Button>
-
-                        <!-- Next Track Button -->
-                        <Button x:Name="btnNext" 
-                                Style="{StaticResource CustomMediaButton}" 
-                                Foreground="White" 
-                                Margin="0,0" 
-                                Click="BtnNext_Click"
-                                MouseLeftButtonDown="BtnNext_MouseLeftButtonDown"
-                                MouseLeftButtonUp="BtnNext_MouseLeftButtonUp"
-                                MouseMove="BtnNext_MouseMove"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Button.RenderTransform>
-                                <ScaleTransform x:Name="btnNextTransform" ScaleX="1" ScaleY="1"/>
-                            </Button.RenderTransform>
-                            <materialDesign:PackIcon Kind="SkipNext" Width="24" Height="24"/>
-                        </Button>
-                    </StackPanel>
-
-                    <!-- Volume Controls - Positioned outside and to the left of the song info viewport -->
-                    <StackPanel x:Name="volumeControlsPanel"
-                                Grid.Column="0"
-                                Orientation="Horizontal" 
-                                VerticalAlignment="Center" 
-                                HorizontalAlignment="Left"
-                                Margin="-190,0,0,0"
-                                Panel.ZIndex="1">
-                        <!-- Volume Slider -->
-                        <Slider x:Name="sliderVolume" 
-                                Minimum="0" 
-                                Maximum="100" 
-                                Value="100" 
-                                VerticalAlignment="Center" 
-                                ValueChanged="SliderVolume_ValueChanged"
-                                Style="{StaticResource CustomVolumeSlider}"
-                                Foreground="#705399" 
-                                Background="Transparent"/>
-
-                        <!-- Volume Icon Button -->
-                        <Border Background="Transparent" 
-                                Padding="8" 
-                                VerticalAlignment="Center" 
-                                Margin="5,0,0,0" 
-                                MouseLeftButtonDown="IconVolume_MouseLeftButtonDown">
-                            <materialDesign:PackIcon x:Name="iconVolume" Kind="VolumeHigh" Foreground="White"/>
-                        </Border>
-                    </StackPanel>
 
                     <!-- Album Art Container -->
                     <Border Grid.Column="0"
@@ -295,7 +371,6 @@
 
                     <!-- Song Information -->
                     <Grid Grid.Column="1" VerticalAlignment="Center">
-                        <!-- Song Title and Artist -->
                         <StackPanel VerticalAlignment="Center" Margin="0,0,0,19">
                             <TextBlock x:Name="txtCurrentTrack" 
                                        Text="No track selected" 
@@ -333,13 +408,9 @@
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="#000A0A0A" Offset="0.0"/>
-                                <!-- Transparent starts here -->
                                 <GradientStop Color="#000A0A0A" Offset="0.48"/>
-                                <!-- Still transparent -->
                                 <GradientStop Color="#FF0A0A0A" Offset="0.68"/>
-                                <!-- Starts becoming opaque immediately -->
                                 <GradientStop Color="#FF0A0A0A" Offset="0.9"/>
-                                <!-- Fully opaque -->
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
@@ -355,106 +426,34 @@
                               Panel.ZIndex="0"
                               Fill="#0A0A0A"/>
 
-                    <!-- Queue Button - Positioned outside and to the right of the currently playing section -->
-                    <Border x:Name="btnQueue" 
+                    <!-- Queue Button -->
+                    <Button x:Name="btnQueue" 
                             Grid.Column="1"
                             Width="35" 
                             Height="24" 
+                            Style="{StaticResource ScalableButtonStyle}"
                             Background="#717171" 
                             BorderThickness="1"
                             BorderBrush="#434242"
-                            CornerRadius="3"
+                            materialDesign:ButtonAssist.CornerRadius="3"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             Margin="0,0,-91,0"
                             Panel.ZIndex="1"
-                            MouseLeftButtonDown="BtnQueue_Click"
-                            MouseLeftButtonUp="BtnQueue_MouseLeftButtonUp"
-                            Cursor="Arrow"
-                            RenderTransformOrigin="0.5,0.5">
-                        <Border.RenderTransform>
-                            <ScaleTransform x:Name="btnQueueTransform" ScaleX="1" ScaleY="1"/>
-                        </Border.RenderTransform>
+                            Click="BtnQueue_Click">
                         <Image Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Image.Source>
                                 <StaticResource ResourceKey="di_queue"/>
                             </Image.Source>
                         </Image>
-                    </Border>
+                    </Button>
 
-                    <!-- Search Bar - Positioned to the right of the queue button with fixed distance -->
-                    <Border x:Name="searchBarBorder"
-                            Grid.Column="1"
-                            Background="#2D2D2D"
-                            BorderBrush="#404040"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Margin="0,0,-280,0"
-                            Padding="8,4"
-                            Width="150"
-                            Height="28"
-                            Panel.ZIndex="1">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Search Icon -->
-                            <materialDesign:PackIcon Grid.Column="0"
-                                                   Kind="Magnify"
-                                                   Width="16"
-                                                   Height="16"
-                                                   Foreground="#CCCCCC"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,6,0"/>
-
-                            <!-- Search Text Box -->
-                            <TextBox Grid.Column="1"
-                                    x:Name="txtSearch"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Foreground="#CCCCCC"
-                                    CaretBrush="White"
-                                    FontSize="12"
-                                    VerticalContentAlignment="Center"
-                                    Padding="0,0,0,0"
-                                    VerticalAlignment="Center">
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="TextBox">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                                            CornerRadius="0">
-                                                        <ScrollViewer x:Name="PART_ContentHost"
-                                                                    Margin="{TemplateBinding Padding}"
-                                                                    Focusable="false"
-                                                                    HorizontalScrollBarVisibility="Hidden"
-                                                                    VerticalScrollBarVisibility="Hidden"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </TextBox.Style>
-                            </TextBox>
-                        </Grid>
-                    </Border>
-
-                    <!-- Seek Bar - Now a direct child of the main Grid -->
+                    <!-- Seek Bar -->
                     <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,36,39,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Current Time -->
                             <ColumnDefinition Width="*"/>
-                            <!-- Progress Bar (fills available space) -->
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Total Duration -->
                         </Grid.ColumnDefinitions>
 
                         <!-- Current Time -->
@@ -515,22 +514,15 @@
                               HorizontalAlignment="Right"
                               Margin="15,0,0,0">
                         <!-- Shuffle Button -->
-                        <Border x:Name="btnShuffle" 
+                        <Button x:Name="btnShuffle" 
                                 Width="24" 
                                 Height="24" 
+                                Style="{StaticResource ScalableButtonStyle}"
                                 Background="Transparent" 
                                 BorderThickness="0"
-                                CornerRadius="3"
+                                materialDesign:ButtonAssist.CornerRadius="3"
                                 Margin="0,0,0,4"
-                                MouseLeftButtonDown="BtnShuffle_Click"
-                                MouseLeftButtonUp="BtnShuffle_MouseLeftButtonUp"
-                                MouseMove="BtnShuffle_MouseMove"
-                                Cursor="Arrow"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Border.RenderTransform>
-                                <ScaleTransform x:Name="btnShuffleTransform" ScaleX="1" ScaleY="1"/>
-                            </Border.RenderTransform>
-
+                                Click="BtnShuffle_Click">
                             <Grid>
                                 <!-- Animated background fill -->
                                 <Rectangle x:Name="btnShuffleFill" 
@@ -544,25 +536,18 @@
 
                                 <materialDesign:PackIcon x:Name="iconShuffle" Kind="ShuffleVariant" Width="16" Height="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
-                        </Border>
+                        </Button>
 
                         <!-- Repeat Button -->
-                        <Border x:Name="btnRepeat" 
+                        <Button x:Name="btnRepeat" 
                                 Width="24" 
                                 Height="24" 
+                                Style="{StaticResource ScalableButtonStyle}"
                                 Background="Transparent" 
                                 BorderThickness="0"
-                                CornerRadius="3"
+                                materialDesign:ButtonAssist.CornerRadius="3"
                                 Margin="0,0,0,0"
-                                MouseLeftButtonDown="BtnRepeat_Click"
-                                MouseLeftButtonUp="BtnRepeat_MouseLeftButtonUp"
-                                MouseMove="BtnRepeat_MouseMove"
-                                Cursor="Arrow"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Border.RenderTransform>
-                                <ScaleTransform x:Name="btnRepeatTransform" ScaleX="1" ScaleY="1"/>
-                            </Border.RenderTransform>
-
+                                Click="BtnRepeat_Click">
                             <Grid>
                                 <!-- Animated background fill -->
                                 <Rectangle x:Name="btnRepeatFill" 
@@ -580,12 +565,10 @@
                                     </Image.RenderTransform>
                                 </Image>
                             </Grid>
-                        </Border>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
-
-
         </Grid>
     </Border>
 </UserControl> 

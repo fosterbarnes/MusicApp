@@ -15,9 +15,7 @@ namespace MusicApp.TitleBarWithPlayerControls
 {
     public partial class TitleBar : System.Windows.Controls.UserControl
     {
-        // ===========================================
-        // EVENTS
-        // ===========================================
+        // === Events ===
         public event EventHandler? PlayPauseRequested;
         public event EventHandler? PreviousTrackRequested;
         public event EventHandler? NextTrackRequested;
@@ -27,9 +25,7 @@ namespace MusicApp.TitleBarWithPlayerControls
         public event EventHandler<double>? VolumeChanged;
         public event EventHandler<bool>? ShuffleStateChanged;
 
-        // ===========================================
-        // AUDIO PLAYBACK STATE
-        // ===========================================
+        // === Audio Playback State ===
         private WaveOutEvent? waveOut;
         private AudioFileReader? audioFileReader;
         private bool isPlaying = false;
@@ -40,15 +36,11 @@ namespace MusicApp.TitleBarWithPlayerControls
         private TimeSpan pausedPosition;
         private bool isUpdatingAudioObjects = false;
 
-        // ===========================================
-        // PLAYER SETTINGS STATE
-        // ===========================================
+        // === Player Settings State ===
         private bool isShuffleEnabled = false;
         private SettingsManager.RepeatMode repeatMode = SettingsManager.RepeatMode.Off;
 
-        // ===========================================
-        // DYNAMIC SPACING CONSTANTS
-        // ===========================================
+        // === Constants ===
         private const double MIN_SPACING_FROM_EDGE = 20;
         private const double MAX_SPACING_FROM_EDGE = 50;
         private const double MIN_SPACING_BETWEEN_CONTROLS = 20;
@@ -56,9 +48,22 @@ namespace MusicApp.TitleBarWithPlayerControls
         private const double MIN_WINDOW_WIDTH_FOR_SPACING = 1039;
         private const double MAX_WINDOW_WIDTH_FOR_SPACING = 1600;
 
-        // ===========================================
-        // PROPERTIES
-        // ===========================================
+        private const double BUTTON_FILL_SIZE = 24.0;
+        private const int ANIMATION_DURATION_MS = 200;
+        private const int MOUSE_MOVE_DELAY_MS = 50;
+        private const double MOUSE_POSITION_TOLERANCE = 100;
+        private const double VOLUME_MAX = 100;
+        private const double FALLBACK_PLAYBACK_CONTROLS_WIDTH = 146;
+        private const double WINDOW_CONTROLS_WIDTH = 140;
+        private const double SEARCH_BAR_RIGHT_MARGIN_OFFSET = -134;
+        private const double GRADIENT_MASK_WIDTH = 120;
+        private const double GRADIENT_MASK_HEIGHT = 38;
+        private const double REPEAT_ICON_OFFSET_Y = -1.5;
+        private const double SEARCH_PLACEHOLDER_COLOR_R = 204;
+        private const double SEARCH_PLACEHOLDER_COLOR_G = 204;
+        private const double SEARCH_PLACEHOLDER_COLOR_B = 204;
+
+        // === Properties ===
         public bool IsPlaying
         {
             get => isPlaying;
@@ -87,10 +92,10 @@ namespace MusicApp.TitleBarWithPlayerControls
             get => sliderVolume.Value;
             set
             {
-                sliderVolume.Value = Math.Max(0, Math.Min(100, value));
+                sliderVolume.Value = Math.Max(0, Math.Min(VOLUME_MAX, value));
                 if (waveOut != null && !isMuted)
                 {
-                    waveOut.Volume = (float)(sliderVolume.Value / 100.0);
+                    SetWaveOutVolume(sliderVolume.Value);
                 }
             }
         }
@@ -159,9 +164,7 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
         }
 
-        // ===========================================
-        // CONSTRUCTOR
-        // ===========================================
+        // === Constructor ===
         public TitleBar()
         {
             InitializeComponent();
@@ -169,11 +172,10 @@ namespace MusicApp.TitleBarWithPlayerControls
             this.Unloaded += TitleBar_Unloaded;
             InitializeSeekBarTimer();
 
-            // Initialize search box placeholder text
             if (txtSearch != null)
             {
                 txtSearch.Text = "Search";
-                txtSearch.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)); // #CCCCCC
+                txtSearch.Foreground = new SolidColorBrush(Color.FromRgb((byte)SEARCH_PLACEHOLDER_COLOR_R, (byte)SEARCH_PLACEHOLDER_COLOR_G, (byte)SEARCH_PLACEHOLDER_COLOR_B));
                 txtSearch.GotFocus += TxtSearch_GotFocus;
                 txtSearch.LostFocus += TxtSearch_LostFocus;
             }
@@ -193,13 +195,11 @@ namespace MusicApp.TitleBarWithPlayerControls
             if (txtSearch != null && string.IsNullOrWhiteSpace(txtSearch.Text))
             {
                 txtSearch.Text = "Search";
-                txtSearch.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)); // #CCCCCC
+                txtSearch.Foreground = new SolidColorBrush(Color.FromRgb((byte)SEARCH_PLACEHOLDER_COLOR_R, (byte)SEARCH_PLACEHOLDER_COLOR_G, (byte)SEARCH_PLACEHOLDER_COLOR_B));
             }
         }
 
-        // ===========================================
-        // WINDOW CONTROL EVENTS
-        // ===========================================
+        // === Window Control Events ===
         private async void TitleBar_Loaded(object sender, RoutedEventArgs e)
         {
             try
@@ -208,15 +208,12 @@ namespace MusicApp.TitleBarWithPlayerControls
                 if (window != null)
                 {
                     window.SizeChanged += Window_SizeChanged;
-                    UpdateSongInfoWidth(); // Initial update
+                    UpdateSongInfoWidth();
                 }
 
-                // Update seek bar width after layout is complete
                 _ = Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => {
                     UpdateSeekBarWidth();
-                    UpdateGradientMask(); // Ensure gradient mask is positioned correctly after layout
-                    
-                    // Update control spacing and volume slider width after layout is complete
+                    UpdateGradientMask();
                     var window = Window.GetWindow(this);
                     if (window != null)
                     {
@@ -224,21 +221,11 @@ namespace MusicApp.TitleBarWithPlayerControls
                     }
                 }));
 
-                // Load player settings
                 await LoadPlayerSettingsAsync();
-
-                // Debug: Check initial volume state
-                System.Diagnostics.Debug.WriteLine($"Control loaded - Volume slider value: {sliderVolume.Value}");
-                System.Diagnostics.Debug.WriteLine($"Control loaded - isMuted: {isMuted}");
-                System.Diagnostics.Debug.WriteLine($"Control loaded - waveOut is null: {waveOut == null}");
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                System.Diagnostics.Debug.WriteLine($"Error in TitleBar_Loaded: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in TitleBar_Loaded - resetting to initial state");
-                ResetToInitialState();
+                HandleError("TitleBar_Loaded", ex);
             }
         }
 
@@ -246,7 +233,6 @@ namespace MusicApp.TitleBarWithPlayerControls
         {
             try
             {
-                // Clean up timer when control is unloaded
                 if (seekBarTimer != null)
                 {
                     seekBarTimer.Stop();
@@ -256,11 +242,7 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                System.Diagnostics.Debug.WriteLine($"Error in TitleBar_Unloaded: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in TitleBar_Unloaded - resetting to initial state");
-                ResetToInitialState();
+                HandleError("TitleBar_Unloaded", ex);
             }
         }
 
@@ -270,14 +252,12 @@ namespace MusicApp.TitleBarWithPlayerControls
             {
                 UpdateSongInfoWidth();
                 UpdateSeekBarWidth();
-                UpdateGradientMask(); // Update gradient mask position and size
+                UpdateGradientMask();
 
-                // Immediately update the progress bar with the new width to prevent visual lag
                 if (audioFileReader != null && totalDuration.TotalSeconds > 0)
                 {
                     try
                     {
-                        // Update the progress bar using the current playback position and new width
                         if (progressFill != null)
                         {
                             double progress = audioFileReader.CurrentTime.TotalSeconds / totalDuration.TotalSeconds;
@@ -285,47 +265,29 @@ namespace MusicApp.TitleBarWithPlayerControls
                             progressFill.Width = Math.Max(0, Math.Min(currentSeekBarWidth, progressWidth));
                         }
                     }
-                    catch (ObjectDisposedException)
-                    {
-                        // AudioFileReader was disposed, ignore
-                    }
-                    catch (NullReferenceException)
-                    {
-                        // AudioFileReader is null, ignore
-                    }
+                    catch (ObjectDisposedException) { }
+                    catch (NullReferenceException) { }
                 }
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                System.Diagnostics.Debug.WriteLine($"Error in Window_SizeChanged: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in Window_SizeChanged - resetting to initial state");
-                ResetToInitialState();
+                HandleError("Window_SizeChanged", ex);
             }
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Don't handle window dragging if the click is on the seek bar
             if (e.Source == seekBarBackground || seekBarBackground.IsMouseOver)
-            {
-                System.Diagnostics.Debug.WriteLine("TitleBar_MouseLeftButtonDown - click is on seek bar, ignoring window drag");
                 return;
-            }
 
             if (e.ChangedButton == MouseButton.Left)
             {
-                // Check if this is a double-click
                 if (e.ClickCount == 2)
                 {
-                    // Double-click toggles maximize/restore
                     WindowMaximizeRequested?.Invoke(this, EventArgs.Empty);
                 }
                 else
                 {
-                    // Single click for drag
-                    System.Diagnostics.Debug.WriteLine("TitleBar_MouseLeftButtonDown - starting window drag");
                     Window.GetWindow(this)?.DragMove();
                 }
             }
@@ -346,9 +308,7 @@ namespace MusicApp.TitleBarWithPlayerControls
             WindowCloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        // ===========================================
-        // PLAYBACK CONTROL EVENTS
-        // ===========================================
+        // === Playback Control Events ===
         private void BtnPlayPause_Click(object sender, RoutedEventArgs e)
         {
             PlayPauseRequested?.Invoke(this, EventArgs.Empty);
@@ -364,99 +324,18 @@ namespace MusicApp.TitleBarWithPlayerControls
             NextTrackRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        // Mouse event handlers for playback control buttons (following queue button pattern)
-        private void BtnPlayPause_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button to pressed state
-            AnimateButtonPress(btnPlayPauseTransform);
-        }
-
-        private void BtnPlayPause_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button back to normal size
-            AnimateButtonRelease(btnPlayPauseTransform);
-        }
-
-        private void BtnPlayPause_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-        }
-
-        private void BtnPrevious_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button to pressed state
-            AnimateButtonPress(btnPreviousTransform);
-        }
-
-        private void BtnPrevious_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button back to normal size
-            AnimateButtonRelease(btnPreviousTransform);
-        }
-
-        private void BtnPrevious_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-        }
-
-        private void BtnNext_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button to pressed state
-            AnimateButtonPress(btnNextTransform);
-        }
-
-        private void BtnNext_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button back to normal size
-            AnimateButtonRelease(btnNextTransform);
-        }
-
-        private void BtnNext_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-        }
-
-        // ===========================================
-        // SHUFFLE AND REPEAT BUTTON EVENTS
-        // ===========================================
+        // === Shuffle and Repeat Button Events ===
         private async void BtnShuffle_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("Shuffle button clicked!");
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button to pressed state
-            AnimateButtonPress(btnShuffleTransform);
-
-            // Toggle shuffle state
+            e.Handled = true;
             IsShuffleEnabled = !IsShuffleEnabled;
-
-            // Save the new state to settings
             await SettingsManager.Instance.SetShuffleStateAsync(IsShuffleEnabled);
-
-            System.Diagnostics.Debug.WriteLine($"Shuffle state changed to: {IsShuffleEnabled}");
         }
 
         private async void BtnRepeat_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("Repeat button clicked!");
-            e.Handled = true; // Prevent event bubbling to parent
+            e.Handled = true;
 
-            // Animate button to pressed state
-            AnimateButtonPress(btnRepeatTransform);
-
-            // Cycle through repeat states: Off -> All -> One -> Off
             var newMode = repeatMode switch
             {
                 SettingsManager.RepeatMode.Off => SettingsManager.RepeatMode.All,
@@ -466,73 +345,18 @@ namespace MusicApp.TitleBarWithPlayerControls
             };
 
             RepeatMode = newMode;
-
-            // Save the new state to settings
             await SettingsManager.Instance.SetRepeatModeAsync(newMode);
-
-            System.Diagnostics.Debug.WriteLine($"Repeat mode changed to: {newMode} ({(int)newMode})");
         }
 
-        // ===========================================
-        // BUTTON ANIMATION HELPER METHODS
-        // ===========================================
-        private void AnimateButtonPress(ScaleTransform transform)
-        {
-            if (transform != null)
-            {
-                // Stop any existing animation and set base value
-                transform.BeginAnimation(ScaleTransform.ScaleXProperty, null);
-                transform.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                
-                // Ensure we have a base value to animate from
-                if (transform.ScaleX == 0)
-                {
-                    transform.ScaleX = 1.0;
-                    transform.ScaleY = 1.0;
-                }
-                
-                var animation = new System.Windows.Media.Animation.DoubleAnimation
-                {
-                    To = 0.90,
-                    Duration = TimeSpan.FromMilliseconds(50),
-                    FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd,
-                    EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
-                };
-
-                transform.BeginAnimation(ScaleTransform.ScaleXProperty, animation);
-                transform.BeginAnimation(ScaleTransform.ScaleYProperty, animation);
-            }
-        }
-
-        private void AnimateButtonRelease(ScaleTransform transform)
-        {
-            if (transform != null)
-            {
-                // Stop any existing animation
-                transform.BeginAnimation(ScaleTransform.ScaleXProperty, null);
-                transform.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                
-                var animation = new System.Windows.Media.Animation.DoubleAnimation
-                {
-                    To = 1.0,
-                    Duration = TimeSpan.FromMilliseconds(100),
-                    FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd,
-                    EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
-                };
-
-                transform.BeginAnimation(ScaleTransform.ScaleXProperty, animation);
-                transform.BeginAnimation(ScaleTransform.ScaleYProperty, animation);
-            }
-        }
-
+        // === Button Animation Helper Methods ===
         private void AnimateFillExpand(System.Windows.FrameworkElement fillElement)
         {
             if (fillElement != null)
             {
                 var animation = new System.Windows.Media.Animation.DoubleAnimation
                 {
-                    To = 24.0,
-                    Duration = TimeSpan.FromMilliseconds(200),
+                    To = BUTTON_FILL_SIZE,
+                    Duration = TimeSpan.FromMilliseconds(ANIMATION_DURATION_MS),
                     EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
                 };
 
@@ -548,7 +372,7 @@ namespace MusicApp.TitleBarWithPlayerControls
                 var animation = new System.Windows.Media.Animation.DoubleAnimation
                 {
                     To = 0.0,
-                    Duration = TimeSpan.FromMilliseconds(200),
+                    Duration = TimeSpan.FromMilliseconds(ANIMATION_DURATION_MS),
                     EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
                 };
 
@@ -557,73 +381,18 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
         }
 
-        // ===========================================
-        // QUEUE BUTTON EVENTS
-        // ===========================================
+        // === Queue Button Events ===
         private void BtnQueue_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("Queue button clicked!");
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button to pressed state
-            AnimateButtonPress(btnQueueTransform);
-
-            // TODO: Add queue functionality later
-            // This is just a placeholder as requested
+            e.Handled = true;
         }
 
-        private void BtnQueue_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling to parent
-
-            // Animate button back to normal size
-            AnimateButtonRelease(btnQueueTransform);
-        }
-
-        // Additional mouse event handlers to prevent window dragging
-        private void BtnShuffle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-
-            // Animate button back to normal size
-            AnimateButtonRelease(btnShuffleTransform);
-        }
-
-        private void BtnShuffle_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-        }
-
-        private void BtnRepeat_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-
-            // Animate button back to normal size
-            AnimateButtonRelease(btnRepeatTransform);
-        }
-
-        private void BtnRepeat_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            e.Handled = true; // Prevent event bubbling
-        }
-
-        // ===========================================
-        // VOLUME CONTROL EVENTS
-        // ===========================================
+        // === Volume Control Events ===
         private void SliderVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            System.Diagnostics.Debug.WriteLine($"Volume slider changed to: {sliderVolume.Value}");
-            System.Diagnostics.Debug.WriteLine($"waveOut is null: {waveOut == null}");
-            System.Diagnostics.Debug.WriteLine($"isMuted: {isMuted}");
-
             if (waveOut != null && !isMuted)
             {
-                waveOut.Volume = (float)(sliderVolume.Value / 100.0);
-                System.Diagnostics.Debug.WriteLine($"Set waveOut.Volume to: {waveOut.Volume}");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("Cannot set volume - waveOut is null or muted");
+                SetWaveOutVolume(sliderVolume.Value);
             }
 
             VolumeChanged?.Invoke(this, sliderVolume.Value);
@@ -633,25 +402,16 @@ namespace MusicApp.TitleBarWithPlayerControls
         {
             if (isMuted)
             {
-                // Unmute
-                System.Diagnostics.Debug.WriteLine($"Unmuting - setting volume to: {previousVolume}");
                 isMuted = false;
                 iconVolume.Kind = PackIconKind.VolumeHigh;
                 sliderVolume.Value = previousVolume;
                 if (waveOut != null)
                 {
-                    waveOut.Volume = (float)(previousVolume / 100.0);
-                    System.Diagnostics.Debug.WriteLine($"Set waveOut.Volume to: {waveOut.Volume}");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("Cannot unmute - waveOut is null");
+                    SetWaveOutVolume(previousVolume);
                 }
             }
             else
             {
-                // Mute
-                System.Diagnostics.Debug.WriteLine($"Muting - previous volume was: {sliderVolume.Value}");
                 isMuted = true;
                 previousVolume = sliderVolume.Value;
                 iconVolume.Kind = PackIconKind.VolumeOff;
@@ -659,22 +419,11 @@ namespace MusicApp.TitleBarWithPlayerControls
                 if (waveOut != null)
                 {
                     waveOut.Volume = 0;
-                    System.Diagnostics.Debug.WriteLine("Set waveOut.Volume to 0 (muted)");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("Cannot mute - waveOut is null");
                 }
             }
         }
 
-        // ===========================================
-        // PUBLIC METHODS
-        // ===========================================
-
-        /// <summary>
-        /// Sets the current track information displayed in the title bar
-        /// </summary>
+        // === Public Methods ===
         public void SetTrackInfo(string title, string artist, string? album = null, BitmapImage? albumArt = null)
         {
             if (txtCurrentTrack != null)
@@ -684,177 +433,99 @@ namespace MusicApp.TitleBarWithPlayerControls
             if (txtCurrentAlbum != null)
                 txtCurrentAlbum.Text = album ?? "";
 
-            // Show/hide dash separator and album based on whether album info exists
+            bool hasAlbum = !string.IsNullOrEmpty(album);
             if (txtDashSeparator != null)
-                txtDashSeparator.Visibility = !string.IsNullOrEmpty(album) ? Visibility.Visible : Visibility.Collapsed;
+                txtDashSeparator.Visibility = hasAlbum ? Visibility.Visible : Visibility.Collapsed;
             if (txtCurrentAlbum != null)
-                txtCurrentAlbum.Visibility = !string.IsNullOrEmpty(album) ? Visibility.Visible : Visibility.Collapsed;
+                txtCurrentAlbum.Visibility = hasAlbum ? Visibility.Visible : Visibility.Collapsed;
 
             if (imgAlbumArt != null)
             {
-                if (albumArt != null)
-                {
-                    imgAlbumArt.Source = albumArt;
-                }
-                else
-                {
-                    imgAlbumArt.Source = null;
-                }
+                imgAlbumArt.Source = albumArt;
             }
         }
 
-        /// <summary>
-        /// Sets the audio playback objects for volume control
-        /// </summary>
         public void SetAudioObjects(WaveOutEvent? waveOut, AudioFileReader? audioFileReader)
         {
-            // Set flag to prevent race conditions
             isUpdatingAudioObjects = true;
 
             try
             {
-                // Stop the seek bar timer before changing audio objects
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                }
+                seekBarTimer?.Stop();
 
                 this.waveOut = waveOut;
                 this.audioFileReader = audioFileReader;
 
-                // If we're clearing audio objects, reset to initial state like a fresh launch
                 if (waveOut == null || audioFileReader == null)
                 {
                     ResetToInitialState();
                 }
                 else
                 {
-                    // Initialize volume on the waveOut object
-                    if (waveOut != null && !isMuted)
+                    if (!isMuted)
                     {
-                        waveOut.Volume = (float)(sliderVolume.Value / 100.0);
-                        System.Diagnostics.Debug.WriteLine($"Initialized waveOut volume to: {waveOut.Volume}");
+                        SetWaveOutVolume(sliderVolume.Value);
                     }
 
-                    // Update seek bar with initial values
-                    if (audioFileReader != null)
+                    try
                     {
-                        try
-                        {
-                            totalDuration = audioFileReader.TotalTime;
-                            pausedPosition = TimeSpan.Zero;
-                            UpdateSeekBar(TimeSpan.Zero, totalDuration);
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            // AudioFileReader was disposed, reset seek bar
-                            totalDuration = TimeSpan.Zero;
-                            pausedPosition = TimeSpan.Zero;
-                            UpdateSeekBar(TimeSpan.Zero, TimeSpan.Zero);
-                        }
+                        totalDuration = audioFileReader.TotalTime;
+                        pausedPosition = TimeSpan.Zero;
+                        UpdateSeekBar(TimeSpan.Zero, totalDuration);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        totalDuration = TimeSpan.Zero;
+                        pausedPosition = TimeSpan.Zero;
+                        UpdateSeekBar(TimeSpan.Zero, TimeSpan.Zero);
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                Console.WriteLine($"Error in SetAudioObjects: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                Console.WriteLine("Error in SetAudioObjects - resetting to initial state");
-                ResetToInitialState();
+                HandleError("SetAudioObjects", ex);
             }
             finally
             {
-                // Clear flag when done
                 isUpdatingAudioObjects = false;
             }
         }
 
-        /// <summary>
-        /// Resets the TitleBar to its initial state like a fresh launch
-        /// This is called when audio objects are cleared (queue ends, new track selected)
-        /// </summary>
         public void ResetToInitialState()
         {
             try
             {
-                Console.WriteLine("Resetting TitleBar to initial state - clearing all audio-related state");
+                seekBarTimer?.Stop();
 
-                // Stop and clear the seek bar timer
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                    Console.WriteLine("Seek bar timer stopped during reset");
-                }
-
-                // Reset all audio-related state variables
                 totalDuration = TimeSpan.Zero;
                 pausedPosition = TimeSpan.Zero;
                 isPlaying = false;
 
-                // Reset drag-related state
                 isDragging = false;
                 isMouseDown = false;
                 dragTargetPosition = TimeSpan.Zero;
 
-                // Reset seek bar display to initial state
                 UpdateSeekBar(TimeSpan.Zero, TimeSpan.Zero);
-
-                // Update play/pause icon to show play state
                 UpdatePlayPauseIcon();
-
-                // Ensure the timer is completely stopped
-                StopSeekBarTimer();
-
-                Console.WriteLine("TitleBar reset to initial state completed");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error during TitleBar reset: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // If we encounter an error during reset, try to at least stop the timer
-                try
-                {
-                    if (seekBarTimer != null)
-                    {
-                        seekBarTimer.Stop();
-                        Console.WriteLine("Emergency timer stop during reset error");
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine("Failed to stop timer during reset error");
-                }
+                System.Diagnostics.Debug.WriteLine($"Error during TitleBar reset: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Immediately stops the seek bar timer and resets related state
-        /// </summary>
         private void StopSeekBarTimer()
         {
             try
             {
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                    Console.WriteLine("Seek bar timer immediately stopped");
-                }
+                seekBarTimer?.Stop();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error stopping seek bar timer: {ex.Message}");
-
-                // If we encounter an error stopping the timer, reset to initial state as a safety measure
-                Console.WriteLine("Error in StopSeekBarTimer - resetting to initial state");
-                ResetToInitialState();
+                HandleError("StopSeekBarTimer", ex);
             }
         }
 
-        /// <summary>
-        /// Updates the window state icon (maximize/restore)
-        /// </summary>
         public void UpdateWindowStateIcon(WindowState state)
         {
             if (state == WindowState.Maximized)
@@ -867,45 +538,26 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
         }
 
-        /// <summary>
-        /// Gets the current window state icon for debugging
-        /// </summary>
         public PackIconKind GetCurrentWindowStateIcon()
         {
             return iconMaximize.Kind;
         }
 
-        // ===========================================
-        // PRIVATE HELPER METHODS
-        // ===========================================
+        // === Private Helper Methods ===
         private async Task LoadPlayerSettingsAsync()
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("Loading player settings...");
-
                 IsShuffleEnabled = await SettingsManager.Instance.GetShuffleStateAsync();
                 RepeatMode = await SettingsManager.Instance.GetRepeatModeAsync();
 
-                System.Diagnostics.Debug.WriteLine($"Raw settings loaded - Shuffle: {IsShuffleEnabled}, Repeat: {RepeatMode}");
-
-                // Update icons to reflect loaded state
                 UpdateShuffleIcon();
                 UpdateRepeatIcon();
-
-                // Notify that shuffle state has been loaded (this will trigger MainWindow to initialize shuffled tracks)
                 ShuffleStateChanged?.Invoke(this, IsShuffleEnabled);
-
-                System.Diagnostics.Debug.WriteLine($"Player settings loaded and icons updated - Shuffle: {IsShuffleEnabled}, Repeat: {RepeatMode}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading player settings: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // If we encounter an error loading settings, reset to initial state as a safety measure
-                System.Diagnostics.Debug.WriteLine("Error in LoadPlayerSettingsAsync - resetting to initial state");
-                ResetToInitialState();
+                HandleError("LoadPlayerSettingsAsync", ex);
             }
         }
 
@@ -917,11 +569,7 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                System.Diagnostics.Debug.WriteLine($"Error in UpdatePlayPauseIcon: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in UpdatePlayPauseIcon - resetting to initial state");
-                ResetToInitialState();
+                HandleError("UpdatePlayPauseIcon", ex);
             }
         }
 
@@ -933,11 +581,7 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                System.Diagnostics.Debug.WriteLine($"Error in UpdateVolumeIcon: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in UpdateVolumeIcon - resetting to initial state");
-                ResetToInitialState();
+                HandleError("UpdateVolumeIcon", ex);
             }
         }
 
@@ -945,47 +589,20 @@ namespace MusicApp.TitleBarWithPlayerControls
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"UpdateShuffleIcon called - IsShuffleEnabled: {IsShuffleEnabled}");
-
-                if (btnShuffle != null && btnShuffleFill != null)
+                if (IsShuffleEnabled)
                 {
-                    var icon = btnShuffle.FindName("iconShuffle") as PackIcon;
-                    if (icon != null)
-                    {
-                        if (IsShuffleEnabled)
-                        {
-                            icon.Kind = PackIconKind.ShuffleVariant;
-                            // Animate the fill expanding from center
-                            AnimateFillExpand(btnShuffleFill);
-
-                            System.Diagnostics.Debug.WriteLine("Shuffle icon updated to ACTIVE state (purple background)");
-                        }
-                        else
-                        {
-                            icon.Kind = PackIconKind.ShuffleVariant;
-                            // Animate the fill contracting to center
-                            AnimateFillContract(btnShuffleFill);
-
-                            System.Diagnostics.Debug.WriteLine("Shuffle icon updated to INACTIVE state (transparent background)");
-                        }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find iconShuffle in btnShuffle");
-                    }
+                    iconShuffle.Kind = PackIconKind.ShuffleVariant;
+                    AnimateFillExpand(btnShuffleFill);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("ERROR: btnShuffle or btnShuffleFill is null");
+                    iconShuffle.Kind = PackIconKind.ShuffleVariant;
+                    AnimateFillContract(btnShuffleFill);
                 }
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
                 System.Diagnostics.Debug.WriteLine($"Error in UpdateShuffleIcon: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in UpdateShuffleIcon - resetting to initial state");
-                ResetToInitialState();
             }
         }
 
@@ -993,121 +610,47 @@ namespace MusicApp.TitleBarWithPlayerControls
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"UpdateRepeatIcon called - RepeatMode: {RepeatMode}");
-
-                if (btnRepeat != null && btnRepeatFill != null)
+                switch (RepeatMode)
                 {
-                    var icon = btnRepeat.FindName("iconRepeat") as System.Windows.Controls.Image;
-                    if (icon != null)
-                    {
-                        switch (RepeatMode)
+                    case SettingsManager.RepeatMode.Off:
+                        iconRepeat.Source = Application.Current.Resources["RepeatStandardIcon"] as ImageSource;
+                        AnimateFillContract(btnRepeatFill);
+                        ResetRepeatIconTransform();
+                        break;
+
+                    case SettingsManager.RepeatMode.All:
+                        iconRepeat.Source = Application.Current.Resources["RepeatStandardIcon"] as ImageSource;
+                        AnimateFillExpand(btnRepeatFill);
+                        ResetRepeatIconTransform();
+                        break;
+
+                    case SettingsManager.RepeatMode.One:
+                        var customIcon = Application.Current.Resources["RepeatOneIcon"] as ImageSource;
+                        iconRepeat.Source = customIcon ?? Application.Current.Resources["RepeatStandardIcon"] as ImageSource;
+                        
+                        if (customIcon != null && iconRepeat.RenderTransform is TranslateTransform transform)
                         {
-                            case SettingsManager.RepeatMode.Off:
-                                // Use standard repeat icon for OFF state
-                                icon.Source = System.Windows.Application.Current.Resources["RepeatStandardIcon"] as System.Windows.Media.DrawingImage;
-                                // Animate the fill contracting to center
-                                AnimateFillContract(btnRepeatFill);
-
-                                ResetRepeatIconTransform(); // Reset any transform from previous state
-                                System.Diagnostics.Debug.WriteLine("Repeat icon updated to OFF state (transparent background)");
-                                break;
-
-                            case SettingsManager.RepeatMode.All:
-                                // Use standard repeat icon for ALL state
-                                icon.Source = System.Windows.Application.Current.Resources["RepeatStandardIcon"] as System.Windows.Media.DrawingImage;
-                                // Animate the fill expanding from center
-                                AnimateFillExpand(btnRepeatFill);
-
-                                ResetRepeatIconTransform(); // Reset any transform from previous state
-                                System.Diagnostics.Debug.WriteLine("Repeat icon updated to ALL state (purple background)");
-                                break;
-
-                            case SettingsManager.RepeatMode.One:
-                                // Use custom XAML icon for repeat one state
-                                try
-                                {
-                                    System.Diagnostics.Debug.WriteLine("Attempting to load custom repeat one icon...");
-
-                                    // Check if the resource exists
-                                    if (System.Windows.Application.Current.Resources.Contains("RepeatOneIcon"))
-                                    {
-                                        var customIcon = System.Windows.Application.Current.Resources["RepeatOneIcon"] as System.Windows.Media.DrawingImage;
-                                        if (customIcon != null)
-                                        {
-                                            icon.Source = customIcon;
-
-                                            // Apply vertical offset to center the repeat icon (not the "1")
-                                            var transform = icon.RenderTransform as TranslateTransform;
-                                            if (transform != null)
-                                            {
-                                                transform.Y = -1.5; // Shift up by 1.5 pixels to center the repeat icon
-                                            }
-
-                                            System.Diagnostics.Debug.WriteLine("Repeat icon updated to ONE state with custom XAML icon and vertical offset");
-                                        }
-                                        else
-                                        {
-                                            System.Diagnostics.Debug.WriteLine("Custom icon resource found but is null, using fallback");
-                                            icon.Source = System.Windows.Application.Current.Resources["RepeatStandardIcon"] as System.Windows.Media.DrawingImage;
-                                            ResetRepeatIconTransform();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        System.Diagnostics.Debug.WriteLine("Custom icon resource not found in Application.Resources, using fallback");
-                                        icon.Source = System.Windows.Application.Current.Resources["RepeatStandardIcon"] as System.Windows.Media.DrawingImage;
-                                        ResetRepeatIconTransform();
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Fallback to standard icon if there's any error
-                                    System.Diagnostics.Debug.WriteLine($"Error loading custom icon: {ex.Message}");
-                                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                                    icon.Source = System.Windows.Application.Current.Resources["RepeatStandardIcon"] as System.Windows.Media.DrawingImage;
-                                    ResetRepeatIconTransform();
-                                }
-
-                                // Animate the fill expanding from center
-                                AnimateFillExpand(btnRepeatFill);
-                                break;
+                            transform.Y = REPEAT_ICON_OFFSET_Y;
                         }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find iconRepeat in btnRepeat");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: btnRepeat or btnRepeatFill is null");
+
+                        AnimateFillExpand(btnRepeatFill);
+                        break;
                 }
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
                 System.Diagnostics.Debug.WriteLine($"Error in UpdateRepeatIcon: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                System.Diagnostics.Debug.WriteLine("Error in UpdateRepeatIcon - resetting to initial state");
-                ResetToInitialState();
             }
         }
 
-        /// <summary>
-        /// Resets the repeat icon transform to its default position
-        /// </summary>
         private void ResetRepeatIconTransform()
         {
-            var icon = btnRepeat?.FindName("iconRepeat") as System.Windows.Controls.Image;
-            if (icon?.RenderTransform is TranslateTransform transform)
+            if (iconRepeat?.RenderTransform is TranslateTransform transform)
             {
-                transform.Y = 0; // Reset to default position
+                transform.Y = 0;
             }
         }
 
-        /// <summary>
-        /// Updates the song info section width and position based on the current window width
-        /// </summary>
         private void UpdateSongInfoWidth()
         {
             var window = Window.GetWindow(this);
@@ -1116,7 +659,6 @@ namespace MusicApp.TitleBarWithPlayerControls
             double windowWidth = window.ActualWidth;
             double calculatedWidth = CalculateResponsiveWidth(windowWidth);
 
-            // Find the song info border and update its width and position
             var songInfoBorder = this.FindName("songInfoBorder") as Border;
             if (songInfoBorder != null)
             {
@@ -1124,225 +666,140 @@ namespace MusicApp.TitleBarWithPlayerControls
                 UpdateSongInfoPosition(windowWidth, calculatedWidth);
             }
 
-            // Update the gradient mask position and width
             UpdateGradientMask();
-
-            // Update control spacing
             UpdateControlSpacing(windowWidth);
         }
 
-        /// <summary>
-        /// Updates the current seek bar width for accurate seeking calculations
-        /// </summary>
         private void UpdateSeekBarWidth()
         {
             if (seekBarBackground != null)
             {
                 currentSeekBarWidth = seekBarBackground.ActualWidth;
-                System.Diagnostics.Debug.WriteLine($"Seek bar width updated: {currentSeekBarWidth}");
             }
         }
 
-        /// <summary>
-        /// Updates the song info section position based on window width
-        /// Always centers the song info viewport
-        /// </summary>
         private void UpdateSongInfoPosition(double windowWidth, double songInfoWidth)
         {
             var songInfoBorder = this.FindName("songInfoBorder") as Border;
             if (songInfoBorder == null) return;
 
-            // Always center the song info viewport
             songInfoBorder.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
             songInfoBorder.Margin = new Thickness(0, 5, 0, 5);
         }
 
-        /// <summary>
-        /// Calculates the responsive width based on window size
-        /// </summary>
-        /// <param name="windowWidth">Current window width in pixels</param>
-        /// <returns>Calculated width for the song info section</returns>
         private double CalculateResponsiveWidth(double windowWidth)
         {
             const double MIN_WIDTH = 300;
             const double MAX_WIDTH = 600;
             const double MIN_WINDOW_WIDTH = 1039;
-            const double MAX_WINDOW_WIDTH = 1600; // You can adjust this value
+            const double MAX_WINDOW_WIDTH = 1600;
 
             if (windowWidth <= MIN_WINDOW_WIDTH)
-            {
                 return MIN_WIDTH;
-            }
-            else if (windowWidth >= MAX_WINDOW_WIDTH)
-            {
+            if (windowWidth >= MAX_WINDOW_WIDTH)
                 return MAX_WIDTH;
-            }
-            else
-            {
-                // Linear interpolation between min and max
-                double windowRange = MAX_WINDOW_WIDTH - MIN_WINDOW_WIDTH;
-                double widthRange = MAX_WIDTH - MIN_WIDTH;
-                double progress = (windowWidth - MIN_WINDOW_WIDTH) / windowRange;
-                return MIN_WIDTH + (widthRange * progress);
-            }
+
+            double windowRange = MAX_WINDOW_WIDTH - MIN_WINDOW_WIDTH;
+            double widthRange = MAX_WIDTH - MIN_WIDTH;
+            double progress = (windowWidth - MIN_WINDOW_WIDTH) / windowRange;
+            return MIN_WIDTH + (widthRange * progress);
         }
 
-        /// <summary>
-        /// Calculates the responsive width for the volume slider based on window size
-        /// Only starts shrinking when the song info viewport is at its minimum width
-        /// </summary>
-        /// <param name="windowWidth">Current window width in pixels</param>
-        /// <returns>Calculated width for the volume slider</returns>
         private double CalculateVolumeSliderWidth(double windowWidth)
         {
             const double MIN_SLIDER_WIDTH = 60;
             const double MAX_SLIDER_WIDTH = 100;
-            const double SONG_INFO_MIN_WINDOW_WIDTH = 1039; // Window width where song info reaches minimum
-            const double VOLUME_SLIDER_MIN_WINDOW_WIDTH = 800; // Window width where volume slider reaches minimum
+            const double SONG_INFO_MIN_WINDOW_WIDTH = 1039;
+            const double VOLUME_SLIDER_MIN_WINDOW_WIDTH = 800;
 
-            // Keep slider at max width until song info viewport is at minimum
             if (windowWidth >= SONG_INFO_MIN_WINDOW_WIDTH)
-            {
                 return MAX_SLIDER_WIDTH;
-            }
-            // Start shrinking only when window is smaller than song info minimum threshold
-            else if (windowWidth <= VOLUME_SLIDER_MIN_WINDOW_WIDTH)
-            {
+            if (windowWidth <= VOLUME_SLIDER_MIN_WINDOW_WIDTH)
                 return MIN_SLIDER_WIDTH;
-            }
-            else
-            {
-                // Linear interpolation between min and max
-                // Shrinks from SONG_INFO_MIN_WINDOW_WIDTH (1039px) to VOLUME_SLIDER_MIN_WINDOW_WIDTH (800px)
-                double windowRange = SONG_INFO_MIN_WINDOW_WIDTH - VOLUME_SLIDER_MIN_WINDOW_WIDTH;
-                double widthRange = MAX_SLIDER_WIDTH - MIN_SLIDER_WIDTH;
-                double progress = (windowWidth - VOLUME_SLIDER_MIN_WINDOW_WIDTH) / windowRange;
-                return MIN_SLIDER_WIDTH + (widthRange * progress);
-            }
+
+            double windowRange = SONG_INFO_MIN_WINDOW_WIDTH - VOLUME_SLIDER_MIN_WINDOW_WIDTH;
+            double widthRange = MAX_SLIDER_WIDTH - MIN_SLIDER_WIDTH;
+            double progress = (windowWidth - VOLUME_SLIDER_MIN_WINDOW_WIDTH) / windowRange;
+            return MIN_SLIDER_WIDTH + (widthRange * progress);
         }
 
-        /// <summary>
-        /// Calculates the spacing from the window edge based on window width
-        /// </summary>
-        /// <param name="windowWidth">Current window width in pixels</param>
-        /// <returns>Calculated spacing from edge</returns>
+        private double CalculateSearchWidth(double windowWidth)
+        {
+            const double MIN_SEARCH_WIDTH = 150;
+            const double MAX_SEARCH_WIDTH = 300;
+            const double MIN_WINDOW_WIDTH = 1039;
+            const double MAX_WINDOW_WIDTH = 1600;
+
+            if (windowWidth <= MIN_WINDOW_WIDTH)
+                return MIN_SEARCH_WIDTH;
+            if (windowWidth >= MAX_WINDOW_WIDTH)
+                return MAX_SEARCH_WIDTH;
+
+            double windowRange = MAX_WINDOW_WIDTH - MIN_WINDOW_WIDTH;
+            double widthRange = MAX_SEARCH_WIDTH - MIN_SEARCH_WIDTH;
+            double progress = (windowWidth - MIN_WINDOW_WIDTH) / windowRange;
+            return MIN_SEARCH_WIDTH + (widthRange * progress);
+        }
+
         private double CalculateSpacingFromEdge(double windowWidth)
         {
             if (windowWidth <= MIN_WINDOW_WIDTH_FOR_SPACING)
-            {
                 return MIN_SPACING_FROM_EDGE;
-            }
-            else if (windowWidth >= MAX_WINDOW_WIDTH_FOR_SPACING)
-            {
+            if (windowWidth >= MAX_WINDOW_WIDTH_FOR_SPACING)
                 return MAX_SPACING_FROM_EDGE;
-            }
-            else
-            {
-                // Linear interpolation between min and max
-                double windowRange = MAX_WINDOW_WIDTH_FOR_SPACING - MIN_WINDOW_WIDTH_FOR_SPACING;
-                double spacingRange = MAX_SPACING_FROM_EDGE - MIN_SPACING_FROM_EDGE;
-                double progress = (windowWidth - MIN_WINDOW_WIDTH_FOR_SPACING) / windowRange;
-                return MIN_SPACING_FROM_EDGE + (spacingRange * progress);
-            }
+
+            double windowRange = MAX_WINDOW_WIDTH_FOR_SPACING - MIN_WINDOW_WIDTH_FOR_SPACING;
+            double spacingRange = MAX_SPACING_FROM_EDGE - MIN_SPACING_FROM_EDGE;
+            double progress = (windowWidth - MIN_WINDOW_WIDTH_FOR_SPACING) / windowRange;
+            return MIN_SPACING_FROM_EDGE + (spacingRange * progress);
         }
 
-        /// <summary>
-        /// Calculates the spacing between controls based on window width
-        /// </summary>
-        /// <param name="windowWidth">Current window width in pixels</param>
-        /// <returns>Calculated spacing between controls</returns>
         private double CalculateSpacingBetweenControls(double windowWidth)
         {
             if (windowWidth <= MIN_WINDOW_WIDTH_FOR_SPACING)
-            {
                 return MIN_SPACING_BETWEEN_CONTROLS;
-            }
-            else if (windowWidth >= MAX_WINDOW_WIDTH_FOR_SPACING)
-            {
+            if (windowWidth >= MAX_WINDOW_WIDTH_FOR_SPACING)
                 return MAX_SPACING_BETWEEN_CONTROLS;
-            }
-            else
-            {
-                // Linear interpolation between min and max
-                double windowRange = MAX_WINDOW_WIDTH_FOR_SPACING - MIN_WINDOW_WIDTH_FOR_SPACING;
-                double spacingRange = MAX_SPACING_BETWEEN_CONTROLS - MIN_SPACING_BETWEEN_CONTROLS;
-                double progress = (windowWidth - MIN_WINDOW_WIDTH_FOR_SPACING) / windowRange;
-                return MIN_SPACING_BETWEEN_CONTROLS + (spacingRange * progress);
-            }
+
+            double windowRange = MAX_WINDOW_WIDTH_FOR_SPACING - MIN_WINDOW_WIDTH_FOR_SPACING;
+            double spacingRange = MAX_SPACING_BETWEEN_CONTROLS - MIN_SPACING_BETWEEN_CONTROLS;
+            double progress = (windowWidth - MIN_WINDOW_WIDTH_FOR_SPACING) / windowRange;
+            return MIN_SPACING_BETWEEN_CONTROLS + (spacingRange * progress);
         }
 
-        /// <summary>
-        /// Updates the spacing and positions of playback and volume controls based on window width
-        /// </summary>
-        /// <param name="windowWidth">Current window width in pixels</param>
         private void UpdateControlSpacing(double windowWidth)
         {
             if (playbackControlsPanel == null || volumeControlsPanel == null) return;
-            if (windowWidth <= 0) return; // Safety check
+            if (windowWidth <= 0) return;
 
-            // Calculate spacing values
             double spacingFromEdge = CalculateSpacingFromEdge(windowWidth);
             double spacingBetweenControls = CalculateSpacingBetweenControls(windowWidth);
 
-            // Get the actual widths of the control panels
+            if (sliderVolume != null)
+            {
+                sliderVolume.Width = CalculateVolumeSliderWidth(windowWidth);
+            }
+
             playbackControlsPanel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
             volumeControlsPanel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
             
             double playbackControlsWidth = playbackControlsPanel.DesiredSize.Width;
-            double volumeControlsWidth = volumeControlsPanel.DesiredSize.Width;
+            if (playbackControlsWidth <= 0) playbackControlsWidth = FALLBACK_PLAYBACK_CONTROLS_WIDTH;
 
-            // If widths are 0, use fallback values (shouldn't happen, but safety check)
-            if (playbackControlsWidth <= 0) playbackControlsWidth = 146; // Approximate: 3 buttons * 48px + 2px spacing
-            if (volumeControlsWidth <= 0) volumeControlsWidth = 129; // Approximate: 100px slider + 5px + 24px icon
-
-            // Get song info border to calculate its position
-            var songInfoBorder = this.FindName("songInfoBorder") as Border;
-            if (songInfoBorder == null) return;
-
-            double songInfoPadding = 15; // Padding from the border
-            double songInfoWidth = songInfoBorder.ActualWidth > 0 ? songInfoBorder.ActualWidth : CalculateResponsiveWidth(windowWidth);
+            playbackControlsPanel.Margin = new Thickness(spacingFromEdge, 0, 0, 0);
             
-            // Safety check - ensure we have valid dimensions
-            if (songInfoWidth <= 0) return;
-
-            // The song info border is centered, so calculate its left edge
-            double songInfoBorderLeftEdge = (windowWidth - songInfoWidth) / 2.0;
-            
-            // The grid column 0 (where controls are) starts at: songInfoBorderLeftEdge + songInfoPadding
-            double gridColumnLeftEdge = songInfoBorderLeftEdge + songInfoPadding;
-
-            // Calculate desired positions from window left edge:
-            // Playback controls left edge: spacingFromEdge
-            double playbackLeftEdge = spacingFromEdge;
-            
-            // Volume controls left edge: spacingFromEdge + playbackControlsWidth + spacingBetweenControls
             double volumeLeftEdge = spacingFromEdge + playbackControlsWidth + spacingBetweenControls;
+            volumeControlsPanel.Margin = new Thickness(volumeLeftEdge, 0, 0, 0);
 
-            // Calculate negative margins from grid column left edge:
-            // The margin should position the control so its left edge is at the desired position
-            // If gridColumnLeftEdge is at position X, and we want playback at position Y (where Y < X),
-            // then margin = -(X - Y) = Y - X
-            double playbackMarginLeft = playbackLeftEdge - gridColumnLeftEdge;
-            
-            // Calculate volume margin to ensure it's always positioned to the right of playback
-            // Volume should be: playback position + playback width + spacing
-            double volumeMarginLeft = playbackMarginLeft + playbackControlsWidth + spacingBetweenControls;
-
-            // Update margins (they should already be negative if positioned to the left)
-            playbackControlsPanel.Margin = new Thickness(playbackMarginLeft, 0, 0, 0);
-            volumeControlsPanel.Margin = new Thickness(volumeMarginLeft, 0, 0, 0);
-
-            // Update volume slider width dynamically
-            if (sliderVolume != null)
+            if (searchBarBorder != null)
             {
-                double sliderWidth = CalculateVolumeSliderWidth(windowWidth);
-                sliderVolume.Width = sliderWidth;
+                double searchBarWidth = CalculateSearchWidth(windowWidth);
+                searchBarBorder.Width = searchBarWidth;
+                double searchRightMargin = WINDOW_CONTROLS_WIDTH + SEARCH_BAR_RIGHT_MARGIN_OFFSET;
+                searchBarBorder.Margin = new Thickness(0, 0, searchRightMargin, 0);
             }
         }
 
-        /// <summary>
-        /// Updates the gradient mask position and width to prevent text from extending under shuffle/repeat buttons
-        /// </summary>
         private void UpdateGradientMask()
         {
             if (textGradientMask == null) return;
@@ -1350,49 +807,27 @@ namespace MusicApp.TitleBarWithPlayerControls
             var window = Window.GetWindow(this);
             if (window == null) return;
 
-            // The shuffle button is positioned at the right edge of the song info section
-            // We need to position the mask so it covers the area where text extends under the buttons
-            // The mask should start from the left edge of the shuffle button area and extend leftward
-
-            // Fixed width for the gradient transition (from transparent to background color)
-            double maskWidth = 120; // Increased width to extend to the right edge
-            double maskHeight = 38; // Height set to 38px as requested
-
-            // Position the mask at the very top with no margin to cover the entire text area
-            // This ensures it covers both the song title and artist text completely
-            double maskTopMargin = 0; // No top margin to start from the very top
-
-            // Update the mask position and size
-            textGradientMask.Width = maskWidth;
-            textGradientMask.Height = maskHeight;
-            textGradientMask.Margin = new Thickness(0, maskTopMargin, 0, 0);
+            textGradientMask.Width = GRADIENT_MASK_WIDTH;
+            textGradientMask.Height = GRADIENT_MASK_HEIGHT;
+            textGradientMask.Margin = new Thickness(0, 0, 0, 0);
         }
 
-        /// <summary>
-        /// Updates the seek bar with current time and total duration
-        /// </summary>
-        /// <param name="currentTime">Current playback position</param>
-        /// <param name="totalTime">Total duration of the track</param>
         public void UpdateSeekBar(TimeSpan currentTime, TimeSpan totalTime)
         {
             try
             {
-                // Update time displays
                 if (txtCurrentTime != null)
                     txtCurrentTime.Text = FormatTimeSpan(currentTime);
                 if (txtTotalDuration != null)
                     txtTotalDuration.Text = FormatTimeSpan(totalTime);
 
-                // Update total duration for seeking calculations
                 totalDuration = totalTime;
 
-                // Update progress bar
                 if (progressFill != null)
                 {
                     if (totalTime.TotalSeconds > 0)
                     {
                         double progress = currentTime.TotalSeconds / totalTime.TotalSeconds;
-                        // Use the current seek bar width instead of hardcoded 200
                         double progressWidth = currentSeekBarWidth * progress;
                         progressFill.Width = Math.Max(0, Math.Min(currentSeekBarWidth, progressWidth));
                     }
@@ -1401,35 +836,20 @@ namespace MusicApp.TitleBarWithPlayerControls
                         progressFill.Width = 0;
                     }
                 }
-
-                // Note: Seek bar width is now only updated when window size changes
-                // This prevents unnecessary updates every second during playback
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                Console.WriteLine($"Error in UpdateSeekBar: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                Console.WriteLine("Error in UpdateSeekBar - resetting to initial state");
-                ResetToInitialState();
+                HandleError("UpdateSeekBar", ex);
             }
         }
 
 
 
-        /// <summary>
-        /// Formats a TimeSpan to MM:SS format
-        /// </summary>
-        /// <param name="timeSpan">TimeSpan to format</param>
-        /// <returns>Formatted time string</returns>
         private string FormatTimeSpan(TimeSpan timeSpan)
         {
             return $"{(int)timeSpan.TotalMinutes}:{timeSpan.Seconds:D2}";
         }
 
-        /// <summary>
-        /// Initializes the seek bar timer
-        /// </summary>
         private void InitializeSeekBarTimer()
         {
             try
@@ -1440,101 +860,64 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
             catch (Exception ex)
             {
-                // Log any errors and reset to initial state as a safety measure
-                Console.WriteLine($"Error in InitializeSeekBarTimer: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                Console.WriteLine("Error in InitializeSeekBarTimer - resetting to initial state");
-                ResetToInitialState();
+                HandleError("InitializeSeekBarTimer", ex);
             }
         }
 
-        /// <summary>
-        /// Safely checks if audio objects are valid and can be accessed
-        /// </summary>
         private bool AreAudioObjectsValid()
         {
             try
             {
-                // Check if audioFileReader is null
                 if (audioFileReader == null)
-                {
                     return false;
-                }
 
-                // Test if audioFileReader is still valid by accessing a property
                 var _ = audioFileReader.TotalTime;
                 return true;
             }
             catch (ObjectDisposedException)
             {
-                Console.WriteLine("AudioFileReader was disposed during validity check");
                 return false;
             }
             catch (NullReferenceException)
             {
-                Console.WriteLine("AudioFileReader is null during validity check");
                 return false;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error checking audio object validity: {ex.Message}");
-
-                // If we encounter an error checking validity, reset to initial state as a safety measure
-                Console.WriteLine("Error in AreAudioObjectsValid - resetting to initial state");
-                ResetToInitialState();
-
                 return false;
             }
         }
 
-        /// <summary>
-        /// Updates the seek bar timer based on current playback state
-        /// </summary>
         private void UpdateSeekBarTimer()
         {
-            // Don't update timer if we're currently updating audio objects
-            if (isUpdatingAudioObjects) return;
+            if (isUpdatingAudioObjects || seekBarTimer == null) return;
 
-            if (seekBarTimer == null) return;
-
-            // Always stop the timer first
             seekBarTimer.Stop();
 
             try
             {
                 if (isPlaying && AreAudioObjectsValid())
                 {
-                    // Audio objects are valid, start the timer
                     seekBarTimer.Start();
-                    Console.WriteLine("Seek bar timer started - audio objects are valid");
                 }
                 else
                 {
-                    // Store current position when pausing or when audio objects are invalid
                     if (AreAudioObjectsValid() && audioFileReader != null)
                     {
                         try
                         {
                             pausedPosition = audioFileReader.CurrentTime;
-                            Console.WriteLine($"Stored paused position: {pausedPosition}");
                         }
-                        catch (Exception ex)
+                        catch
                         {
-                            // Any error, reset paused position
-                            Console.WriteLine($"Error getting current time: {ex.Message}");
                             pausedPosition = TimeSpan.Zero;
                         }
                     }
                     else
                     {
-                        // Audio objects are invalid, reset paused position
                         pausedPosition = TimeSpan.Zero;
-                        Console.WriteLine("Audio objects invalid - reset paused position to zero");
-
-                        // Additional safety: if audio objects are invalid and we're not playing, reset to initial state
                         if (!isPlaying)
                         {
-                            Console.WriteLine("Audio objects invalid and not playing - resetting to initial state");
                             ResetToInitialState();
                         }
                     }
@@ -1542,99 +925,51 @@ namespace MusicApp.TitleBarWithPlayerControls
             }
             catch (Exception ex)
             {
-                // Log any errors, timer is already stopped
-                Console.WriteLine($"Error updating seek bar timer: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // If we encounter an error, reset to initial state as a safety measure
-                Console.WriteLine("Error in UpdateSeekBarTimer - resetting to initial state");
-                ResetToInitialState();
+                HandleError("UpdateSeekBarTimer", ex);
             }
         }
 
-        /// <summary>
-        /// Timer tick event to update seek bar
-        /// </summary>
         private void SeekBarTimer_Tick(object? sender, EventArgs e)
         {
-            // Don't process timer ticks if we're updating audio objects
-            if (isUpdatingAudioObjects) return;
+            if (isUpdatingAudioObjects || isDragging) return;
 
-            // Don't update the seekbar while the user is dragging
-            if (isDragging) return;
-
-            // Immediately stop the timer if we're not playing or have no audio reader
             if (!isPlaying || !AreAudioObjectsValid())
             {
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                    Console.WriteLine("Seek bar timer stopped - not playing or audio objects invalid");
-                }
-
-                // Additional safety: if we're not playing and audio objects are invalid, reset to initial state
+                seekBarTimer?.Stop();
                 if (!isPlaying && !AreAudioObjectsValid())
                 {
-                    Console.WriteLine("Timer stopped due to invalid state - resetting to initial state");
                     ResetToInitialState();
                 }
-
                 return;
             }
 
             try
             {
-                // Update the seek bar with current time
                 if (audioFileReader != null)
                 {
                     UpdateSeekBar(audioFileReader.CurrentTime, totalDuration);
                 }
                 else
                 {
-                    // audioFileReader became null, stop the timer
-                    Console.WriteLine("audioFileReader became null during timer tick");
-                    if (seekBarTimer != null)
-                    {
-                        seekBarTimer.Stop();
-                    }
+                    seekBarTimer?.Stop();
                 }
             }
             catch (ObjectDisposedException)
             {
-                // AudioFileReader was disposed, stop the timer
-                Console.WriteLine("AudioFileReader was disposed during timer tick");
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                }
+                seekBarTimer?.Stop();
             }
             catch (NullReferenceException)
             {
-                // AudioFileReader is null, stop the timer
-                Console.WriteLine("AudioFileReader is null during timer tick");
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                }
+                seekBarTimer?.Stop();
             }
             catch (Exception ex)
             {
-                // Log any other errors and stop the timer
-                Console.WriteLine($"Error in seek bar timer: {ex.Message}");
-                if (seekBarTimer != null)
-                {
-                    seekBarTimer.Stop();
-                }
-
-                // If we encounter an error, reset to initial state as a safety measure
-                Console.WriteLine("Error in SeekBarTimer_Tick - resetting to initial state");
-                ResetToInitialState();
+                seekBarTimer?.Stop();
+                HandleError("SeekBarTimer_Tick", ex);
             }
         }
 
-        // ===========================================
-        // SEEK BAR INTERACTION EVENTS
-        // ===========================================
+        // === Seek Bar Interaction Events ===
         private bool isDragging = false;
         private double currentSeekBarWidth = 0;
         private bool wasMutedBeforeDrag = false;
@@ -1642,401 +977,135 @@ namespace MusicApp.TitleBarWithPlayerControls
         private bool isMouseDown = false;
         private System.Windows.Point lastValidMousePosition;
         private DateTime lastMouseDownTime;
-        private TimeSpan dragTargetPosition; // Store the visual position user sees while dragging
+        private TimeSpan dragTargetPosition;
 
-        /// <summary>
-        /// Handles mouse left button down on the seek bar
-        /// </summary>
         private void SeekBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"SeekBar_MouseLeftButtonDown called - Source: {e.Source}, OriginalSource: {e.OriginalSource}");
-
             if (audioFileReader == null || totalDuration.TotalSeconds <= 0) return;
 
-            // Calculate and seek to the clicked position relative to the seek bar background
             System.Windows.Point clickPoint = e.GetPosition(seekBarBackground);
-            double clickPosition = clickPoint.X;
+            double clickPosition = ClampMousePosition(clickPoint.X, currentSeekBarWidth);
 
-            System.Diagnostics.Debug.WriteLine($"Mouse down - raw clickPoint: {clickPoint}, clickPosition: {clickPosition}, seek bar width: {currentSeekBarWidth}");
-
-            // Clamp the position to valid bounds instead of rejecting it
-            if (clickPosition < 0)
-            {
-                clickPosition = 0;
-                System.Diagnostics.Debug.WriteLine($"Clamped negative click position to 0");
-            }
-            else if (clickPosition > currentSeekBarWidth)
-            {
-                clickPosition = currentSeekBarWidth;
-                System.Diagnostics.Debug.WriteLine($"Clamped click position to max width: {currentSeekBarWidth}");
-            }
-
-            // Store the valid position for later use
             lastValidMousePosition = clickPoint;
             isMouseDown = true;
             lastMouseDownTime = DateTime.Now;
 
-            // Calculate the target position based on click (0-1 range)
-            double progress = clickPosition / currentSeekBarWidth;
-            progress = Math.Max(0, Math.Min(1, progress));
+            double progress = Math.Max(0, Math.Min(1, clickPosition / currentSeekBarWidth));
             dragTargetPosition = TimeSpan.FromSeconds(progress * totalDuration.TotalSeconds);
 
-            // Don't seek immediately - just update the visual display
-            // The actual seek will happen when the user releases the mouse
-            System.Diagnostics.Debug.WriteLine($"Drag started at position: {clickPosition}, target time: {dragTargetPosition}");
-
-            // Immediately update the seekbar display to show the new position
             if (audioFileReader != null && totalDuration.TotalSeconds > 0)
             {
                 try
                 {
                     UpdateSeekBar(dragTargetPosition, totalDuration);
                 }
-                catch (ObjectDisposedException)
-                {
-                    // AudioFileReader was disposed, ignore
-                }
-                catch (NullReferenceException)
-                {
-                    // AudioFileReader is null, ignore
-                }
+                catch (ObjectDisposedException) { }
+                catch (NullReferenceException) { }
             }
 
-            // Store current audio state before starting drag
             wasMutedBeforeDrag = isMuted;
             volumeBeforeDrag = sliderVolume.Value;
 
-            // Mute audio during drag to prevent jarring playback
             if (waveOut != null && !isMuted)
             {
-                System.Diagnostics.Debug.WriteLine($"Muting audio during drag - previous volume: {sliderVolume.Value}");
                 waveOut.Volume = 0;
             }
 
-            // Start dragging
             isDragging = true;
             seekBarBackground.CaptureMouse();
-            System.Diagnostics.Debug.WriteLine($"Drag started - mouse captured, isDragging: {isDragging}");
-
-            // Verify mouse capture was successful
-            if (seekBarBackground.IsMouseCaptured)
-            {
-                System.Diagnostics.Debug.WriteLine("Mouse capture successful - seek bar has mouse capture");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("WARNING: Mouse capture failed - seek bar does not have mouse capture");
-            }
-
-            // Mark the event as handled to prevent it from bubbling up to the title bar
             e.Handled = true;
-            System.Diagnostics.Debug.WriteLine("SeekBar_MouseLeftButtonDown - event marked as handled");
         }
 
-        /// <summary>
-        /// Handles mouse movement while dragging on the seek bar
-        /// </summary>
         private void SeekBar_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (!isDragging || audioFileReader == null || totalDuration.TotalSeconds <= 0) return;
 
-            // Ignore mouse move events that happen too soon after mouse down (prevents invalid coordinates)
             TimeSpan timeSinceMouseDown = DateTime.Now - lastMouseDownTime;
-            if (timeSinceMouseDown.TotalMilliseconds < 50)
-            {
-                System.Diagnostics.Debug.WriteLine($"Ignoring mouse move too soon after mouse down: {timeSinceMouseDown.TotalMilliseconds}ms");
+            if (timeSinceMouseDown.TotalMilliseconds < MOUSE_MOVE_DELAY_MS)
                 return;
-            }
 
-            // Get the current mouse position relative to the seek bar background
             System.Windows.Point currentPoint = e.GetPosition(seekBarBackground);
             double currentPosition = currentPoint.X;
 
-            System.Diagnostics.Debug.WriteLine($"Mouse move during drag - raw position: {currentPosition}, seek bar width: {currentSeekBarWidth}");
-
-            // Check if this is a valid position (within reasonable bounds)
-            if (currentPosition < -100 || currentPosition > currentSeekBarWidth + 100)
-            {
-                System.Diagnostics.Debug.WriteLine($"Invalid mouse position detected: {currentPosition}, using last valid position");
-                // Use the last valid position instead of seeking to an invalid one
+            if (currentPosition < -MOUSE_POSITION_TOLERANCE || currentPosition > currentSeekBarWidth + MOUSE_POSITION_TOLERANCE)
                 return;
-            }
 
-            // Clamp the position to valid bounds
-            if (currentPosition < 0)
-            {
-                currentPosition = 0;
-                System.Diagnostics.Debug.WriteLine($"Clamped negative position to 0");
-            }
-            else if (currentPosition > currentSeekBarWidth)
-            {
-                currentPosition = currentSeekBarWidth;
-                System.Diagnostics.Debug.WriteLine($"Clamped position to max width: {currentSeekBarWidth}");
-            }
-
-            // Store this as the last valid position
+            currentPosition = ClampMousePosition(currentPosition, currentSeekBarWidth);
             lastValidMousePosition = currentPoint;
 
-            // Calculate the target position based on current mouse position (0-1 range)
-            double progress = currentPosition / currentSeekBarWidth;
-            progress = Math.Max(0, Math.Min(1, progress));
+            double progress = Math.Max(0, Math.Min(1, currentPosition / currentSeekBarWidth));
             dragTargetPosition = TimeSpan.FromSeconds(progress * totalDuration.TotalSeconds);
 
-            // Don't seek immediately - just update the visual display
-            // The actual seek will happen when the user releases the mouse
-            System.Diagnostics.Debug.WriteLine($"Dragging to position: {currentPosition}, target time: {dragTargetPosition}");
-
-            // Immediately update the seekbar display to show the new position during drag
             if (audioFileReader != null && totalDuration.TotalSeconds > 0)
             {
                 try
                 {
                     UpdateSeekBar(dragTargetPosition, totalDuration);
                 }
-                catch (ObjectDisposedException)
-                {
-                    // AudioFileReader was disposed, ignore
-                }
-                catch (NullReferenceException)
-                {
-                    // AudioFileReader is null, ignore
-                }
+                catch (ObjectDisposedException) { }
+                catch (NullReferenceException) { }
             }
         }
 
-        /// <summary>
-        /// Handles mouse left button up on the seek bar
-        /// </summary>
         private void SeekBar_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"SeekBar_MouseLeftButtonUp called - isDragging: {isDragging}, isMouseDown: {isMouseDown}");
+            if (!isDragging) return;
 
-            if (isDragging)
-            {
-                System.Diagnostics.Debug.WriteLine("SeekBar_MouseLeftButtonUp - ending drag operation");
-
-                // Restore audio state after drag ends
-                if (waveOut != null)
-                {
-                    if (wasMutedBeforeDrag)
-                    {
-                        // Was muted before, keep muted
-                        System.Diagnostics.Debug.WriteLine("Drag ended - keeping audio muted (was muted before)");
-                        waveOut.Volume = 0;
-                    }
-                    else
-                    {
-                        // Was not muted, restore previous volume
-                        float restoredVolume = (float)(volumeBeforeDrag / 100.0);
-                        waveOut.Volume = restoredVolume;
-                        System.Diagnostics.Debug.WriteLine($"Drag ended - restored volume to: {restoredVolume}");
-                    }
-                }
-
-                // Jump to the stored drag target position when drag ends
-                if (audioFileReader != null && totalDuration.TotalSeconds > 0)
-                {
-                    try
-                    {
-                        // Additional null check for safety
-                        if (audioFileReader != null)
-                        {
-                            // Set the audio to the exact position the user was seeing during drag
-                            audioFileReader.CurrentTime = dragTargetPosition;
-                            // Update the seekbar display to show the final position
-                            UpdateSeekBar(dragTargetPosition, totalDuration);
-                        }
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        // AudioFileReader was disposed, ignore
-                    }
-                    catch (NullReferenceException)
-                    {
-                        // AudioFileReader is null, ignore
-                    }
-                }
-
-                isDragging = false;
-                isMouseDown = false;
-                seekBarBackground.ReleaseMouseCapture();
-
-                System.Diagnostics.Debug.WriteLine("Drag operation ended - mouse capture released");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("SeekBar_MouseLeftButtonUp called but not dragging - ignoring");
-            }
+            EndDragOperation();
+            e.Handled = true;
         }
 
-        /// <summary>
-        /// Handles when the mouse leaves the seek bar area during dragging
-        /// </summary>
         private void SeekBar_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (isDragging)
+        }
+
+        private void SetWaveOutVolume(double volume)
+        {
+            if (waveOut != null)
             {
-                System.Diagnostics.Debug.WriteLine("Mouse left seek bar area during drag - continuing drag operation");
-                // Don't end the drag, just continue tracking
+                waveOut.Volume = (float)(volume / VOLUME_MAX);
             }
         }
 
-        /// <summary>
-        /// Global mouse up handler to catch when mouse is released outside the seek bar
-        /// </summary>
-        private void UserControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private double ClampMousePosition(double position, double maxWidth)
         {
-            // Only handle if we're actually dragging and the mouse is not over the seek bar
-            if (isDragging && !seekBarBackground.IsMouseOver)
-            {
-                System.Diagnostics.Debug.WriteLine("Global mouse up detected outside seek bar during drag - ending drag operation");
-                // End the drag operation
-                if (waveOut != null)
-                {
-                    if (wasMutedBeforeDrag)
-                    {
-                        System.Diagnostics.Debug.WriteLine("Global mouse up - keeping audio muted (was muted before)");
-                        waveOut.Volume = 0;
-                    }
-                    else
-                    {
-                        float restoredVolume = (float)(volumeBeforeDrag / 100.0);
-                        waveOut.Volume = restoredVolume;
-                        System.Diagnostics.Debug.WriteLine($"Global mouse up - restored volume to: {restoredVolume}");
-                    }
-                }
-
-                // Jump to the stored drag target position when drag ends
-                if (audioFileReader != null && totalDuration.TotalSeconds > 0)
-                {
-                    try
-                    {
-                        // Additional null check for safety
-                        if (audioFileReader != null)
-                        {
-                            // Set the audio to the exact position the user was seeing during drag
-                            audioFileReader.CurrentTime = dragTargetPosition;
-                            // Update the seekbar display to show the final position
-                            UpdateSeekBar(dragTargetPosition, totalDuration);
-                        }
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        // AudioFileReader was disposed, ignore
-                    }
-                    catch (NullReferenceException)
-                    {
-                        // AudioFileReader is null, ignore
-                    }
-                }
-
-                isDragging = false;
-                isMouseDown = false;
-                seekBarBackground.ReleaseMouseCapture();
-                System.Diagnostics.Debug.WriteLine("Drag operation ended via global mouse up");
-            }
+            return Math.Max(0, Math.Min(maxWidth, position));
         }
 
-        /// <summary>
-        /// Updates the existing SeekToPosition method to work with dynamic seek bar width
-        /// </summary>
-        /// <param name="clickPosition">X position of click relative to seek bar</param>
-        public void SeekToPosition(double clickPosition)
+        private void EndDragOperation()
         {
-            if (audioFileReader == null || totalDuration.TotalSeconds <= 0) return;
-
-            try
+            if (waveOut != null)
             {
-                // Additional null check for safety
-                if (audioFileReader == null)
+                if (wasMutedBeforeDrag)
                 {
-                    System.Diagnostics.Debug.WriteLine("Cannot seek: audioFileReader is null");
-                    return;
-                }
-
-                // Use the stored seek bar width that gets updated dynamically
-                double seekBarWidth = currentSeekBarWidth;
-
-                // Debug output to see what values we're getting
-                System.Diagnostics.Debug.WriteLine($"=== SEEK DEBUG INFO ===");
-                System.Diagnostics.Debug.WriteLine($"clickPosition: {clickPosition}");
-                System.Diagnostics.Debug.WriteLine($"currentSeekBarWidth: {currentSeekBarWidth}");
-                System.Diagnostics.Debug.WriteLine($"totalDuration: {totalDuration.TotalSeconds}");
-
-                // Additional null check before accessing CurrentTime
-                if (audioFileReader != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"audioFileReader.CurrentTime before seek: {audioFileReader.CurrentTime}");
-                }
-
-                if (seekBarWidth <= 0)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: Seek bar width is 0 or negative, cannot seek");
-                    System.Diagnostics.Debug.WriteLine("Trying to get width from seekBarBackground.ActualWidth...");
-                    seekBarWidth = seekBarBackground?.ActualWidth ?? 0;
-                    System.Diagnostics.Debug.WriteLine($"seekBarBackground.ActualWidth: {seekBarWidth}");
-
-                    if (seekBarWidth <= 0)
-                    {
-                        System.Diagnostics.Debug.WriteLine("ERROR: Still cannot get valid width, aborting seek");
-                        return;
-                    }
-                }
-
-                // Ensure clickPosition is within bounds
-                if (clickPosition < 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"WARNING: clickPosition {clickPosition} < 0, clamping to 0");
-                    clickPosition = 0;
-                }
-                if (clickPosition > seekBarWidth)
-                {
-                    System.Diagnostics.Debug.WriteLine($"WARNING: clickPosition {clickPosition} > seekBarWidth {seekBarWidth}, clamping to seekBarWidth");
-                    clickPosition = seekBarWidth;
-                }
-
-                // Calculate the target position based on click (0-1 range)
-                double progress = clickPosition / seekBarWidth;
-                System.Diagnostics.Debug.WriteLine($"Calculated progress: {progress}");
-
-                // Ensure progress is between 0 and 1
-                progress = Math.Max(0, Math.Min(1, progress));
-                System.Diagnostics.Debug.WriteLine($"Clamped progress: {progress}");
-
-                TimeSpan targetPosition = TimeSpan.FromSeconds(progress * totalDuration.TotalSeconds);
-                System.Diagnostics.Debug.WriteLine($"Target position: {targetPosition}");
-                System.Diagnostics.Debug.WriteLine($"=== END SEEK DEBUG ===");
-
-                // Additional null check before seeking
-                if (audioFileReader != null)
-                {
-                    // Seek to the target position
-                    audioFileReader.CurrentTime = targetPosition;
-
-                    // Update the seek bar immediately
-                    UpdateSeekBar(targetPosition, totalDuration);
+                    waveOut.Volume = 0;
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("Cannot seek: audioFileReader became null during seek operation");
+                    SetWaveOutVolume(volumeBeforeDrag);
                 }
             }
-            catch (ObjectDisposedException)
+
+            if (audioFileReader != null && totalDuration.TotalSeconds > 0)
             {
-                // AudioFileReader was disposed, ignore the seek operation
-                System.Diagnostics.Debug.WriteLine("Cannot seek: AudioFileReader has been disposed");
+                try
+                {
+                    audioFileReader.CurrentTime = dragTargetPosition;
+                    UpdateSeekBar(dragTargetPosition, totalDuration);
+                }
+                catch (ObjectDisposedException) { }
+                catch (NullReferenceException) { }
             }
-            catch (NullReferenceException)
-            {
-                // AudioFileReader is null, ignore the seek operation
-                System.Diagnostics.Debug.WriteLine("Cannot seek: AudioFileReader is null");
-            }
-            catch (Exception ex)
-            {
-                // Log any other errors
-                System.Diagnostics.Debug.WriteLine($"Error during seek operation: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
+
+            isDragging = false;
+            isMouseDown = false;
+            seekBarBackground.ReleaseMouseCapture();
+        }
+
+        private void HandleError(string context, Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in {context}: {ex.Message}");
+            ResetToInitialState();
         }
 
     }
