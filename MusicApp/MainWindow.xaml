@@ -7,8 +7,9 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:titleBar="clr-namespace:MusicApp.TitleBarWithPlayerControls"
         xmlns:converters="clr-namespace:MusicApp.Converters"
+        xmlns:views="clr-namespace:MusicApp.Views"
         mc:Ignorable="d"
-        Title="Music App" Height="700" Width="1200"
+        Title="musicApp" Height="767" Width="1245"
         Background="#1E1E1E"
         WindowStyle="None"
         AllowsTransparency="False"
@@ -79,7 +80,7 @@
                     <StackPanel Margin="10">
 
                         <!-- App Title -->
-                        <TextBlock Text="Music App" 
+                        <TextBlock Text="musicApp" 
                                    FontSize="20" 
                                    FontWeight="Bold" 
                                    Foreground="White" 
@@ -226,146 +227,7 @@
                     <!-- ===========================================
                          CONTENT AREA SECTION
                          =========================================== -->
-                    <Grid Grid.Row="1" x:Name="mainContent" Margin="0">
-
-                        <!-- ===========================================
-                             SONGS VIEW
-                             =========================================== -->
-                        <Grid x:Name="libraryView" Visibility="Visible">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <!-- Music List (Expands) -->
-                            </Grid.RowDefinitions>
-
-                            <!-- Music List -->
-                            <ListView x:Name="lstMusic" 
-                                      Grid.Row="0" 
-                                      Background="Transparent" 
-                                      BorderThickness="0" 
-                                      Foreground="White"
-                                      SelectionChanged="LstMusic_SelectionChanged">
-                            </ListView>
-                        </Grid>
-
-                        <!-- ===========================================
-                             QUEUE VIEW
-                             =========================================== -->
-                        <Grid x:Name="queueView" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <!-- Queue List (Expands) -->
-                            </Grid.RowDefinitions>
-
-                            <!-- Queue List -->
-                            <ListView x:Name="lstQueue" 
-                                      Grid.Row="0" 
-                                      Background="Transparent" 
-                                      BorderThickness="0" 
-                                      Foreground="White"
-                                      SelectionChanged="LstQueue_SelectionChanged">
-                            </ListView>
-                        </Grid>
-
-                        <!-- ===========================================
-                             PLAYLISTS VIEW
-                             =========================================== -->
-                        <Grid x:Name="playlistsView" Visibility="Collapsed">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel>
-                                    <TextBlock Text="Playlists" 
-                                               FontSize="20" 
-                                               FontWeight="Bold" 
-                                               Foreground="White" 
-                                               Margin="0,0,0,20"/>
-
-                                    <Button Content="Create New Playlist" 
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            HorizontalAlignment="Left" 
-                                            Margin="0,0,0,20"/>
-
-                                    <ListView x:Name="lstPlaylists" 
-                                              Background="Transparent" 
-                                              Foreground="White"/>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Grid>
-
-                        <!-- ===========================================
-                             RECENTLY PLAYED VIEW
-                             =========================================== -->
-                        <Grid x:Name="recentlyPlayedView" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <!-- Recently Played List (Expands) -->
-                            </Grid.RowDefinitions>
-
-                            <!-- Recently Played List -->
-                            <ListView x:Name="lstRecentlyPlayed" 
-                                      Grid.Row="0" 
-                                      Background="Transparent" 
-                                      BorderThickness="0" 
-                                      Foreground="White"
-                                      SelectionChanged="LstRecentlyPlayed_SelectionChanged">
-                            </ListView>
-                        </Grid>
-
-                        <!-- ===========================================
-                             ARTISTS VIEW
-                             =========================================== -->
-                        <Grid x:Name="artistsView" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <!-- Artists List (Expands) -->
-                            </Grid.RowDefinitions>
-
-                            <!-- Artists List -->
-                            <ListView x:Name="lstArtists" 
-                                      Grid.Row="0" 
-                                      Background="Transparent" 
-                                      BorderThickness="0" 
-                                      Foreground="White"
-                                      SelectionChanged="LstArtists_SelectionChanged">
-                            </ListView>
-                        </Grid>
-
-                        <!-- ===========================================
-                             ALBUMS VIEW
-                             =========================================== -->
-                        <Grid x:Name="albumsView" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <!-- Albums List (Expands) -->
-                            </Grid.RowDefinitions>
-
-                            <!-- Albums List -->
-                            <ListView x:Name="lstAlbums" 
-                                      Grid.Row="0" 
-                                      Background="Transparent" 
-                                      BorderThickness="0" 
-                                      Foreground="White"
-                                      SelectionChanged="LstAlbums_SelectionChanged">
-                            </ListView>
-                        </Grid>
-
-                        <!-- ===========================================
-                             GENRES VIEW
-                             =========================================== -->
-                        <Grid x:Name="genresView" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <!-- Genres List (Expands) -->
-                            </Grid.RowDefinitions>
-
-                            <!-- Genres List -->
-                            <ListView x:Name="lstGenres" 
-                                      Grid.Row="0" 
-                                      Background="Transparent" 
-                                      BorderThickness="0" 
-                                      Foreground="White"
-                                      SelectionChanged="LstGenres_SelectionChanged">
-                            </ListView>
-                        </Grid>
-                    </Grid>
+                    <ContentControl Grid.Row="1" x:Name="contentHost" Margin="0"/>
                 </Grid>
             </Grid>
 

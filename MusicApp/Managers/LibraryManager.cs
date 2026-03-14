@@ -11,7 +11,7 @@ namespace MusicApp
     {
         private static readonly string AppDataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
-            "MusicApp");
+            "musicApp");
         
         private static readonly string LibraryCacheFilePath = Path.Combine(AppDataPath, "library.json");
         private static readonly string RecentlyPlayedFilePath = Path.Combine(AppDataPath, "recentlyPlayed.json");
@@ -248,6 +248,146 @@ namespace MusicApp
             {
                 Console.WriteLine($"Error saving playlists: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Saves playlists from an enumerable collection of Playlist objects.
+        /// </summary>
+        public Task SavePlaylistsFromCollectionAsync(IEnumerable<Playlist> playlistsCollection)
+        {
+            var cache = new PlaylistsCache
+            {
+                Playlists = playlistsCollection?.ToList() ?? new List<Playlist>()
+            };
+            return SavePlaylistsAsync(cache);
+        }
+
+        /// <summary>
+        /// Imports a playlist from an M3U file and returns a Playlist instance with TrackFilePaths populated.
+        /// Caller is responsible for adding it to any collections and persisting via SavePlaylistsFromCollectionAsync.
+        /// </summary>
+        public Playlist ImportPlaylistFromM3u(string m3uPath, string playlistName, IEnumerable<Song> allSongs)
+        {
+            if (string.IsNullOrWhiteSpace(m3uPath))
+                throw new ArgumentException("M3U path must not be null or empty.", nameof(m3uPath));
+            if (string.IsNullOrWhiteSpace(playlistName))
+                playlistName = Path.GetFileNameWithoutExtension(m3uPath);
+
+            var playlist = new Playlist(playlistName);
+
+            var availableTracks = allSongs?.ToList() ?? new List<Song>();
+            foreach (var entry in Helpers.M3uPlaylistHelper.Parse(m3uPath))
+            {
+                var path = entry.FilePath;
+                if (string.IsNullOrWhiteSpace(path))
+                    continue;
+
+                playlist.TrackFilePaths.Add(path);
+
+                var match = availableTracks.FirstOrDefault(t => string.Equals(t.FilePath, path, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    playlist.Tracks.Add(match);
+                }
+            }
+
+            playlist.LastModified = DateTime.Now;
+            return playlist;
+        }
+
+        /// <summary>
+        /// Exports the given playlist to an M3U file.
+        /// </summary>
+        public void ExportPlaylistToM3u(Playlist playlist, string outputPath)
+        {
+            if (playlist == null)
+                throw new ArgumentNullException(nameof(playlist));
+            if (string.IsNullOrWhiteSpace(outputPath))
+                throw new ArgumentException("Output path must not be null or empty.", nameof(outputPath));
+
+            // Prefer the in-memory Tracks collection; fall back to TrackFilePaths if needed
+            var tracks = new List<Song>();
+            if (playlist.Tracks != null && playlist.Tracks.Count > 0)
+            {
+                tracks.AddRange(playlist.Tracks);
+            }
+            else if (playlist.TrackFilePaths != null && playlist.TrackFilePaths.Count > 0)
+            {
+                foreach (var path in playlist.TrackFilePaths)
+                {
+                    if (string.IsNullOrWhiteSpace(path))
+                        continue;
+
+                    tracks.Add(new Song
+                    {
+                        FilePath = path,
+                        Title = Path.GetFileNameWithoutExtension(path)
+                    });
+                }
+            }
+
+            Helpers.M3uPlaylistHelper.Write(outputPath, tracks);
+        }
+
+        /// <summary>
+        /// Adds a new playlist to an in-memory collection. Caller is responsible for persisting via SavePlaylistsFromCollectionAsync.
+        /// </summary>
+        public void AddPlaylist(ICollection<Playlist> playlistsCollection, Playlist playlist)
+        {
+            if (playlistsCollection == null || playlist == null)
+                return;
+
+            playlistsCollection.Add(playlist);
+        }
+
+        /// <summary>
+        /// Deletes an existing playlist from an in-memory collection. Caller is responsible for persisting via SavePlaylistsFromCollectionAsync.
+        /// </summary>
+        public void DeletePlaylist(ICollection<Playlist> playlistsCollection, Playlist playlist)
+        {
+            if (playlistsCollection == null || playlist == null)
+                return;
+
+            if (!playlistsCollection.Remove(playlist))
+            {
+                var toRemove = playlistsCollection.FirstOrDefault(p => string.Equals(p.Name, playlist.Name, StringComparison.OrdinalIgnoreCase));
+                if (toRemove != null)
+                    playlistsCollection.Remove(toRemove);
+            }
+        }
+
+        /// <summary>
+        /// Renames an existing playlist in-memory. Caller is responsible for persisting via SavePlaylistsFromCollectionAsync.
+        /// </summary>
+        public void RenamePlaylist(Playlist playlist, string newName)
+        {
+            if (playlist == null || string.IsNullOrWhiteSpace(newName))
+                return;
+
+            playlist.Name = newName;
+            playlist.LastModified = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Adds a track to the given playlist (in-memory). Caller is responsible for persisting via SavePlaylistsFromCollectionAsync.
+        /// </summary>
+        public void AddTrackToPlaylist(Playlist playlist, Song track)
+        {
+            if (playlist == null || track == null)
+                return;
+
+            playlist.AddTrack(track);
+        }
+
+        /// <summary>
+        /// Removes a track from the given playlist (in-memory). Caller is responsible for persisting via SavePlaylistsFromCollectionAsync.
+        /// </summary>
+        public void RemoveTrackFromPlaylist(Playlist playlist, Song track)
+        {
+            if (playlist == null || track == null)
+                return;
+
+            playlist.RemoveTrack(track);
         }
 
         #endregion

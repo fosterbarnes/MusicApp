@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -17,6 +18,8 @@ using ATL;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using MusicApp.Views;
+using MusicApp.Helpers;
 
 namespace MusicApp
 {
@@ -68,14 +71,8 @@ namespace MusicApp
         private ObservableCollection<Playlist> playlists = new ObservableCollection<Playlist>();
         private ObservableCollection<Song> recentlyPlayed = new ObservableCollection<Song>();
 
-        // ===========================================
-        // SORTING STATE
-        // ===========================================
-        private Dictionary<ListView, (string column, ListSortDirection direction)> sortStates = 
-            new Dictionary<ListView, (string, ListSortDirection)>();
-        private HashSet<GridViewColumnHeader> wiredHeaders = new HashSet<GridViewColumnHeader>();
-        private HashSet<GridViewColumn> wiredColumnWidthHandlers = new HashSet<GridViewColumn>();
-        private Dictionary<ListView, ContextMenu> listViewContextMenus = new Dictionary<ListView, ContextMenu>();
+        /// <summary>Exposes current playlists for context menu and other consumers.</summary>
+        public IReadOnlyList<Playlist> Playlists => playlists;
 
         // ===========================================
         // SETTINGS AND PERSISTENCE
@@ -85,10 +82,6 @@ namespace MusicApp
         private SettingsManager.AppSettings appSettings = new SettingsManager.AppSettings();
         private DispatcherTimer? sidebarWidthSaveTimer;
         private bool isSidebarWidthDirty = false;
-        private DispatcherTimer? columnWidthSaveTimer;
-        private bool isColumnWidthDirty = false;
-        private HashSet<string> dirtyColumnWidthViews = new HashSet<string>();
-        private Dictionary<ListView, string> listViewToViewName = new Dictionary<ListView, string>();
 
         // ===========================================
         // AUDIO PLAYBACK STATE
@@ -102,19 +95,15 @@ namespace MusicApp
         private bool isManualNavigation = false; // Flag to differentiate between natural progression and manual navigation
 
         // ===========================================
-        // COLUMN MANAGEMENT
+        // MODULAR VIEWS
         // ===========================================
-        private Dictionary<string, ColumnDefinition> columnDefinitions = new Dictionary<string, ColumnDefinition>();
-        private Dictionary<string, List<string>> defaultVisibleColumns = new Dictionary<string, List<string>>();
-        
-        private class ColumnDefinition
-        {
-            public string DisplayName { get; set; } = "";
-            public string PropertyName { get; set; } = "";
-            public string SortPropertyName { get; set; } = "";
-            public double DefaultWidth { get; set; } = 150;
-            public IValueConverter? Converter { get; set; }
-        }
+        private SongsView? songsView;
+        private QueueView? queueViewControl;
+        private RecentlyPlayedView? recentlyPlayedViewControl;
+        private ArtistGenreView? artistsViewControl;
+        private ArtistGenreView? genresViewControl;
+        private AlbumsView? albumsViewControl;
+        private PlaylistsView? playlistsViewControl;
 
         // ===========================================
         // CONSTRUCTOR AND INITIALIZATION
@@ -166,9 +155,8 @@ namespace MusicApp
                 windowManager.SetInitialPosition(100, 100, 1200, 700);
             }
 
-            // Initialize column definitions FIRST (before SetupEventHandlers which uses them)
-            InitializeColumnDefinitions();
-
+            TrackListColumnConfig.Initialize();
+            CreateViewsAndWirePlayback();
             SetupEventHandlers();
 
             // Load saved data asynchronously
@@ -179,491 +167,89 @@ namespace MusicApp
 
             // Setup sidebar width tracking
             SetupSidebarWidthTracking();
-            SetupColumnWidthTracking();
         }
 
-        /// <summary>
-        /// Initializes column definitions for all available columns
-        /// </summary>
-        private void InitializeColumnDefinitions()
+        private void CreateViewsAndWirePlayback()
         {
-            // Clear any existing definitions
-            columnDefinitions.Clear();
-            
-            columnDefinitions["Title"] = new ColumnDefinition
-            {
-                DisplayName = "Title",
-                PropertyName = "Title",
-                SortPropertyName = "Title",
-                DefaultWidth = 300
-            };
+            songsView = new SongsView();
+            queueViewControl = new QueueView();
+            recentlyPlayedViewControl = new RecentlyPlayedView();
+            artistsViewControl = new ArtistGenreView { ViewName = "Artists" };
+            genresViewControl = new ArtistGenreView { ViewName = "Genres" };
+            albumsViewControl = new AlbumsView();
+            playlistsViewControl = new PlaylistsView();
 
-            columnDefinitions["Album"] = new ColumnDefinition
-            {
-                DisplayName = "Album",
-                PropertyName = "Album",
-                SortPropertyName = "Album",
-                DefaultWidth = 200
-            };
+            void OnPlayTrackRequested(object? s, Song track) => PlayTrack(track);
+            songsView.PlayTrackRequested += OnPlayTrackRequested;
+            queueViewControl.PlayTrackRequested += OnPlayTrackRequested;
+            recentlyPlayedViewControl.PlayTrackRequested += OnPlayTrackRequested;
+            artistsViewControl.PlayTrackRequested += OnPlayTrackRequested;
+            genresViewControl.PlayTrackRequested += OnPlayTrackRequested;
+            albumsViewControl.PlayTrackRequested += OnPlayTrackRequested;
+            playlistsViewControl.PlayTrackRequested += OnPlayTrackRequested;
 
-            columnDefinitions["Album Artist"] = new ColumnDefinition
-            {
-                DisplayName = "Album Artist",
-                PropertyName = "AlbumArtist",
-                SortPropertyName = "AlbumArtist",
-                DefaultWidth = 200
-            };
+            songsView.PlayNextRequested += OnPlayNextRequested;
+            queueViewControl.PlayNextRequested += OnPlayNextRequested;
+            recentlyPlayedViewControl.PlayNextRequested += OnPlayNextRequested;
+            artistsViewControl.PlayNextRequested += OnPlayNextRequested;
+            genresViewControl.PlayNextRequested += OnPlayNextRequested;
+            albumsViewControl.PlayNextRequested += OnPlayNextRequested;
+            playlistsViewControl.PlayNextRequested += OnPlayNextRequested;
 
-            columnDefinitions["Artist"] = new ColumnDefinition
-            {
-                DisplayName = "Artist",
-                PropertyName = "Artist",
-                SortPropertyName = "Artist",
-                DefaultWidth = 200
-            };
+            songsView.AddToQueueRequested += OnAddToQueueRequested;
+            songsView.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            songsView.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            queueViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            queueViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            queueViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            recentlyPlayedViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            recentlyPlayedViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            recentlyPlayedViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            artistsViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            artistsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            artistsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            genresViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            genresViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            genresViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            albumsViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            albumsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            albumsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            playlistsViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            playlistsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            playlistsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
 
-            columnDefinitions["Beats Per Minute"] = new ColumnDefinition
-            {
-                DisplayName = "Beats Per Minute",
-                PropertyName = "BeatsPerMinute",
-                SortPropertyName = "BeatsPerMinute",
-                DefaultWidth = 120,
-                Converter = new Converters.IntConverter()
-            };
+            songsView.ShowInExplorerRequested += OnShowInExplorerRequested;
+            queueViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
+            recentlyPlayedViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
+            artistsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
+            genresViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
+            albumsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
+            playlistsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
 
-            columnDefinitions["Bit Rate"] = new ColumnDefinition
-            {
-                DisplayName = "Bit Rate",
-                PropertyName = "Bitrate",
-                SortPropertyName = "Bitrate",
-                DefaultWidth = 100
-            };
+            songsView.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            queueViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            recentlyPlayedViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            artistsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            genresViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            albumsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            playlistsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
 
-            columnDefinitions["Category"] = new ColumnDefinition
-            {
-                DisplayName = "Category",
-                PropertyName = "Category",
-                SortPropertyName = "Category",
-                DefaultWidth = 150
-            };
+            songsView.DeleteRequested += OnDeleteRequested;
+            queueViewControl.DeleteRequested += OnDeleteRequested;
+            recentlyPlayedViewControl.DeleteRequested += OnDeleteRequested;
+            artistsViewControl.DeleteRequested += OnDeleteRequested;
+            genresViewControl.DeleteRequested += OnDeleteRequested;
+            albumsViewControl.DeleteRequested += OnDeleteRequested;
+            playlistsViewControl.DeleteRequested += OnDeleteRequested;
 
-            columnDefinitions["Composer"] = new ColumnDefinition
-            {
-                DisplayName = "Composer",
-                PropertyName = "Composer",
-                SortPropertyName = "Composer",
-                DefaultWidth = 200
-            };
+            playlistsViewControl.CreatePlaylistRequested += PlaylistsViewControl_CreatePlaylistRequested;
+            playlistsViewControl.ImportPlaylistRequested += PlaylistsViewControl_ImportPlaylistRequested;
+            playlistsViewControl.ExportPlaylistRequested += PlaylistsViewControl_ExportPlaylistRequested;
+            playlistsViewControl.DeletePlaylistRequested += PlaylistsViewControl_DeletePlaylistRequested;
+            playlistsViewControl.RemoveFromPlaylistRequested += OnRemoveFromPlaylistRequested;
 
-            columnDefinitions["Date Added"] = new ColumnDefinition
-            {
-                DisplayName = "Date Added",
-                PropertyName = "DateAdded",
-                SortPropertyName = "DateAdded",
-                DefaultWidth = 120,
-                Converter = new Converters.DateConverter()
-            };
-
-            columnDefinitions["Date Modified"] = new ColumnDefinition
-            {
-                DisplayName = "Date Modified",
-                PropertyName = "DateModified",
-                SortPropertyName = "DateModified",
-                DefaultWidth = 120,
-                Converter = new Converters.DateConverter()
-            };
-
-            columnDefinitions["Disc Number"] = new ColumnDefinition
-            {
-                DisplayName = "Disc Number",
-                PropertyName = "DiscNumber",
-                SortPropertyName = "DiscNumber",
-                DefaultWidth = 100
-            };
-
-            columnDefinitions["File Type"] = new ColumnDefinition
-            {
-                DisplayName = "File Type",
-                PropertyName = "FileType",
-                SortPropertyName = "FileType",
-                DefaultWidth = 100
-            };
-
-            columnDefinitions["Genre"] = new ColumnDefinition
-            {
-                DisplayName = "Genre",
-                PropertyName = "Genre",
-                SortPropertyName = "Genre",
-                DefaultWidth = 150
-            };
-
-            columnDefinitions["Last Played"] = new ColumnDefinition
-            {
-                DisplayName = "Last Played",
-                PropertyName = "LastPlayed",
-                SortPropertyName = "LastPlayed",
-                DefaultWidth = 120,
-                Converter = new Converters.DateConverter()
-            };
-
-            columnDefinitions["Plays"] = new ColumnDefinition
-            {
-                DisplayName = "Plays",
-                PropertyName = "PlayCount",
-                SortPropertyName = "PlayCount",
-                DefaultWidth = 80,
-                Converter = new Converters.IntConverter()
-            };
-
-            columnDefinitions["Release Date"] = new ColumnDefinition
-            {
-                DisplayName = "Release Date",
-                PropertyName = "ReleaseDate",
-                SortPropertyName = "ReleaseDate",
-                DefaultWidth = 120,
-                Converter = new Converters.NullableDateConverter()
-            };
-
-            columnDefinitions["Sample Rate"] = new ColumnDefinition
-            {
-                DisplayName = "Sample Rate",
-                PropertyName = "SampleRate",
-                SortPropertyName = "SampleRate",
-                DefaultWidth = 120
-            };
-
-            columnDefinitions["Size"] = new ColumnDefinition
-            {
-                DisplayName = "Size",
-                PropertyName = "FileSize",
-                SortPropertyName = "FileSize",
-                DefaultWidth = 100,
-                Converter = new Converters.FileSizeConverter()
-            };
-
-            columnDefinitions["Time"] = new ColumnDefinition
-            {
-                DisplayName = "Time",
-                PropertyName = "Duration",
-                SortPropertyName = "DurationTimeSpan",
-                DefaultWidth = 80
-            };
-
-            columnDefinitions["Track Number"] = new ColumnDefinition
-            {
-                DisplayName = "Track Number",
-                PropertyName = "TrackNumber",
-                SortPropertyName = "TrackNumber",
-                DefaultWidth = 100,
-                Converter = new Converters.IntConverter()
-            };
-
-            columnDefinitions["Year"] = new ColumnDefinition
-            {
-                DisplayName = "Year",
-                PropertyName = "Year",
-                SortPropertyName = "Year",
-                DefaultWidth = 80,
-                Converter = new Converters.IntConverter()
-            };
-
-            // Set default visible columns for each view
-            defaultVisibleColumns["Songs"] = new List<string> { "Title", "Artist", "Album", "Time" };
-            defaultVisibleColumns["Queue"] = new List<string> { "Title", "Artist", "Album", "Time" };
-            defaultVisibleColumns["Artists"] = new List<string> { "Title", "Artist", "Album", "Time" };
-            defaultVisibleColumns["Albums"] = new List<string> { "Title", "Artist", "Album", "Time" };
-            defaultVisibleColumns["Genres"] = new List<string> { "Title", "Artist", "Album", "Time" };
-            defaultVisibleColumns["Recently Played"] = new List<string> { "Title", "Artist", "Album", "Time" };
+            contentHost.Content = songsView;
         }
-
-        /// <summary>
-        /// Gets the list of visible columns for a view, using saved preferences or defaults
-        /// </summary>
-        private List<string> GetVisibleColumns(string viewName)
-        {
-            if (appSettings?.WindowState?.ColumnVisibility != null &&
-                appSettings.WindowState.ColumnVisibility.TryGetValue(viewName, out var savedColumns) &&
-                savedColumns != null && savedColumns.Count > 0)
-            {
-                return savedColumns;
-            }
-
-            if (defaultVisibleColumns.TryGetValue(viewName, out var defaultColumns))
-            {
-                return defaultColumns;
-            }
-
-            return new List<string> { "Title", "Artist", "Album", "Time" };
-        }
-
-        /// <summary>
-        /// Builds GridView columns dynamically based on visible columns configuration
-        /// </summary>
-        private void BuildGridViewColumns(ListView listView, string viewName)
-        {
-            try
-            {
-                if (listView == null) return;
-
-                GridView gridView;
-                if (listView.View is GridView existingGridView)
-                {
-                    gridView = existingGridView;
-                }
-                else
-                {
-                    gridView = new GridView();
-                    listView.View = gridView;
-                }
-
-                // Clear existing columns
-                gridView.Columns.Clear();
-
-                // Get visible columns for this view
-                var visibleColumns = GetVisibleColumns(viewName);
-                
-                if (visibleColumns == null || visibleColumns.Count == 0)
-                {
-                    // Fallback to defaults if no columns configured
-                    visibleColumns = defaultVisibleColumns.TryGetValue(viewName, out var defaults) 
-                        ? defaults 
-                        : new List<string> { "Title", "Artist", "Album", "Time" };
-                }
-
-                // Get saved column widths for this view if available
-                Dictionary<string, double> savedWidths;
-                if (appSettings?.WindowState?.ColumnWidths != null && 
-                    appSettings.WindowState.ColumnWidths.TryGetValue(viewName, out var viewWidths))
-                {
-                    savedWidths = viewWidths;
-                }
-                else
-                {
-                    // Fallback to SongsViewColumnWidths for backward compatibility
-                    savedWidths = appSettings?.WindowState?.SongsViewColumnWidths ?? new Dictionary<string, double>();
-                }
-
-                // Build columns in the order they should appear
-                foreach (var columnName in visibleColumns)
-                {
-                    if (columnDefinitions.TryGetValue(columnName, out var columnDef))
-                    {
-                        var column = new GridViewColumn
-                        {
-                            Header = columnDef.DisplayName,
-                            Width = savedWidths.TryGetValue(columnDef.DisplayName, out var savedWidth) && savedWidth > 0
-                                ? savedWidth
-                                : columnDef.DefaultWidth
-                        };
-
-                        // Create binding
-                        var binding = new Binding(columnDef.PropertyName);
-                        if (columnDef.Converter != null)
-                        {
-                            binding.Converter = columnDef.Converter;
-                        }
-
-                        // Create cell template using FrameworkElementFactory (still supported in WPF)
-                        var dataTemplate = new DataTemplate();
-                        var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-                        textBlockFactory.SetBinding(TextBlock.TextProperty, binding);
-                        textBlockFactory.SetValue(TextBlock.MarginProperty, new Thickness(-9, 0, 0, 0));
-                        textBlockFactory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
-                        dataTemplate.VisualTree = textBlockFactory;
-                        column.CellTemplate = dataTemplate;
-
-                        gridView.Columns.Add(column);
-                    }
-                }
-
-                // Apply column header style
-                var headerStyle = this.FindResource("CompactGridViewHeaderStyle") as Style;
-                if (headerStyle != null)
-                {
-                    gridView.ColumnHeaderContainerStyle = headerStyle;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error building columns for {viewName}: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-        }
-
-        /// <summary>
-        /// Updates column visibility for a view and rebuilds the columns
-        /// </summary>
-        private async Task UpdateColumnVisibilityAsync(string viewName, List<string> visibleColumns)
-        {
-            if (appSettings?.WindowState == null)
-            {
-                appSettings = await settingsManager.LoadSettingsAsync();
-            }
-
-            if (appSettings.WindowState.ColumnVisibility == null)
-            {
-                appSettings.WindowState.ColumnVisibility = new Dictionary<string, List<string>>();
-            }
-
-            appSettings.WindowState.ColumnVisibility[viewName] = visibleColumns;
-            await settingsManager.SaveSettingsAsync(appSettings);
-
-            // Rebuild columns for the affected view
-            ListView? targetListView = viewName switch
-            {
-                "Songs" => lstMusic,
-                "Queue" => lstQueue,
-                "Artists" => lstArtists,
-                "Albums" => lstAlbums,
-                "Genres" => lstGenres,
-                "Recently Played" => lstRecentlyPlayed,
-                _ => null
-            };
-
-            if (targetListView != null)
-            {
-                BuildGridViewColumns(targetListView, viewName);
-                WireUpColumnHeaderSorting(targetListView);
-                WireUpColumnResizeHandlers(targetListView);
-                WireUpColumnContextMenu(targetListView, viewName);
-            }
-        }
-
-        /// <summary>
-        /// Wires up right-click context menu on grid view column headers
-        /// </summary>
-        private void WireUpColumnContextMenu(ListView listView, string viewName)
-        {
-            if (listView.View is not GridView gridView)
-                return;
-
-            // Wait for headers to be rendered
-            listView.Loaded += (s, e) =>
-            {
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    WireUpContextMenuForHeaders(listView, viewName);
-                }), DispatcherPriority.Loaded);
-            };
-
-            listView.LayoutUpdated += (s, e) =>
-            {
-                WireUpContextMenuForHeaders(listView, viewName);
-            };
-        }
-
-        /// <summary>
-        /// Wires up context menu for all column headers in a ListView
-        /// </summary>
-        private void WireUpContextMenuForHeaders(ListView listView, string viewName)
-        {
-            var headers = FindVisualChildren<GridViewColumnHeader>(listView);
-            
-            // Get or create context menu for this ListView
-            if (!listViewContextMenus.TryGetValue(listView, out var contextMenu))
-            {
-                contextMenu = CreateColumnContextMenu(listView, viewName);
-                listViewContextMenus[listView] = contextMenu;
-            }
-            else
-            {
-                // Update existing context menu to reflect current state
-                contextMenu = CreateColumnContextMenu(listView, viewName);
-                listViewContextMenus[listView] = contextMenu;
-            }
-            
-            foreach (var header in headers)
-            {
-                header.ContextMenu = contextMenu;
-            }
-        }
-
-        /// <summary>
-        /// Creates a context menu for column selection
-        /// </summary>
-        private ContextMenu CreateColumnContextMenu(ListView listView, string viewName)
-        {
-            var contextMenu = new ContextMenu();
-            contextMenu.Background = new SolidColorBrush(Color.FromRgb(0x2D, 0x2D, 0x2D));
-            contextMenu.Foreground = new SolidColorBrush(Colors.White);
-
-            // Add "Auto Size All Columns" menu item
-            var autoSizeItem = new MenuItem
-            {
-                Header = "Auto Size All Columns",
-                Foreground = new SolidColorBrush(Colors.White)
-            };
-            autoSizeItem.Click += (s, e) => AutoSizeAllColumns(listView);
-            contextMenu.Items.Add(autoSizeItem);
-
-            // Add separator
-            contextMenu.Items.Add(new Separator());
-
-            // Get current visible columns
-            var visibleColumns = GetVisibleColumns(viewName);
-
-            // Add menu items for each available column
-            foreach (var columnDef in columnDefinitions.OrderBy(kvp => kvp.Key))
-            {
-                var columnName = columnDef.Key;
-                var isVisible = visibleColumns.Contains(columnName);
-
-                var menuItem = new MenuItem
-                {
-                    Header = columnDef.Value.DisplayName,
-                    IsCheckable = true,
-                    IsChecked = isVisible,
-                    Foreground = new SolidColorBrush(Colors.White)
-                };
-
-                menuItem.Checked += (s, e) =>
-                {
-                    var currentVisible = GetVisibleColumns(viewName);
-                    if (!currentVisible.Contains(columnName))
-                    {
-                        var updatedColumns = new List<string>(currentVisible) { columnName };
-                        _ = UpdateColumnVisibilityAsync(viewName, updatedColumns);
-                    }
-                };
-
-                menuItem.Unchecked += (s, e) =>
-                {
-                    var currentVisible = GetVisibleColumns(viewName);
-                    // Don't allow unchecking if it's the last visible column
-                    if (currentVisible.Count > 1)
-                    {
-                        var updatedColumns = new List<string>(currentVisible);
-                        updatedColumns.Remove(columnName);
-                        _ = UpdateColumnVisibilityAsync(viewName, updatedColumns);
-                    }
-                    else
-                    {
-                        // Re-check it if it's the last one
-                        menuItem.IsChecked = true;
-                    }
-                };
-
-                contextMenu.Items.Add(menuItem);
-            }
-
-            return contextMenu;
-        }
-
-        /// <summary>
-        /// Auto-sizes all columns in a ListView
-        /// </summary>
-        private void AutoSizeAllColumns(ListView listView)
-        {
-            if (listView.View is GridView gridView)
-            {
-                foreach (var column in gridView.Columns)
-                {
-                    column.Width = double.NaN; // Auto size
-                }
-            }
-        }
-
-
 
         /// <summary>
         /// Loads all saved data from settings files
@@ -698,9 +284,6 @@ namespace MusicApp
 
                 // Restore playlists
                 RestorePlaylists(playlistsCache);
-
-                // Load sample data if no playlists exist
-                LoadSampleData();
 
                 // Restore recently played
                 RestoreRecentlyPlayed(recentlyPlayedCache);
@@ -741,60 +324,13 @@ namespace MusicApp
                     sidebarColumn.Width = new GridLength(appSettings.WindowState.SidebarWidth);
                 }
 
-                // Restore column widths for songs view
-                RestoreColumnWidths();
-                
-                // Rebuild columns with saved visibility settings
-                RebuildAllColumnsWithSavedSettings();
-            }
-        }
-        
-        /// <summary>
-        /// Rebuilds all columns with saved visibility and width settings
-        /// </summary>
-        private void RebuildAllColumnsWithSavedSettings()
-        {
-            BuildGridViewColumns(lstMusic, "Songs");
-            BuildGridViewColumns(lstQueue, "Queue");
-            BuildGridViewColumns(lstRecentlyPlayed, "Recently Played");
-            BuildGridViewColumns(lstArtists, "Artists");
-            BuildGridViewColumns(lstAlbums, "Albums");
-            BuildGridViewColumns(lstGenres, "Genres");
-            
-            // Re-wire up handlers
-            WireUpColumnHeaderSorting(lstMusic);
-            WireUpColumnHeaderSorting(lstQueue);
-            WireUpColumnHeaderSorting(lstRecentlyPlayed);
-            WireUpColumnHeaderSorting(lstArtists);
-            WireUpColumnHeaderSorting(lstAlbums);
-            WireUpColumnHeaderSorting(lstGenres);
-            WireUpColumnResizeHandlers(lstMusic);
-            WireUpColumnContextMenu(lstMusic, "Songs");
-            WireUpColumnContextMenu(lstQueue, "Queue");
-            WireUpColumnContextMenu(lstRecentlyPlayed, "Recently Played");
-            WireUpColumnContextMenu(lstArtists, "Artists");
-            WireUpColumnContextMenu(lstAlbums, "Albums");
-            WireUpColumnContextMenu(lstGenres, "Genres");
-        }
-
-        /// <summary>
-        /// Restores column widths for the songs view from saved settings
-        /// </summary>
-        private void RestoreColumnWidths()
-        {
-            if (lstMusic.View is GridView gridView && appSettings.WindowState?.SongsViewColumnWidths != null)
-            {
-                foreach (var column in gridView.Columns)
-                {
-                    if (column.Header != null && appSettings.WindowState.SongsViewColumnWidths.TryGetValue(
-                        column.Header.ToString() ?? "", out double savedWidth))
-                    {
-                        if (savedWidth > 0)
-                        {
-                            column.Width = savedWidth;
-                        }
-                    }
-                }
+                // Rebuild columns with saved visibility/width in each view
+                songsView?.RebuildColumns();
+                queueViewControl?.RebuildColumns();
+                recentlyPlayedViewControl?.RebuildColumns();
+                artistsViewControl?.RebuildColumns();
+                genresViewControl?.RebuildColumns();
+                albumsViewControl?.RebuildColumns();
             }
         }
 
@@ -942,7 +478,7 @@ namespace MusicApp
                 UpdateShuffledTracks();
 
                 // Update queue view if it's currently visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -975,6 +511,83 @@ namespace MusicApp
             }
         }
 
+        private async void PlaylistsViewControl_CreatePlaylistRequested(object? sender, EventArgs e)
+        {
+            var name = Microsoft.VisualBasic.Interaction.InputBox("Enter playlist name:", "Create Playlist", "New Playlist");
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+
+            var playlist = new Playlist(name);
+            libraryManager.AddPlaylist(playlists, playlist);
+            await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+            UpdateUI();
+        }
+
+        private async void PlaylistsViewControl_DeletePlaylistRequested(object? sender, Playlist e)
+        {
+            if (e == null)
+                return;
+
+            var result = MessageBox.Show($"Delete playlist \"{e.Name}\"?", "Delete Playlist", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            libraryManager.DeletePlaylist(playlists, e);
+            await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+            UpdateUI();
+        }
+
+        private async void PlaylistsViewControl_ImportPlaylistRequested(object? sender, EventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "M3U Playlists|*.m3u;*.m3u8|All Files|*.*",
+                Title = "Import Playlist"
+            };
+
+            var result = dialog.ShowDialog(this);
+            if (result != true)
+                return;
+
+            try
+            {
+                var imported = libraryManager.ImportPlaylistFromM3u(dialog.FileName, System.IO.Path.GetFileNameWithoutExtension(dialog.FileName), allTracks);
+                libraryManager.AddPlaylist(playlists, imported);
+                await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+                UpdateUI();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to import playlist: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void PlaylistsViewControl_ExportPlaylistRequested(object? sender, Playlist e)
+        {
+            if (e == null)
+                return;
+
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "M3U Playlists|*.m3u;*.m3u8|All Files|*.*",
+                Title = "Export Playlist",
+                FileName = $"{e.Name}.m3u"
+            };
+
+            var result = dialog.ShowDialog(this);
+            if (result != true)
+                return;
+
+            try
+            {
+                libraryManager.ExportPlaylistToM3u(e, dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to export playlist: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         /// <summary>
         /// Restores recently played tracks
         /// </summary>
@@ -998,23 +611,14 @@ namespace MusicApp
         /// </summary>
         private void UpdateUI()
         {
-            // Refresh the music list
-            lstMusic.ItemsSource = null;
-            lstMusic.ItemsSource = filteredTracks;
-
-            // Refresh playlists
-            lstPlaylists.ItemsSource = null;
-            lstPlaylists.ItemsSource = playlists;
-
-            // Refresh recently played
-            lstRecentlyPlayed.ItemsSource = null;
-            lstRecentlyPlayed.ItemsSource = recentlyPlayed;
-
-            // Refresh queue view if it's visible
-            if (queueView.Visibility == Visibility.Visible)
-            {
+            if (songsView != null) songsView.ItemsSource = allTracks;
+            if (playlistsViewControl != null) playlistsViewControl.Playlists = playlists;
+            if (recentlyPlayedViewControl != null) recentlyPlayedViewControl.ItemsSource = recentlyPlayed;
+            if (artistsViewControl != null) artistsViewControl.ItemsSource = allTracks;
+            if (genresViewControl != null) genresViewControl.ItemsSource = allTracks;
+            if (albumsViewControl != null) albumsViewControl.ItemsSource = allTracks;
+            if (contentHost?.Content == queueViewControl)
                 UpdateQueueView();
-            }
         }
 
         /// <summary>
@@ -1095,61 +699,12 @@ namespace MusicApp
         /// </summary>
         private void SetupEventHandlers()
         {
-            // Set the data context for the music list
-            lstMusic.ItemsSource = filteredTracks;
-            lstPlaylists.ItemsSource = playlists;
-            lstRecentlyPlayed.ItemsSource = recentlyPlayed;
-
-            // Initialize queue view
-            lstQueue.ItemsSource = new ObservableCollection<Song>();
-
-            // Initialize new views (will be populated with filtered data later)
-            lstArtists.ItemsSource = new ObservableCollection<Song>();
-            lstAlbums.ItemsSource = new ObservableCollection<Song>();
-            lstGenres.ItemsSource = new ObservableCollection<Song>();
-
-            // Map ListViews to view names for column width tracking
-            listViewToViewName[lstMusic] = "Songs";
-            listViewToViewName[lstQueue] = "Queue";
-            listViewToViewName[lstRecentlyPlayed] = "Recently Played";
-            listViewToViewName[lstArtists] = "Artists";
-            listViewToViewName[lstAlbums] = "Albums";
-            listViewToViewName[lstGenres] = "Genres";
-            
-            // Build columns dynamically for all ListViews after they're loaded
-            lstMusic.Loaded += (s, e) => BuildGridViewColumns(lstMusic, "Songs");
-            lstQueue.Loaded += (s, e) => BuildGridViewColumns(lstQueue, "Queue");
-            lstRecentlyPlayed.Loaded += (s, e) => BuildGridViewColumns(lstRecentlyPlayed, "Recently Played");
-            lstArtists.Loaded += (s, e) => BuildGridViewColumns(lstArtists, "Artists");
-            lstAlbums.Loaded += (s, e) => BuildGridViewColumns(lstAlbums, "Albums");
-            lstGenres.Loaded += (s, e) => BuildGridViewColumns(lstGenres, "Genres");
-            
-            // Also build immediately in case Loaded already fired
-            BuildGridViewColumns(lstMusic, "Songs");
-            BuildGridViewColumns(lstQueue, "Queue");
-            BuildGridViewColumns(lstRecentlyPlayed, "Recently Played");
-            BuildGridViewColumns(lstArtists, "Artists");
-            BuildGridViewColumns(lstAlbums, "Albums");
-            BuildGridViewColumns(lstGenres, "Genres");
-
-            // Wire up column header sorting for all ListViews
-            WireUpColumnHeaderSorting(lstMusic);
-            WireUpColumnHeaderSorting(lstQueue);
-            WireUpColumnHeaderSorting(lstRecentlyPlayed);
-            WireUpColumnHeaderSorting(lstArtists);
-            WireUpColumnHeaderSorting(lstAlbums);
-            WireUpColumnHeaderSorting(lstGenres);
-
-            // Wire up column resize handlers for songs view to enforce minimum width
-            WireUpColumnResizeHandlers(lstMusic);
-
-            // Wire up context menus for all ListViews
-            WireUpColumnContextMenu(lstMusic, "Songs");
-            WireUpColumnContextMenu(lstQueue, "Queue");
-            WireUpColumnContextMenu(lstRecentlyPlayed, "Recently Played");
-            WireUpColumnContextMenu(lstArtists, "Artists");
-            WireUpColumnContextMenu(lstAlbums, "Albums");
-            WireUpColumnContextMenu(lstGenres, "Genres");
+            if (songsView != null) songsView.ItemsSource = allTracks;
+            if (playlistsViewControl != null) playlistsViewControl.Playlists = playlists;
+            if (recentlyPlayedViewControl != null) recentlyPlayedViewControl.ItemsSource = recentlyPlayed;
+            if (artistsViewControl != null) artistsViewControl.ItemsSource = allTracks;
+            if (genresViewControl != null) genresViewControl.ItemsSource = allTracks;
+            if (albumsViewControl != null) albumsViewControl.ItemsSource = allTracks;
 
             // Wire up title bar player control events
             titleBarPlayer.PlayPauseRequested += TitleBarPlayer_PlayPauseRequested;
@@ -1164,20 +719,6 @@ namespace MusicApp
 
             // Wire up window size changed event
             this.SizeChanged += MainWindow_SizeChanged;
-        }
-
-        /// <summary>
-        /// Loads initial sample data for the application (only if no saved data exists)
-        /// </summary>
-        private void LoadSampleData()
-        {
-            // Only add sample playlists if no playlists exist
-            if (playlists.Count == 0)
-            {
-                playlists.Add(new Playlist("Favorites", "My favorite songs"));
-                playlists.Add(new Playlist("Workout Mix", "High energy songs for workouts"));
-                playlists.Add(new Playlist("Chill Vibes", "Relaxing music"));
-            }
         }
 
         #region Shuffle Management
@@ -1274,7 +815,7 @@ namespace MusicApp
                 Console.WriteLine($"Shuffle queue order: {string.Join(" -> ", shuffledTracks.Take(5).Select(t => t.Title))}...");
 
                 // Update queue view if it's currently visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -1483,7 +1024,11 @@ namespace MusicApp
         {
             if (currentTrack == null)
             {
-                if (filteredTracks.Count > 0)
+                if (contentHost?.Content == songsView && songsView?.SelectedTrack is Song selectedSong)
+                {
+                    PlayTrack(selectedSong);
+                }
+                else if (filteredTracks.Count > 0)
                 {
                     PlayTrack(filteredTracks[0]);
                 }
@@ -1551,7 +1096,7 @@ namespace MusicApp
                 {
                     Console.WriteLine("Previous track is null or invalid, cannot play");
                     // Update queue view if it's visible
-                    if (queueView.Visibility == Visibility.Visible)
+                    if (contentHost?.Content == queueViewControl)
                     {
                         UpdateQueueView();
                     }
@@ -1614,7 +1159,7 @@ namespace MusicApp
                     titleBarPlayer.SetTrackInfo("No track selected", "", "");
 
                     // Update queue view if it's visible
-                    if (queueView.Visibility == Visibility.Visible)
+                    if (contentHost?.Content == queueViewControl)
                     {
                         UpdateQueueView();
                     }
@@ -1637,7 +1182,7 @@ namespace MusicApp
                 titleBarPlayer.SetTrackInfo("No track selected", "", "");
 
                 // Update queue view if it's visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -1790,36 +1335,6 @@ namespace MusicApp
                 {
                     appSettings.WindowState.SidebarWidth = sidebarColumn.ActualWidth;
 
-                    // Save column widths for all views
-                    if (appSettings.WindowState.ColumnWidths == null)
-                    {
-                        appSettings.WindowState.ColumnWidths = new Dictionary<string, Dictionary<string, double>>();
-                    }
-
-                    foreach (var kvp in listViewToViewName)
-                    {
-                        var listView = kvp.Key;
-                        var viewName = kvp.Value;
-                        
-                        if (listView.View is GridView gridView)
-                        {
-                            var columnWidths = new Dictionary<string, double>();
-                            foreach (var column in gridView.Columns)
-                            {
-                                if (column.Header != null && !double.IsNaN(column.Width))
-                                {
-                                    columnWidths[column.Header.ToString() ?? ""] = column.Width;
-                                }
-                            }
-                            appSettings.WindowState.ColumnWidths[viewName] = columnWidths;
-
-                            // Also update SongsViewColumnWidths for backward compatibility
-                            if (viewName == "Songs")
-                            {
-                                appSettings.WindowState.SongsViewColumnWidths = columnWidths;
-                            }
-                        }
-                    }
                 }
 
                 // Save the settings asynchronously
@@ -1866,7 +1381,7 @@ namespace MusicApp
             }
 
             // Update queue view if it's currently visible
-            if (queueView.Visibility == Visibility.Visible)
+            if (contentHost?.Content == queueViewControl)
             {
                 UpdateQueueView();
             }
@@ -1937,87 +1452,241 @@ namespace MusicApp
 
         private void ShowLibraryView()
         {
-            libraryView.Visibility = Visibility.Visible;
-            queueView.Visibility = Visibility.Collapsed;
-            playlistsView.Visibility = Visibility.Collapsed;
-            recentlyPlayedView.Visibility = Visibility.Collapsed;
-            artistsView.Visibility = Visibility.Collapsed;
-            albumsView.Visibility = Visibility.Collapsed;
-            genresView.Visibility = Visibility.Collapsed;
+            contentHost.Content = songsView;
+            if (songsView != null) songsView.ItemsSource = allTracks;
         }
 
         private void ShowQueueView()
         {
-            libraryView.Visibility = Visibility.Collapsed;
-            queueView.Visibility = Visibility.Visible;
-            playlistsView.Visibility = Visibility.Collapsed;
-            recentlyPlayedView.Visibility = Visibility.Collapsed;
-            artistsView.Visibility = Visibility.Collapsed;
-            albumsView.Visibility = Visibility.Collapsed;
-            genresView.Visibility = Visibility.Collapsed;
-
-            // Update the queue list with current playing queue
+            contentHost.Content = queueViewControl;
             UpdateQueueView();
         }
 
         private void ShowPlaylistsView()
         {
-            libraryView.Visibility = Visibility.Collapsed;
-            queueView.Visibility = Visibility.Collapsed;
-            playlistsView.Visibility = Visibility.Visible;
-            recentlyPlayedView.Visibility = Visibility.Collapsed;
-            artistsView.Visibility = Visibility.Collapsed;
-            albumsView.Visibility = Visibility.Collapsed;
-            genresView.Visibility = Visibility.Collapsed;
+            contentHost.Content = playlistsViewControl;
+            if (playlistsViewControl != null) playlistsViewControl.Playlists = playlists;
         }
 
         private void ShowRecentlyPlayedView()
         {
-            libraryView.Visibility = Visibility.Collapsed;
-            queueView.Visibility = Visibility.Collapsed;
-            playlistsView.Visibility = Visibility.Collapsed;
-            recentlyPlayedView.Visibility = Visibility.Visible;
-            artistsView.Visibility = Visibility.Collapsed;
-            albumsView.Visibility = Visibility.Collapsed;
-            genresView.Visibility = Visibility.Collapsed;
+            contentHost.Content = recentlyPlayedViewControl;
+            if (recentlyPlayedViewControl != null) recentlyPlayedViewControl.ItemsSource = recentlyPlayed;
         }
 
         private void ShowArtistsView()
         {
-            libraryView.Visibility = Visibility.Collapsed;
-            queueView.Visibility = Visibility.Collapsed;
-            playlistsView.Visibility = Visibility.Collapsed;
-            recentlyPlayedView.Visibility = Visibility.Collapsed;
-            artistsView.Visibility = Visibility.Visible;
-            albumsView.Visibility = Visibility.Collapsed;
-            genresView.Visibility = Visibility.Collapsed;
+            contentHost.Content = artistsViewControl;
+            if (artistsViewControl != null) artistsViewControl.ItemsSource = null;
         }
 
         private void ShowAlbumsView()
         {
-            libraryView.Visibility = Visibility.Collapsed;
-            queueView.Visibility = Visibility.Collapsed;
-            playlistsView.Visibility = Visibility.Collapsed;
-            recentlyPlayedView.Visibility = Visibility.Collapsed;
-            artistsView.Visibility = Visibility.Collapsed;
-            albumsView.Visibility = Visibility.Visible;
-            genresView.Visibility = Visibility.Collapsed;
+            contentHost.Content = albumsViewControl;
+            if (albumsViewControl != null) albumsViewControl.ItemsSource = null;
         }
 
         private void ShowGenresView()
         {
-            libraryView.Visibility = Visibility.Collapsed;
-            queueView.Visibility = Visibility.Collapsed;
-            playlistsView.Visibility = Visibility.Collapsed;
-            recentlyPlayedView.Visibility = Visibility.Collapsed;
-            artistsView.Visibility = Visibility.Collapsed;
-            albumsView.Visibility = Visibility.Collapsed;
-            genresView.Visibility = Visibility.Visible;
+            contentHost.Content = genresViewControl;
+            if (genresViewControl != null) genresViewControl.ItemsSource = null;
         }
 
         #endregion
 
         #region Queue Management
+
+        /// <summary>
+        /// Inserts the given track to play immediately after the current track (play next).
+        /// </summary>
+        private void OnPlayNextRequested(object? sender, Song track)
+        {
+            if (track == null || string.IsNullOrEmpty(track.FilePath))
+                return;
+
+            int insertAt = GetCurrentTrackIndex() + 1;
+            if (insertAt < 0)
+                insertAt = 0;
+
+            // Insert into filtered queue (normal order)
+            if (insertAt <= filteredTracks.Count)
+                filteredTracks.Insert(insertAt, track);
+            else
+                filteredTracks.Add(track);
+
+            // Insert into shuffled queue at same logical position
+            int shuffleInsertAt = (titleBarPlayer.IsShuffleEnabled ? currentShuffledIndex : currentTrackIndex) + 1;
+            if (shuffleInsertAt < 0)
+                shuffleInsertAt = 0;
+            if (shuffleInsertAt <= shuffledTracks.Count)
+                shuffledTracks.Insert(shuffleInsertAt, track);
+            else
+                shuffledTracks.Add(track);
+
+            if (contentHost?.Content == queueViewControl)
+                UpdateQueueView();
+        }
+
+        /// <summary>
+        /// Appends the given track to the end of the current queue.
+        /// </summary>
+        private void OnAddToQueueRequested(object? sender, Song track)
+        {
+            if (track == null || string.IsNullOrEmpty(track.FilePath))
+                return;
+
+            filteredTracks.Add(track);
+            shuffledTracks.Add(track);
+
+            if (contentHost?.Content == queueViewControl)
+                UpdateQueueView();
+        }
+
+        private async void OnAddTrackToPlaylistRequested(object? sender, (Song track, Playlist playlist) args)
+        {
+            if (args.track == null || args.playlist == null)
+                return;
+            args.playlist.AddTrack(args.track);
+            await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+        }
+
+        private async void OnCreateNewPlaylistWithTrackRequested(object? sender, Song track)
+        {
+            if (track == null)
+                return;
+            var dialog = new NewPlaylistDialog
+            {
+                Owner = this
+            };
+            if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.PlaylistName))
+                return;
+            var playlist = new Playlist(dialog.PlaylistName.Trim());
+            playlist.AddTrack(track);
+            libraryManager.AddPlaylist(playlists, playlist);
+            await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+            UpdateUI();
+        }
+
+        private async void OnRemoveFromPlaylistRequested(object? sender, (Song track, Playlist playlist) args)
+        {
+            if (args.track == null || args.playlist == null)
+                return;
+            args.playlist.RemoveTrack(args.track);
+            await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+        }
+
+        /// <summary>
+        /// Opens Windows Explorer with the track's file selected.
+        /// </summary>
+        private void OnShowInExplorerRequested(object? sender, Song track)
+        {
+            if (track == null || string.IsNullOrEmpty(track.FilePath))
+                return;
+            if (!File.Exists(track.FilePath))
+                return;
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"/select,\"{track.FilePath}\""
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log or show a brief message if explorer fails (e.g. path no longer valid)
+                Debug.WriteLine($"Show in Explorer failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Removes the track from the MusicApp library (in-memory and persisted). Does not delete the file.
+        /// </summary>
+        private async void OnRemoveFromLibraryRequested(object? sender, Song track)
+        {
+            if (track == null || string.IsNullOrEmpty(track.FilePath))
+                return;
+            var result = MessageBox.Show($"Remove \"{track.Title}\" from the library? The file will stay on your computer.", "Remove from Library", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result != MessageBoxResult.Yes)
+                return;
+            await RemoveTrackFromLibraryAsync(track);
+        }
+
+        /// <summary>
+        /// Moves the track's file to the recycle bin, then removes it from the library.
+        /// </summary>
+        private async void OnDeleteRequested(object? sender, Song track)
+        {
+            if (track == null || string.IsNullOrEmpty(track.FilePath))
+                return;
+            var result = MessageBox.Show($"Move \"{track.Title}\" to the recycle bin?", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+                return;
+            if (!File.Exists(track.FilePath))
+            {
+                // File already gone; just remove from library
+                await RemoveTrackFromLibraryAsync(track);
+                return;
+            }
+            if (!MoveToRecycleBin(track.FilePath))
+            {
+                System.Windows.MessageBox.Show($"Could not move file to recycle bin: {track.FilePath}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+            await RemoveTrackFromLibraryAsync(track);
+        }
+
+        /// <summary>
+        /// Removes a track from all in-memory collections, playlists, and persisted caches. Stops playback if this track is current.
+        /// </summary>
+        private async Task RemoveTrackFromLibraryAsync(Song track)
+        {
+            if (track == null)
+                return;
+
+            var path = track.FilePath;
+
+            // If this is the current track, stop playback and clear state
+            if (currentTrack != null && string.Equals(currentTrack.FilePath, path, StringComparison.OrdinalIgnoreCase))
+            {
+                CleanupAudioObjects();
+                currentTrack = null;
+                currentTrackIndex = -1;
+                currentShuffledIndex = -1;
+                titleBarPlayer.SetTrackInfo("No track selected", "", "");
+            }
+
+            allTracks.Remove(track);
+            filteredTracks.Remove(track);
+            shuffledTracks.Remove(track);
+            recentlyPlayed.Remove(track);
+
+            foreach (var playlist in playlists)
+            {
+                var toRemove = playlist.Tracks.FirstOrDefault(t => string.Equals(t.FilePath, path, StringComparison.OrdinalIgnoreCase));
+                if (toRemove != null)
+                    playlist.RemoveTrack(toRemove);
+            }
+
+            var libraryCache = await libraryManager.LoadLibraryCacheAsync();
+            libraryCache.Tracks = allTracks.ToList();
+            await libraryManager.SaveLibraryCacheAsync(libraryCache);
+
+            var recentlyPlayedCache = new LibraryManager.RecentlyPlayedCache
+            {
+                RecentlyPlayed = recentlyPlayed.Select(s => new LibraryManager.RecentlyPlayedItem { FilePath = s.FilePath, LastPlayed = s.LastPlayed }).ToList()
+            };
+            await libraryManager.SaveRecentlyPlayedAsync(recentlyPlayedCache);
+
+            await libraryManager.SavePlaylistsFromCollectionAsync(playlists);
+
+            UpdateUI();
+            UpdateShuffledTracks();
+            if (contentHost?.Content == queueViewControl)
+                UpdateQueueView();
+            UpdateStatusBar();
+        }
 
         /// <summary>
         /// Updates the queue view with the current playing queue
@@ -2031,15 +1700,18 @@ namespace MusicApp
                 var queueView = BuildQueueView();
                 Console.WriteLine($"Built queue view with {queueView?.Count ?? 0} songs");
 
-                if (queueView != null && queueView.Count > 0)
+                if (queueViewControl != null)
                 {
-                    Console.WriteLine($"Setting lstQueue.ItemsSource to queue with {queueView.Count} songs");
-                    lstQueue.ItemsSource = queueView;
-                }
-                else
-                {
-                    Console.WriteLine("Queue view is empty, setting lstQueue.ItemsSource to empty collection");
-                    lstQueue.ItemsSource = new ObservableCollection<Song>();
+                    if (queueView != null && queueView.Count > 0)
+                    {
+                        Console.WriteLine($"Setting queue view ItemsSource to queue with {queueView.Count} songs");
+                        queueViewControl.ItemsSource = queueView;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Queue view is empty, setting ItemsSource to empty collection");
+                        queueViewControl.ItemsSource = new ObservableCollection<Song>();
+                    }
                 }
 
                 // Log the current state
@@ -2050,7 +1722,7 @@ namespace MusicApp
             {
                 Console.WriteLine($"Error updating queue view: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                lstQueue.ItemsSource = new ObservableCollection<Song>();
+                if (queueViewControl != null) queueViewControl.ItemsSource = new ObservableCollection<Song>();
             }
         }
 
@@ -2191,35 +1863,6 @@ namespace MusicApp
             }
         }
 
-        /// <summary>
-        /// Event handler for queue list selection changes
-        /// </summary>
-        private void LstQueue_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstQueue.SelectedItem is Song selectedSong)
-            {
-                // When selecting from queue view, jump to the selected track without regenerating shuffle queue
-                var currentQueue = GetCurrentPlayQueue();
-                if (currentQueue != null)
-                {
-                    int queueIndex = currentQueue.IndexOf(selectedSong);
-                    if (queueIndex >= 0)
-                    {
-                        Console.WriteLine($"Queue selection: jumping to track '{selectedSong.Title}' at index {queueIndex} in existing queue");
-
-                        // Set manual navigation flag to prevent shuffle queue regeneration
-                        isManualNavigation = true;
-
-                        // Start playing the selected track immediately
-                        PlayTrack(selectedSong);
-
-                        // Clear the selection to avoid confusion
-                        lstQueue.SelectedItem = null;
-                    }
-                }
-            }
-        }
-
         #endregion
 
         #region Music Management
@@ -2322,7 +1965,7 @@ namespace MusicApp
                         UpdateShuffledTracks();
 
                         // Update queue view if it's currently visible
-                        if (queueView.Visibility == Visibility.Visible)
+                        if (contentHost?.Content == queueViewControl)
                         {
                             UpdateQueueView();
                         }
@@ -2450,7 +2093,7 @@ namespace MusicApp
                 UpdateShuffledTracks();
 
                 // Update queue view if it's currently visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -2717,333 +2360,6 @@ namespace MusicApp
 
         #region Playback Control
 
-        private void LstMusic_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstMusic.SelectedItem is Song selectedTrack)
-            {
-                // When selecting from library view, always regenerate shuffle queue if shuffle is enabled
-                PlayTrack(selectedTrack);
-            }
-        }
-
-        private void LstRecentlyPlayed_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstRecentlyPlayed.SelectedItem is Song selectedTrack)
-            {
-                // When selecting from recently played view, always regenerate shuffle queue if shuffle is enabled
-                PlayTrack(selectedTrack);
-            }
-        }
-
-        private void LstArtists_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstArtists.SelectedItem is Song selectedTrack)
-            {
-                // When selecting from artists view, always regenerate shuffle queue if shuffle is enabled
-                PlayTrack(selectedTrack);
-            }
-        }
-
-        private void LstAlbums_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstAlbums.SelectedItem is Song selectedTrack)
-            {
-                // When selecting from albums view, always regenerate shuffle queue if shuffle is enabled
-                PlayTrack(selectedTrack);
-            }
-        }
-
-        private void LstGenres_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstGenres.SelectedItem is Song selectedTrack)
-            {
-                // When selecting from genres view, always regenerate shuffle queue if shuffle is enabled
-                PlayTrack(selectedTrack);
-            }
-        }
-
-        #region Column Sorting
-
-        /// <summary>
-        /// Wires up click event handlers for all column headers in a ListView
-        /// </summary>
-        private void WireUpColumnHeaderSorting(ListView listView)
-        {
-            if (listView.View is GridView gridView)
-            {
-                // Wait for the ListView to be loaded and rendered so headers exist
-                listView.Loaded += (s, e) =>
-                {
-                    // Use Dispatcher to ensure headers are fully rendered
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        WireUpHeadersForListView(listView);
-                    }), DispatcherPriority.Loaded);
-                };
-
-                // Also wire up when the ListView is rendered (in case Loaded fires too early)
-                listView.LayoutUpdated += (s, e) =>
-                {
-                    WireUpHeadersForListView(listView);
-                };
-            }
-        }
-
-        /// <summary>
-        /// Helper method to wire up headers for a specific ListView
-        /// </summary>
-        private void WireUpHeadersForListView(ListView listView)
-        {
-            // Find all GridViewColumnHeader elements
-            var headers = FindVisualChildren<GridViewColumnHeader>(listView);
-            foreach (var header in headers)
-            {
-                // Only wire up if not already wired
-                if (!wiredHeaders.Contains(header))
-                {
-                    header.Click += (sender, args) => ColumnHeader_Click(sender, args, listView);
-                    wiredHeaders.Add(header);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Finds all visual children of a specific type
-        /// </summary>
-        private IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
-        {
-            if (depObj != null)
-            {
-                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
-                {
-                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-                    if (child != null)
-                    {
-                        if (child is T)
-                        {
-                            yield return (T)child;
-                        }
-
-                        foreach (T childOfChild in FindVisualChildren<T>(child))
-                        {
-                            yield return childOfChild;
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles column header click events for sorting
-        /// </summary>
-        private void ColumnHeader_Click(object sender, RoutedEventArgs e, ListView listView)
-        {
-            if (sender is GridViewColumnHeader clickedHeader)
-            {
-                // Get the column header text
-                string columnName = clickedHeader.Content?.ToString() ?? "";
-
-                // Determine sort direction (toggle if same column, otherwise ascending)
-                ListSortDirection direction = ListSortDirection.Ascending;
-                if (sortStates.ContainsKey(listView) && sortStates[listView].column == columnName)
-                {
-                    // Toggle direction if clicking the same column
-                    direction = sortStates[listView].direction == ListSortDirection.Ascending
-                        ? ListSortDirection.Descending
-                        : ListSortDirection.Ascending;
-                }
-
-                // Update sort state
-                sortStates[listView] = (columnName, direction);
-
-                // Perform the sort
-                SortListView(listView, columnName, direction);
-            }
-        }
-
-        /// <summary>
-        /// Sorts a ListView by the specified column
-        /// </summary>
-        private void SortListView(ListView listView, string columnName, ListSortDirection direction)
-        {
-            if (listView.ItemsSource == null) return;
-
-            // Get the default view of the collection
-            ICollectionView view = CollectionViewSource.GetDefaultView(listView.ItemsSource);
-            if (view == null) return;
-
-            // Clear existing sort descriptions
-            view.SortDescriptions.Clear();
-
-            // Get property name from column definitions
-            string propertyName = columnName;
-            if (columnDefinitions.TryGetValue(columnName, out var columnDef))
-            {
-                propertyName = columnDef.SortPropertyName;
-            }
-
-            // Add new sort description
-            view.SortDescriptions.Add(new SortDescription(propertyName, direction));
-
-            // Apply the sort
-            view.Refresh();
-        }
-
-        /// <summary>
-        /// Wires up handlers to monitor column width changes and enforce minimum width
-        /// Uses DependencyPropertyDescriptor for efficient property change monitoring
-        /// </summary>
-        private void WireUpColumnResizeHandlers(ListView listView)
-        {
-            // Wire up only once when the ListView is loaded
-            listView.Loaded += (s, e) =>
-            {
-                WireUpColumnWidthMonitoring(listView);
-            };
-        }
-
-        /// <summary>
-        /// Monitors GridViewColumn width property changes and enforces minimum width
-        /// This is the most efficient approach as it directly monitors the property without visual tree traversal
-        /// </summary>
-        private void WireUpColumnWidthMonitoring(ListView listView)
-        {
-            if (listView.View is GridView gridView)
-            {
-                const double minWidth = 50.0;
-
-                // Monitor each column's width property directly
-                foreach (var column in gridView.Columns)
-                {
-                    // Only wire up if not already wired
-                    if (!wiredColumnWidthHandlers.Contains(column))
-                    {
-                        // Use DependencyPropertyDescriptor to watch for width changes
-                        // This is efficient as it directly monitors the property without events
-                        var descriptor = DependencyPropertyDescriptor.FromProperty(GridViewColumn.WidthProperty, typeof(GridViewColumn));
-                        if (descriptor != null)
-                        {
-                            descriptor.AddValueChanged(column, (sender, e) =>
-                            {
-                                if (sender is GridViewColumn col)
-                                {
-                                    // Enforce minimum width
-                                    if (!double.IsNaN(col.Width) && col.Width < minWidth)
-                                    {
-                                        col.Width = minWidth;
-                                    }
-                                    
-                                    // Mark column widths as dirty for saving
-                                    if (listViewToViewName.TryGetValue(listView, out var viewName))
-                                    {
-                                        MarkColumnWidthDirty(viewName);
-                                    }
-                                }
-                            });
-                            wiredColumnWidthHandlers.Add(column);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Sets up column width tracking and save timer
-        /// </summary>
-        private void SetupColumnWidthTracking()
-        {
-            // Initialize the save timer for column widths
-            columnWidthSaveTimer = new DispatcherTimer(
-                TimeSpan.FromSeconds(0.5),
-                DispatcherPriority.Background,
-                ColumnWidthSaveTimer_Tick,
-                Dispatcher.CurrentDispatcher);
-        }
-
-        /// <summary>
-        /// Marks the column widths as dirty for a specific view and starts the save timer
-        /// </summary>
-        private void MarkColumnWidthDirty(string viewName)
-        {
-            isColumnWidthDirty = true;
-            dirtyColumnWidthViews.Add(viewName);
-
-            if (columnWidthSaveTimer != null && !columnWidthSaveTimer.IsEnabled)
-            {
-                columnWidthSaveTimer.Start();
-            }
-        }
-
-        /// <summary>
-        /// Timer callback to save the column widths for all dirty views
-        /// </summary>
-        private async void ColumnWidthSaveTimer_Tick(object? sender, EventArgs e)
-        {
-            if (isColumnWidthDirty)
-            {
-                isColumnWidthDirty = false;
-                var viewsToSave = new HashSet<string>(dirtyColumnWidthViews);
-                dirtyColumnWidthViews.Clear();
-                columnWidthSaveTimer?.Stop();
-
-                try
-                {
-                    if (appSettings.WindowState == null)
-                    {
-                        appSettings = await settingsManager.LoadSettingsAsync();
-                    }
-
-                    if (appSettings.WindowState.ColumnWidths == null)
-                    {
-                        appSettings.WindowState.ColumnWidths = new Dictionary<string, Dictionary<string, double>>();
-                    }
-
-                    // Save column widths for each dirty view
-                    foreach (var viewName in viewsToSave)
-                    {
-                        ListView? targetListView = viewName switch
-                        {
-                            "Songs" => lstMusic,
-                            "Queue" => lstQueue,
-                            "Artists" => lstArtists,
-                            "Albums" => lstAlbums,
-                            "Genres" => lstGenres,
-                            "Recently Played" => lstRecentlyPlayed,
-                            _ => null
-                        };
-
-                        if (targetListView?.View is GridView gridView)
-                        {
-                            var columnWidths = new Dictionary<string, double>();
-                            foreach (var column in gridView.Columns)
-                            {
-                                if (column.Header != null && !double.IsNaN(column.Width))
-                                {
-                                    columnWidths[column.Header.ToString() ?? ""] = column.Width;
-                                }
-                            }
-                            appSettings.WindowState.ColumnWidths[viewName] = columnWidths;
-
-                            // Also update SongsViewColumnWidths for backward compatibility
-                            if (viewName == "Songs")
-                            {
-                                appSettings.WindowState.SongsViewColumnWidths = columnWidths;
-                            }
-                        }
-                    }
-
-                    await settingsManager.SaveSettingsAsync(appSettings);
-                    System.Diagnostics.Debug.WriteLine($"MainWindow: Column widths saved for views: {string.Join(", ", viewsToSave)}");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error saving column widths: {ex.Message}");
-                }
-            }
-        }
-
-        #endregion
-
         private void PlayTrack(Song track)
         {
             try
@@ -3147,13 +2463,13 @@ namespace MusicApp
                 AddToRecentlyPlayed(track);
 
                 // Update playlists view if it's visible
-                if (playlistsView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == playlistsViewControl)
                 {
                     UpdatePlaylistsView();
                 }
 
                 // Update queue view if it's visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -3265,13 +2581,13 @@ namespace MusicApp
                 AddToRecentlyPlayed(track);
 
                 // Update playlists view if it's visible
-                if (playlistsView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == playlistsViewControl)
                 {
                     UpdatePlaylistsView();
                 }
 
                 // Update queue view if it's visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -3542,7 +2858,7 @@ namespace MusicApp
                 titleBarPlayer.SetTrackInfo("No track selected", "", "");
 
                 // Update queue view if it's visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -3678,7 +2994,7 @@ namespace MusicApp
                         PlayTrack(nextTrack);
 
                         // Update queue view if it's visible
-                        if (queueView.Visibility == Visibility.Visible)
+                        if (contentHost?.Content == queueViewControl)
                         {
                             UpdateQueueView();
                         }
@@ -3754,10 +3070,10 @@ namespace MusicApp
                     return;
                 }
 
-                // Get the AppData\Roaming\MusicApp directory
+                // Get the AppData\Roaming\musicApp directory
                 var appDataPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "MusicApp");
+                    "musicApp");
 
                 if (!Directory.Exists(appDataPath))
                 {
@@ -3815,7 +3131,7 @@ namespace MusicApp
                 windowManager.ResetWindowState();
 
                 // Update queue view if it's visible
-                if (queueView.Visibility == Visibility.Visible)
+                if (contentHost?.Content == queueViewControl)
                 {
                     UpdateQueueView();
                 }
@@ -3892,66 +3208,6 @@ namespace MusicApp
                 if (appSettings.WindowState != null)
                 {
                     appSettings.WindowState.SidebarWidth = sidebarColumn.ActualWidth;
-
-                    // Save column widths for all views
-                    if (appSettings.WindowState.ColumnWidths == null)
-                    {
-                        appSettings.WindowState.ColumnWidths = new Dictionary<string, Dictionary<string, double>>();
-                    }
-
-                    // Save column visibility for all views
-                    if (appSettings.WindowState.ColumnVisibility == null)
-                    {
-                        appSettings.WindowState.ColumnVisibility = new Dictionary<string, List<string>>();
-                    }
-
-                    foreach (var kvp in listViewToViewName)
-                    {
-                        var listView = kvp.Key;
-                        var viewName = kvp.Value;
-                        
-                        if (listView.View is GridView gridView)
-                        {
-                            // Save column widths
-                            var columnWidths = new Dictionary<string, double>();
-                            foreach (var column in gridView.Columns)
-                            {
-                                if (column.Header != null && !double.IsNaN(column.Width))
-                                {
-                                    columnWidths[column.Header.ToString() ?? ""] = column.Width;
-                                }
-                            }
-                            appSettings.WindowState.ColumnWidths[viewName] = columnWidths;
-
-                            // Save column visibility (get current visible columns in order)
-                            var visibleColumns = new List<string>();
-                            foreach (var column in gridView.Columns)
-                            {
-                                if (column.Header != null)
-                                {
-                                    // Find the column name from the header display name
-                                    var headerText = column.Header.ToString() ?? "";
-                                    // Search column definitions to find matching display name
-                                    foreach (var colDef in columnDefinitions)
-                                    {
-                                        if (colDef.Value.DisplayName == headerText)
-                                        {
-                                            visibleColumns.Add(colDef.Key);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            // Always save visibility, even if empty (will use defaults on load)
-                            appSettings.WindowState.ColumnVisibility[viewName] = visibleColumns;
-
-                            // Also update SongsViewColumnWidths for backward compatibility
-                            if (viewName == "Songs")
-                            {
-                                appSettings.WindowState.SongsViewColumnWidths = columnWidths;
-                            }
-                        }
-                    }
                 }
 
                 // Save settings

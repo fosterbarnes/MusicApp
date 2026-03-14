@@ -3,7 +3,7 @@ param(
     [string]$Date
 )
 
-$Host.UI.RawUI.WindowTitle = "MusicApp Nightly Release"
+$Host.UI.RawUI.WindowTitle = "musicApp Nightly Release"
 
 if ($Date) {
     if ($Date -match '^\d+\.\d+\.\d+$') {
@@ -17,9 +17,9 @@ if ($Date) {
     $currentDate = Get-Date -Format "M.d.yy"
 }
 
-$repoRoot = $PSScriptRoot
+$repoRoot = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
 $buildPath = "$repoRoot\MusicApp\bin\Release\net8.0-windows"
-$zipFileName = "MusicApp_$currentDate.zip"
+$zipFileName = "musicApp_$currentDate.zip"
 $zipPath = "$env:TEMP\$zipFileName"
 $releaseName = "$currentDate Nightly Release"
 $repoUrl = "https://github.com/fosterbarnes/MusicApp"

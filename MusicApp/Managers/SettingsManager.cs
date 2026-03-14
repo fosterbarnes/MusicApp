@@ -11,7 +11,7 @@ namespace MusicApp
     {
         private static readonly string AppDataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
-            "MusicApp");
+            "musicApp");
         
         private static readonly string SettingsFilePath = Path.Combine(AppDataPath, "settings.json");
 

@@ -1,0 +1,46 @@
+using System.Windows.Controls;
+
+namespace MusicApp.Views
+{
+    public partial class QueueView : UserControl
+    {
+        public QueueView()
+        {
+            InitializeComponent();
+            trackList.AddToPlaylistRequested += (s, track) => AddToPlaylistRequested?.Invoke(this, track);
+            trackList.AddTrackToPlaylistRequested += (s, args) => AddTrackToPlaylistRequested?.Invoke(this, args);
+            trackList.CreateNewPlaylistWithTrackRequested += (s, track) => CreateNewPlaylistWithTrackRequested?.Invoke(this, track);
+            trackList.PlayNextRequested += (s, track) => PlayNextRequested?.Invoke(this, track);
+            trackList.AddToQueueRequested += (s, track) => AddToQueueRequested?.Invoke(this, track);
+            trackList.InfoRequested += (s, track) => InfoRequested?.Invoke(this, track);
+            trackList.ShowInExplorerRequested += (s, track) => ShowInExplorerRequested?.Invoke(this, track);
+            trackList.RemoveFromLibraryRequested += (s, track) => RemoveFromLibraryRequested?.Invoke(this, track);
+            trackList.DeleteRequested += (s, track) => DeleteRequested?.Invoke(this, track);
+        }
+
+        public System.Collections.IEnumerable? ItemsSource
+        {
+            get => trackList.ItemsSource;
+            set => trackList.ItemsSource = value;
+        }
+
+        public event System.EventHandler<Song>? PlayTrackRequested;
+
+        public event System.EventHandler<Song>? AddToPlaylistRequested;
+        public event System.EventHandler<(Song track, Playlist playlist)>? AddTrackToPlaylistRequested;
+        public event System.EventHandler<Song>? CreateNewPlaylistWithTrackRequested;
+        public event System.EventHandler<Song>? PlayNextRequested;
+        public event System.EventHandler<Song>? AddToQueueRequested;
+        public event System.EventHandler<Song>? InfoRequested;
+        public event System.EventHandler<Song>? ShowInExplorerRequested;
+        public event System.EventHandler<Song>? RemoveFromLibraryRequested;
+        public event System.EventHandler<Song>? DeleteRequested;
+
+        public void RebuildColumns() => trackList.RebuildColumns();
+
+        private void TrackList_PlayTrackRequested(object? sender, Song e)
+        {
+            PlayTrackRequested?.Invoke(this, e);
+        }
+    }
+}

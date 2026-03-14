@@ -1,6 +1,6 @@
 # Converters Module
 
-This module contains reusable value converters for the MusicApp application.
+This module contains reusable value converters for the musicApp application.
 
 ## Purpose
 

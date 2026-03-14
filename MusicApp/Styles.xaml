@@ -281,4 +281,160 @@
         </Style.Triggers>
     </Style>
 
+    <!-- ===========================================
+         TRACK CONTEXT MENU STYLES
+         =========================================== -->
+
+    <!-- Base chrome for track context menus -->
+    <Style x:Key="TrackContextMenuStyle" TargetType="ContextMenu">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="#2D2D2D"
+                            BorderBrush="#404040"
+                            BorderThickness="1"
+                            Padding="0,5,0,8">
+                        <StackPanel IsItemsHost="True"
+                                    Margin="0" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Base style for top-level items inside track context menus -->
+    <Style x:Key="TrackContextMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Padding" Value="12,2" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}">
+                        <ContentPresenter Margin="10,1"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          Content="{TemplateBinding Header}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Border"
+                                    Property="Background"
+                                    Value="#404040" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground"
+                                    Value="#888888" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Style for top-level menu items that have a submenu (arrow + popout) -->
+    <Style x:Key="TrackContextMenuItemWithSubmenuStyle" TargetType="MenuItem"
+           BasedOn="{StaticResource TrackContextMenuItemStyle}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}">
+                        <Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MinWidth="20" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="HeaderHost"
+                                                 Grid.Column="0"
+                                                 Margin="10,1"
+                                                 HorizontalAlignment="Left"
+                                                 VerticalAlignment="Center"
+                                                 Content="{TemplateBinding Header}"
+                                                 RecognizesAccessKey="True" />
+                                <TextBlock x:Name="SubmenuGlyph"
+                                           Grid.Column="1"
+                                           Margin="8,0,10,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           Text="&gt;"
+                                           FontSize="10"
+                                           Visibility="Collapsed" />
+                            </Grid>
+                            <Popup x:Name="PART_Popup"
+                               Placement="Right"
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                               AllowsTransparency="True"
+                               IsOpen="{TemplateBinding IsSubmenuOpen}"
+                               StaysOpen="False">
+                            <Border Background="#2D2D2D"
+                                    BorderBrush="#404040"
+                                    BorderThickness="1"
+                                    Padding="0,5,0,8"
+                                    MinWidth="{Binding (Parent).(Parent).ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border.Resources>
+                                    <Style TargetType="Separator">
+                                        <Setter Property="Margin" Value="0" />
+                                        <Setter Property="Height" Value="1" />
+                                        <Setter Property="Background" Value="#404040" />
+                                        <Setter Property="SnapsToDevicePixels" Value="True" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Separator">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            Height="{TemplateBinding Height}" />
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Border.Resources>
+                                <StackPanel IsItemsHost="True"
+                                            KeyboardNavigation.DirectionalNavigation="Cycle" />
+                            </Border>
+                        </Popup>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasItems" Value="True">
+                            <Setter TargetName="SubmenuGlyph" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#404040" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#888888" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Style for submenu items: same look and selection shader as main context menu items -->
+    <Style x:Key="TrackContextSubMenuItemStyle" TargetType="MenuItem"
+           BasedOn="{StaticResource TrackContextMenuItemStyle}" />
+
+    <!-- Base style for separators inside track context menus -->
+    <Style x:Key="TrackContextMenuSeparatorStyle" TargetType="Separator">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="#404040" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}"
+                            Height="{TemplateBinding Height}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary> 
