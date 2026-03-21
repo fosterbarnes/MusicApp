@@ -38,6 +38,18 @@ namespace MusicApp.Views
                 view.RequestShowInArtists(song);
         }
 
+        private void ShowInSongsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (TryGetTrackListView(sender, out var view, out var song))
+                view.RequestShowInSongs(song);
+        }
+
+        private void ShowInQueueMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (TryGetTrackListView(sender, out var view, out var song))
+                view.RequestShowInQueue(song);
+        }
+
         private void ShowInAlbumsMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (TryGetTrackListView(sender, out var view, out var song))

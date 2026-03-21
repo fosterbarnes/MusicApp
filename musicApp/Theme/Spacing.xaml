@@ -1,0 +1,82 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Scalar spacing (sys:Double; *-space suffix — WPF does not support x:Double in ResourceDictionary) -->
+    <sys:Double x:Key="Xs-space">2</sys:Double>
+    <sys:Double x:Key="Sm-space">4</sys:Double>
+    <sys:Double x:Key="Md-space">6</sys:Double>
+    <sys:Double x:Key="Lg-space">8</sys:Double>
+    <sys:Double x:Key="Xl-space">10</sys:Double>
+    <sys:Double x:Key="TwoXl-space">12</sys:Double>
+    <sys:Double x:Key="ThreeXl-space">16</sys:Double>
+    <sys:Double x:Key="FourXl-space">24</sys:Double>
+
+    <!-- Thickness tokens (-thk suffix) -->
+    <Thickness x:Key="Zero-thk">0</Thickness>
+    <Thickness x:Key="Border1-thk">1</Thickness>
+    <Thickness x:Key="SidebarButtonMargin-thk">0,5</Thickness>
+    <Thickness x:Key="SidebarButtonPadding-thk">10,8</Thickness>
+    <Thickness x:Key="SidebarButtonContentMargin-thk">10,0</Thickness>
+    <Thickness x:Key="FieldRowGap-thk">0,0,0,8</Thickness>
+    <Thickness x:Key="SectionHeaderGap-thk">0,0,0,6</Thickness>
+    <Thickness x:Key="MenuItemPadding-thk">12,2</Thickness>
+    <Thickness x:Key="MenuItemContentMargin-thk">10,1</Thickness>
+    <Thickness x:Key="PopupContentPadding-thk">12</Thickness>
+    <Thickness x:Key="SearchRowPadding-thk">4,6</Thickness>
+    <Thickness x:Key="SearchTextOffset-thk">8,0,0,0</Thickness>
+    <Thickness x:Key="TrackRowPadding-thk">8,3</Thickness>
+    <Thickness x:Key="TrackDurationMargin-thk">12,0,0,0</Thickness>
+    <Thickness x:Key="ListItemPadding-thk">10,8,10,8</Thickness>
+
+    <Thickness x:Key="Uniform2-thk">2</Thickness>
+    <Thickness x:Key="Uniform4-thk">4</Thickness>
+    <Thickness x:Key="Uniform5-thk">5</Thickness>
+    <Thickness x:Key="Uniform6-thk">6</Thickness>
+    <Thickness x:Key="Uniform8-thk">8</Thickness>
+    <Thickness x:Key="Uniform10-thk">10</Thickness>
+    <Thickness x:Key="Uniform12-thk">12</Thickness>
+    <Thickness x:Key="Uniform15-thk">15</Thickness>
+    <Thickness x:Key="Uniform20-thk">20</Thickness>
+    <Thickness x:Key="Bottom4-thk">0,0,0,4</Thickness>
+    <Thickness x:Key="Bottom8-thk">0,0,0,8</Thickness>
+    <Thickness x:Key="Bottom10-thk">0,0,0,10</Thickness>
+    <Thickness x:Key="Bottom20-thk">0,0,0,20</Thickness>
+    <Thickness x:Key="Top2-thk">0,2,0,0</Thickness>
+    <Thickness x:Key="Top4-thk">0,4,0,0</Thickness>
+    <Thickness x:Key="Top8-thk">0,8,0,0</Thickness>
+    <Thickness x:Key="Top10-thk">0,10,0,0</Thickness>
+    <Thickness x:Key="TopBottom0-thk">0,0</Thickness>
+    <Thickness x:Key="SeparatorVerticalGap-thk">0,5</Thickness>
+    <Thickness x:Key="Right6-thk">0,0,6,0</Thickness>
+    <Thickness x:Key="Right8-thk">0,0,8,0</Thickness>
+    <Thickness x:Key="Right10-thk">0,0,10,0</Thickness>
+    <Thickness x:Key="Right15-thk">0,0,15,0</Thickness>
+    <Thickness x:Key="Left10-thk">10,0,0,0</Thickness>
+    <Thickness x:Key="Left20-thk">20,0,0,0</Thickness>
+    <Thickness x:Key="Left180-thk">180,0,0,0</Thickness>
+    <Thickness x:Key="Left26-thk">26,0,0,20</Thickness>
+    <Thickness x:Key="FieldLabelMargin-thk">0,0,10,8</Thickness>
+    <Thickness x:Key="ComboBoxContentMargin-thk">6,2,28,2</Thickness>
+    <Thickness x:Key="HeaderPanelPadding-thk">15,10</Thickness>
+    <Thickness x:Key="SearchBarPadding-thk">8,4</Thickness>
+    <Thickness x:Key="IconButtonPadding-thk">8</Thickness>
+    <Thickness x:Key="Border0-thk">0</Thickness>
+
+    <!-- Corner radius tokens (-cr suffix) -->
+    <CornerRadius x:Key="None-cr">0</CornerRadius>
+    <CornerRadius x:Key="Xs-cr">2</CornerRadius>
+    <CornerRadius x:Key="Sm-cr">3</CornerRadius>
+    <CornerRadius x:Key="Md-cr">4</CornerRadius>
+    <CornerRadius x:Key="Lg-cr">5</CornerRadius>
+    <CornerRadius x:Key="Xl-cr">6</CornerRadius>
+    <CornerRadius x:Key="TwoXl-cr">8</CornerRadius>
+    <CornerRadius x:Key="Pill20-cr">20</CornerRadius>
+    <CornerRadius x:Key="Pill22-cr">22</CornerRadius>
+    <CornerRadius x:Key="Pill24-cr">24</CornerRadius>
+
+    <!-- Shared control dimensions (*-size suffix) -->
+    <sys:Double x:Key="FieldHeight-size">26</sys:Double>
+    <sys:Double x:Key="ToolButton32-size">32</sys:Double>
+    <sys:Double x:Key="ToolButton24-size">24</sys:Double>
+</ResourceDictionary>

@@ -85,7 +85,6 @@
 
 
 
-
 ## Settings Menu
 ##### EQ
   - Pre-made EQ options
@@ -109,7 +108,6 @@
 
 
 
-
 ## General
 #### UI Stuff
 - ~~Unnecessary space between the scroll bar and track menu in artist/genre view~~
@@ -125,6 +123,81 @@
 - General sluggishness/startup time
 - Window sized is not always properly remembered and restored
 - Queue does not work as intended and needs fixing
+
+#### Right-Click Context Menu
+
+##### General Items
+- ~~Play Next~~
+- ~~Add to Queue~~
+- ~~Add to Playlist:~~
+  -  ~~New playlist~~
+  -  ~~Add to existing~~
+- ~~Show in Artists~~
+- ~~Show in Albums~~
+- ~~Show in Songs~~
+- ~~Show in Queue~~
+- ~~Info/metadata menu:~~
+  
+  ###### Top Info Bar
+  - ~~Song name~~
+  - ~~Artist name~~
+  - ~~Album name~~
+  - ~~Album art~~
+  
+  ###### Details
+  - ~~Song title (text field)~~
+  - ~~Artist (text field)~~
+  - ~~Album (text field)~~
+  - ~~Album artist (text field)~~
+  - ~~Composer (text field)~~
+  - ~~Genre (dropdown menu)~~
+  - ~~Year (text field)~~
+  - ~~Track "#" of "#" (two text fields)~~
+  - ~~Disc number "#" of "#" (two text fields)~~
+  - ~~Compilation (tick box)~~
+  - ~~Favorite (tick box)~~
+  - ~~Bpm (text box)~~
+  - ~~Play Count (text field)~~
+
+  ###### Artwork
+  - To:do
+
+  ###### Lyrics
+  - To:do
+
+  ###### Options
+  - To:do
+
+  ###### Sorting
+  - To:do
+
+  ###### File
+  - To:do
+
+- ~~Show in Explorer~~
+- ~~Remove from Library~~
+- ~~Delete~~
+
+##### Artists
+- ~~Hide "Show in Artists"~~
+
+##### Albums
+- ~~Hide "Show in Albums"~~
+
+##### Songs
+- ~~Hide "Show in Songs"~~
+
+##### Genres
+- ~~Use all general items~~
+
+##### Playlists
+- ~~Use all general items~~
+
+##### Recently Played
+- ~~Hide "Show in Albums"~~
+
+##### Queue
+- ~~Hide "Show in Queue"~~
 
 #### Planned Features
 - Ability to edit metadata
@@ -146,5 +219,5 @@
 
 #### Backend/Boring Stuff
 - Automatic updates integrated with GitHub releases
-- Installer
-- Option for portable version
+- ~~Installer~~
+- ~~Option for portable version~~

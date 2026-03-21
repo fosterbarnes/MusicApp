@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Threading;
+using MusicApp.Constants;
 using MusicApp.Helpers;
 
 namespace MusicApp.Views
@@ -177,6 +178,7 @@ namespace MusicApp.Views
         private ObservableCollection<object> _albumItems = new();
         private CancellationTokenSource? _rebuildCts;
         private CancellationTokenSource? _artLoadCts;
+        private Song? _contextMenuSong;
         
         private (string albumName, string? artistName, bool openDetails, string? selectedTrackFilePath)? _pendingAlbumSelection;
         private readonly DispatcherTimer _artLoadDebounce;
@@ -251,7 +253,6 @@ namespace MusicApp.Views
         public event EventHandler<AlbumGridItem>? AlbumClicked;
 
         public event EventHandler<Song>? PlayTrackRequested;
-        public event EventHandler<Song>? AddToPlaylistRequested;
         public event EventHandler<(Song track, Playlist playlist)>? AddTrackToPlaylistRequested;
         public event EventHandler<Song>? CreateNewPlaylistWithTrackRequested;
         public event EventHandler<Song>? PlayNextRequested;
@@ -259,6 +260,8 @@ namespace MusicApp.Views
         public event EventHandler<Song>? InfoRequested;
         public event EventHandler<Song>? ShowInArtistsRequested;
         public event EventHandler<Song>? ShowInAlbumsRequested;
+        public event EventHandler<Song>? ShowInSongsRequested;
+        public event EventHandler<Song>? ShowInQueueRequested;
         public event EventHandler<Song>? ShowInExplorerRequested;
         public event EventHandler<Song>? RemoveFromLibraryRequested;
         public event EventHandler<Song>? DeleteRequested;
@@ -356,7 +359,7 @@ namespace MusicApp.Views
 
             // Estimate a narrow index window first, then verify with transforms.
             double tileStrideX = Math.Max(1, CurrentTileSize + Math.Max(0, TileMargin.Right));
-            double tileStrideY = Math.Max(1, CurrentTileSize + Math.Max(0, TileMargin.Bottom) + (40 * TileScaleRatio));
+            double tileStrideY = Math.Max(1, CurrentTileSize + Math.Max(0, TileMargin.Bottom) + (UILayoutConstants.AlbumTrackMetaRowHeight * TileScaleRatio));
             int perRow = Math.Max(1, (int)Math.Floor(Math.Max(1, AlbumScrollViewer.ViewportWidth) / tileStrideX));
 
             int startRow = Math.Max(0, (int)Math.Floor(AlbumScrollViewer.VerticalOffset / tileStrideY) - 2);
@@ -478,7 +481,7 @@ namespace MusicApp.Views
 
             if (ct.IsCancellationRequested) return;
 
-            const int batchSize = 64;
+            const int batchSize = UILayoutConstants.AlbumRebuildBatchSize;
             for (int i = 0; i < grouped.Count; i += batchSize)
             {
                 if (ct.IsCancellationRequested) break;
@@ -518,7 +521,7 @@ namespace MusicApp.Views
             _artLoadCts = new CancellationTokenSource();
             var ct = _artLoadCts.Token;
 
-            int maxInitial = Math.Min(100, _albumItems.Count);
+            int maxInitial = Math.Min(UILayoutConstants.InitialAlbumArtLoadCount, _albumItems.Count);
             var itemsToLoad = Enumerable.Range(0, maxInitial)
                 .Select(i => _albumItems[i] as AlbumGridItem)
                 .Where(a => a != null && a.AlbumArtSource == null)
@@ -541,8 +544,8 @@ namespace MusicApp.Views
             var visible = GetVisibleIndices();
             if (visible.Count == 0) return;
 
-            int firstIdx = Math.Max(0, visible[0] - 30);
-            int lastIdx = Math.Min(_albumItems.Count - 1, visible[^1] + 30);
+            int firstIdx = Math.Max(0, visible[0] - UILayoutConstants.AlbumVisibleRangeOverscan);
+            int lastIdx = Math.Min(_albumItems.Count - 1, visible[^1] + UILayoutConstants.AlbumVisibleRangeOverscan);
 
             var itemsToLoad = new List<AlbumGridItem>();
             for (int i = firstIdx; i <= lastIdx; i++)
@@ -560,7 +563,7 @@ namespace MusicApp.Views
             if (items.Count == 0)
                 return;
 
-            int targetSize = Math.Max(80, (int)Math.Round(CurrentTileSize));
+            int targetSize = Math.Max(UILayoutConstants.AlbumArtMinimumTargetSize, (int)Math.Round(CurrentTileSize));
             using var throttler = new SemaphoreSlim(4);
             var tasks = items.Select(async item =>
             {
@@ -861,6 +864,69 @@ namespace MusicApp.Views
                 GenreNavigationRequested?.Invoke(this, _currentFlyout.Genre);
         }
 
+        private void AlbumTrackContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            _contextMenuSong = null;
+            if (sender is not ContextMenu menu || menu.PlacementTarget is not FrameworkElement target)
+                return;
+
+            if (target.DataContext is Song track)
+            {
+                _contextMenuSong = track;
+                SelectedFlyoutTrackFilePath = string.IsNullOrWhiteSpace(track.FilePath) ? null : track.FilePath;
+            }
+
+            var addToPlaylistItem = FindMenuItemByHeader(menu.Items, "Add to Playlist");
+            var mainWindow = Application.Current.MainWindow as MainWindow;
+            var playlists = mainWindow?.Playlists;
+            if (addToPlaylistItem != null && playlists != null)
+            {
+                while (addToPlaylistItem.Items.Count > 2)
+                    addToPlaylistItem.Items.RemoveAt(2);
+                foreach (var playlist in playlists)
+                {
+                    var mi = new MenuItem { Header = playlist.Name, Tag = playlist };
+                    mi.Click += AlbumContextMenu_PlaylistSubmenuClick;
+                    addToPlaylistItem.Items.Add(mi);
+                }
+            }
+
+            var showInQueueItem = FindMenuItemByHeader(menu.Items, "Show in Queue");
+            if (showInQueueItem != null)
+            {
+                bool isInQueue = _contextMenuSong != null && mainWindow?.IsTrackInQueue(_contextMenuSong) == true;
+                showInQueueItem.Visibility = isInQueue ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private static MenuItem? FindMenuItemByHeader(ItemCollection items, string header)
+        {
+            foreach (var item in items)
+                if (item is MenuItem mi && mi.Header?.ToString() == header)
+                    return mi;
+            return null;
+        }
+
+        private void AlbumContextMenu_PlaylistSubmenuClick(object sender, RoutedEventArgs e)
+        {
+            if (_contextMenuSong == null || sender is not MenuItem mi || mi.Tag is not Playlist playlist)
+                return;
+            AddTrackToPlaylistRequested?.Invoke(this, (_contextMenuSong, playlist));
+        }
+
+        private void AlbumContextMenu_PlayNextClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) PlayNextRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_AddToQueueClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) AddToQueueRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_AddToPlaylistClick(object sender, RoutedEventArgs e) { }
+        private void AlbumContextMenu_NewPlaylistClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) CreateNewPlaylistWithTrackRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_ShowInArtistsClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInArtistsRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_ShowInAlbumsClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInAlbumsRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_ShowInSongsClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInSongsRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_ShowInQueueClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInQueueRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_InfoClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) InfoRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_ShowInExplorerClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInExplorerRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_RemoveFromLibraryClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) RemoveFromLibraryRequested?.Invoke(this, _contextMenuSong); }
+        private void AlbumContextMenu_DeleteClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) DeleteRequested?.Invoke(this, _contextMenuSong); }
+
         /// <summary>
         /// Finds the collection index just past the last album on the same visual row
         /// as the item at <paramref name="albumIndex"/>.
@@ -899,7 +965,7 @@ namespace MusicApp.Views
         private double GetWrapPanelWidth()
         {
             var wrapPanel = FindVisualChild<WrapPanel>(AlbumGrid);
-            return wrapPanel?.ActualWidth ?? Math.Max(400, ActualWidth - 48);
+            return wrapPanel?.ActualWidth ?? Math.Max(UILayoutConstants.AlbumWrapFallbackWidth, ActualWidth - UILayoutConstants.AlbumWrapHorizontalPadding);
         }
 
         private void UpdateFlyoutArrowOffset(AlbumGridItem album)

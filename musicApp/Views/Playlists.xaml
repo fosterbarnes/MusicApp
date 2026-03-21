@@ -14,35 +14,6 @@
                 <ResourceDictionary Source="../Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <converters:PinnedToStarIconKindConverter x:Key="PinnedToStarIconKindConverter"/>
-            <!-- No ripple/click circle on playlist list items -->
-            <Style x:Key="PlaylistListViewItemStyle" TargetType="ListViewItem">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="10,8,10,8"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ListViewItem">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter Content="{TemplateBinding Content}"
-                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
-                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#404040"/>
-                    </Trigger>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="#505050"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
@@ -61,8 +32,8 @@
                        Text="Playlists"
                        FontSize="20"
                        FontWeight="Bold"
-                       Foreground="White"
-                       Margin="0,0,0,20"/>
+                       Foreground="{StaticResource TextPrimary-brush}"
+                       Margin="{StaticResource Bottom20-thk}"/>
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="26,0,0,20">
                 <Button Style="{DynamicResource MaterialDesignToolButton}"
                         materialDesign:RippleAssist.IsDisabled="True"
@@ -99,9 +70,9 @@
             <ListView x:Name="lstPlaylists"
                       Grid.Row="2"
                       Background="Transparent"
-                      Foreground="White"
-                      Padding="0,0,0,0"
-                      ItemContainerStyle="{StaticResource PlaylistListViewItemStyle}"
+                      Foreground="{StaticResource TextPrimary-brush}"
+                      Padding="{StaticResource Zero-thk}"
+                      ItemContainerStyle="{StaticResource SidebarListViewItemStyle}"
                       SelectionChanged="LstPlaylists_SelectionChanged">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -140,7 +111,7 @@
                                   Visibility="Collapsed"/>
             <TextBlock x:Name="placeholderText"
                        Text="Select a playlist"
-                       Foreground="#888888"
+                       Foreground="{StaticResource TextMuted-brush}"
                        FontSize="16"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>

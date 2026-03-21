@@ -11,7 +11,7 @@ using MaterialDesignThemes.Wpf;
 using NAudio.Wave;
 using MusicApp;
 
-namespace MusicApp.TitleBarWithPlayerControls
+namespace MusicApp.TitleBarPlus
 {
     public partial class TitleBar : System.Windows.Controls.UserControl
     {

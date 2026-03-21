@@ -6,8 +6,8 @@
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
 
     <!-- Override MaterialDesign primary accent color -->
-    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#FF705399"/>
-    <SolidColorBrush x:Key="PrimaryHueMidForegroundBrush" Color="White"/>
+    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="{StaticResource MainAccentColor}"/>
+    <SolidColorBrush x:Key="PrimaryHueMidForegroundBrush" Color="{StaticResource MainTextColor}"/>
 
     <!-- Minimum vertical scrollbar thumb height is half this value (e.g. 80 → 40px min). -->
     <sys:Double x:Key="{x:Static SystemParameters.VerticalScrollBarButtonHeightKey}">80</sys:Double>
@@ -21,7 +21,7 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollBar">
                             <Grid UseLayoutRounding="True">
-                                <Border Width="1" HorizontalAlignment="Left" Background="#525252" VerticalAlignment="Stretch" SnapsToDevicePixels="True"/>
+                                <Border Width="1" HorizontalAlignment="Left" Background="{StaticResource Divider-brush}" VerticalAlignment="Stretch" SnapsToDevicePixels="True"/>
                                 <Grid Margin="1,0,0,0">
                                     <Grid.RowDefinitions>
                                         <RowDefinition MaxHeight="20"/>
@@ -30,27 +30,23 @@
                                         <RowDefinition Height="1"/>
                                         <RowDefinition MaxHeight="20"/>
                                     </Grid.RowDefinitions>
-                                    <RepeatButton Grid.Row="0" Command="ScrollBar.LineUpCommand" Height="20" Focusable="False" Background="#454545">
+                                    <RepeatButton Grid.Row="0" Command="ScrollBar.LineUpCommand" Height="20" Focusable="False" Background="{StaticResource BorderMuted-brush}">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
                                                 <Border x:Name="border" Background="{TemplateBinding Background}" Padding="0" CornerRadius="0">
                                                     <Viewbox Width="8" Height="6" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Path Fill="#A0A0A0" Data="M 0,6 L 4,0 L 8,6 Z"/>
+                                                        <Path Fill="{StaticResource TextMuted-brush}" Data="M 0,6 L 4,0 L 8,6 Z"/>
                                                     </Viewbox>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#565656"/>
+                                                        <Setter TargetName="border" Property="Background" Value="{StaticResource SelectedHover-brush}"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
-                                    <Border Grid.Row="1" Height="1" VerticalAlignment="Top" SnapsToDevicePixels="True">
-                                        <Border.Background>
-                                            <SolidColorBrush Color="#525252"/>
-                                        </Border.Background>
-                                    </Border>
+                                    <Border Grid.Row="1" Height="1" VerticalAlignment="Top" SnapsToDevicePixels="True" Background="{StaticResource Divider-brush}"/>
                                     <Track x:Name="PART_Track" Grid.Row="2" IsDirectionReversed="True">
                                         <Track.DecreaseRepeatButton>
                                             <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False">
@@ -74,10 +70,10 @@
                                             <Thumb>
                                                 <Thumb.Template>
                                                     <ControlTemplate TargetType="Thumb">
-                                                        <Border x:Name="thumbBorder" Background="#525252" CornerRadius="0"/>
+                                                        <Border x:Name="thumbBorder" Background="{StaticResource Divider-brush}" CornerRadius="0"/>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="thumbBorder" Property="Background" Value="#656565"/>
+                                                                <Setter TargetName="thumbBorder" Property="Background" Value="{StaticResource SelectedHover-brush}"/>
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -85,29 +81,25 @@
                                             </Thumb>
                                         </Track.Thumb>
                                     </Track>
-                                    <Border Grid.Row="3" Height="1" VerticalAlignment="Top" SnapsToDevicePixels="True">
-                                        <Border.Background>
-                                            <SolidColorBrush Color="#525252"/>
-                                        </Border.Background>
-                                    </Border>
-                                    <RepeatButton Grid.Row="4" Command="ScrollBar.LineDownCommand" Height="20" Focusable="False" Background="#454545">
+                                    <Border Grid.Row="3" Height="1" VerticalAlignment="Top" SnapsToDevicePixels="True" Background="{StaticResource Divider-brush}"/>
+                                    <RepeatButton Grid.Row="4" Command="ScrollBar.LineDownCommand" Height="20" Focusable="False" Background="{StaticResource BorderMuted-brush}">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
                                                 <Border x:Name="border" Background="{TemplateBinding Background}" Padding="0" CornerRadius="0">
                                                     <Viewbox Width="8" Height="6" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Path Fill="#A0A0A0" Data="M 0,0 L 4,6 L 8,0 Z"/>
+                                                        <Path Fill="{StaticResource TextMuted-brush}" Data="M 0,0 L 4,6 L 8,0 Z"/>
                                                     </Viewbox>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#565656"/>
+                                                        <Setter TargetName="border" Property="Background" Value="{StaticResource SelectedHover-brush}"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
                                 </Grid>
-                                <Border Height="1" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Background="#454545" SnapsToDevicePixels="True"/>
+                                <Border Height="1" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Background="{StaticResource BorderMuted-brush}" SnapsToDevicePixels="True"/>
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>
@@ -124,7 +116,7 @@
                                     <RowDefinition Height="*" MaxHeight="16"/>
                                     <RowDefinition Height="1"/>
                                 </Grid.RowDefinitions>
-                                <Border Grid.Row="0" Height="1" Background="#525252" HorizontalAlignment="Stretch" SnapsToDevicePixels="True"/>
+                                <Border Grid.Row="0" Height="1" Background="{StaticResource Divider-brush}" HorizontalAlignment="Stretch" SnapsToDevicePixels="True"/>
                                 <Grid Grid.Row="1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -152,10 +144,10 @@
                                             <Thumb>
                                                 <Thumb.Template>
                                                     <ControlTemplate TargetType="Thumb">
-                                                        <Border x:Name="thumbBorder" Background="#525252" CornerRadius="0"/>
+                                                        <Border x:Name="thumbBorder" Background="{StaticResource Divider-brush}" CornerRadius="0"/>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="thumbBorder" Property="Background" Value="#656565"/>
+                                                                <Setter TargetName="thumbBorder" Property="Background" Value="{StaticResource SelectedHover-brush}"/>
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -164,7 +156,7 @@
                                         </Track.Thumb>
                                     </Track>
                                 </Grid>
-                                <Border Grid.Row="2" Height="1" HorizontalAlignment="Stretch" Background="#454545" SnapsToDevicePixels="True"/>
+                                <Border Grid.Row="2" Height="1" HorizontalAlignment="Stretch" Background="{StaticResource BorderMuted-brush}" SnapsToDevicePixels="True"/>
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>
@@ -249,7 +241,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#2D2D2D"/>
+                            <Setter Property="Background" Value="{StaticResource PanelBackground-brush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -268,10 +260,10 @@
                 <ControlTemplate TargetType="Slider">
                     <Grid>
                         <!-- Background Track -->
-                        <Border Height="4" Background="#404040" VerticalAlignment="Center" CornerRadius="2"/>
+                        <Border Height="4" Background="{StaticResource BorderDefault-brush}" VerticalAlignment="Center" CornerRadius="2"/>
                         
                         <!-- Filled Portion -->
-                        <Border Height="4" Background="#705399" VerticalAlignment="Center" CornerRadius="2" 
+                        <Border Height="4" Background="{StaticResource AccentPrimary-brush}" VerticalAlignment="Center" CornerRadius="2"
                                 HorizontalAlignment="Left">
                             <Border.Width>
                                 <MultiBinding Converter="{StaticResource SliderValueToWidthMultiConverter}">
@@ -291,10 +283,10 @@
                                 <RepeatButton Command="Slider.IncreaseLarge" Opacity="0" Focusable="false"/>
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb x:Name="Thumb" Background="#705399">
+                                <Thumb x:Name="Thumb" Background="{StaticResource AccentPrimary-brush}">
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Ellipse Fill="#705399" Width="20" Height="20"/>
+                                            <Ellipse Fill="{StaticResource AccentPrimary-brush}" Width="20" Height="20"/>
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
@@ -317,7 +309,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Arrow"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -331,7 +323,7 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#505050"/>
+                <Setter Property="Background" Value="{StaticResource Selected-brush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -340,7 +332,7 @@
     <Style x:Key="CloseButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#E81123"/>
+                <Setter Property="Background" Value="{StaticResource Danger-brush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -354,10 +346,10 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}"/>
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
-        <Setter Property="Margin" Value="0,5"/>
-        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="Margin" Value="{StaticResource SidebarButtonMargin-thk}"/>
+        <Setter Property="Padding" Value="{StaticResource SidebarButtonPadding-thk}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -367,17 +359,17 @@
                             CornerRadius="4">
                         <ContentPresenter HorizontalAlignment="Left" 
                                           VerticalAlignment="Center" 
-                                          Margin="10,0"/>
+                                          Margin="{StaticResource SidebarButtonContentMargin-thk}"/>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#404040"/>
+                <Setter Property="Background" Value="{StaticResource Hover-brush}"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="#505050"/>
+                <Setter Property="Background" Value="{StaticResource Selected-brush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -394,7 +386,7 @@
                 <ControlTemplate TargetType="GridSplitter">
                     <Border Background="{TemplateBinding Background}">
                         <Border x:Name="splitterLine"
-                               Background="#404040"
+                               Background="{StaticResource BorderDefault-brush}"
                                Width="1"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Stretch"/>
@@ -412,9 +404,9 @@
     <Style x:Key="CompactGridViewHeaderStyle" TargetType="GridViewColumnHeader">
         <Setter Property="Height" Value="20"/>
         <Setter Property="Padding" Value="5,0"/>
-        <Setter Property="Background" Value="#2D2D2D"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="#404040"/>
+        <Setter Property="Background" Value="{StaticResource PanelBackground-brush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDefault-brush}"/>
         <!-- Remove right border to avoid double 1px divider; custom separator below handles it -->
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -454,7 +446,7 @@
                         </Thumb>
                         <!-- Custom vertical separator line -->
                         <Border Width="1" 
-                                Background="#525252" 
+                                Background="{StaticResource Divider-brush}"
                                 HorizontalAlignment="Right" 
                                 VerticalAlignment="Stretch"/>
                     </Grid>
@@ -463,7 +455,7 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#404040"/>
+                <Setter Property="Background" Value="{StaticResource Hover-brush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -488,10 +480,40 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#404040"/>
+                <Setter Property="Background" Value="{StaticResource Hover-brush}"/>
             </Trigger>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#505050"/>
+                <Setter Property="Background" Value="{StaticResource Selected-brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Shared list item style for sidebar list panels (Artists/Genres/Playlists) -->
+    <Style x:Key="SidebarListViewItemStyle" TargetType="ListViewItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="{StaticResource Border0-thk}"/>
+        <Setter Property="Padding" Value="{StaticResource ListItemPadding-thk}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource Hover-brush}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource Selected-brush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -507,8 +529,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="#2D2D2D"
-                            BorderBrush="#404040"
+                    <Border Background="{StaticResource PanelBackground-brush}"
+                            BorderBrush="{StaticResource BorderDefault-brush}"
                             BorderThickness="1"
                             Padding="0,5,0,8">
                         <StackPanel IsItemsHost="True"
@@ -523,15 +545,15 @@
     <Style x:Key="TrackContextMenuItemStyle" TargetType="MenuItem">
         <Setter Property="Margin" Value="0" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="Padding" Value="12,2" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
+        <Setter Property="Padding" Value="{StaticResource MenuItemPadding-thk}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
                     <Border x:Name="Border"
                             Background="{TemplateBinding Background}">
-                        <ContentPresenter Margin="10,1"
+                        <ContentPresenter Margin="{StaticResource MenuItemContentMargin-thk}"
                                           HorizontalAlignment="Left"
                                           VerticalAlignment="Center"
                                           Content="{TemplateBinding Header}"
@@ -541,11 +563,11 @@
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Border"
                                     Property="Background"
-                                    Value="#404040" />
+                                    Value="{StaticResource Hover-brush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground"
-                                    Value="#888888" />
+                                    Value="{StaticResource TextMuted-brush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -589,8 +611,8 @@
                                AllowsTransparency="True"
                                IsOpen="{TemplateBinding IsSubmenuOpen}"
                                StaysOpen="False">
-                            <Border Background="#2D2D2D"
-                                    BorderBrush="#404040"
+                            <Border Background="{StaticResource PanelBackground-brush}"
+                                    BorderBrush="{StaticResource BorderDefault-brush}"
                                     BorderThickness="1"
                                     Padding="0,5,0,8"
                                     MinWidth="{Binding (Parent).(Parent).ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
@@ -598,7 +620,7 @@
                                     <Style TargetType="Separator">
                                         <Setter Property="Margin" Value="0" />
                                         <Setter Property="Height" Value="1" />
-                                        <Setter Property="Background" Value="#404040" />
+                                        <Setter Property="Background" Value="{StaticResource BorderDefault-brush}" />
                                         <Setter Property="SnapsToDevicePixels" Value="True" />
                                         <Setter Property="Template">
                                             <Setter.Value>
@@ -621,10 +643,10 @@
                             <Setter TargetName="SubmenuGlyph" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#404040" />
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource Hover-brush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="#888888" />
+                            <Setter Property="Foreground" Value="{StaticResource TextMuted-brush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -640,7 +662,7 @@
     <Style x:Key="TrackContextMenuSeparatorStyle" TargetType="Separator">
         <Setter Property="Margin" Value="0" />
         <Setter Property="Height" Value="1" />
-        <Setter Property="Background" Value="#404040" />
+        <Setter Property="Background" Value="{StaticResource BorderDefault-brush}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>

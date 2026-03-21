@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using MusicApp.Views;
 using MusicApp.Helpers;
 using MusicApp.Dialogs;
+using MusicApp.Constants;
 
 namespace MusicApp
 {
@@ -162,13 +163,21 @@ namespace MusicApp
                 else
                 {
                     // Fall back to default position
-                    windowManager.SetInitialPosition(100, 100, 1200, 700);
+                    windowManager.SetInitialPosition(
+                        UILayoutConstants.DefaultWindowLeft,
+                        UILayoutConstants.DefaultWindowTop,
+                        UILayoutConstants.DefaultWindowWidth,
+                        UILayoutConstants.DefaultWindowHeight);
                 }
             }
             catch
             {
                 // Fall back to default position if loading fails
-                windowManager.SetInitialPosition(100, 100, 1200, 700);
+                windowManager.SetInitialPosition(
+                    UILayoutConstants.DefaultWindowLeft,
+                    UILayoutConstants.DefaultWindowTop,
+                    UILayoutConstants.DefaultWindowWidth,
+                    UILayoutConstants.DefaultWindowHeight);
             }
 
             TrackListColumnConfig.Initialize();
@@ -216,24 +225,31 @@ namespace MusicApp
             songsView.AddToQueueRequested += OnAddToQueueRequested;
             songsView.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             songsView.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            songsView.InfoRequested += OnInfoRequested;
             queueViewControl.AddToQueueRequested += OnAddToQueueRequested;
             queueViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             queueViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            queueViewControl.InfoRequested += OnInfoRequested;
             recentlyPlayedViewControl.AddToQueueRequested += OnAddToQueueRequested;
             recentlyPlayedViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             recentlyPlayedViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            recentlyPlayedViewControl.InfoRequested += OnInfoRequested;
             artistsViewControl.AddToQueueRequested += OnAddToQueueRequested;
             artistsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             artistsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            artistsViewControl.InfoRequested += OnInfoRequested;
             genresViewControl.AddToQueueRequested += OnAddToQueueRequested;
             genresViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             genresViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            genresViewControl.InfoRequested += OnInfoRequested;
             albumsViewControl.AddToQueueRequested += OnAddToQueueRequested;
             albumsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             albumsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            albumsViewControl.InfoRequested += OnInfoRequested;
             playlistsViewControl.AddToQueueRequested += OnAddToQueueRequested;
             playlistsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             playlistsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            playlistsViewControl.InfoRequested += OnInfoRequested;
 
             songsView.ShowInExplorerRequested += OnShowInExplorerRequested;
             queueViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
@@ -256,6 +272,18 @@ namespace MusicApp
             genresViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             albumsViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             playlistsViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
+            songsView.ShowInQueueRequested += OnShowInQueueRequested;
+            recentlyPlayedViewControl.ShowInQueueRequested += OnShowInQueueRequested;
+            artistsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
+            genresViewControl.ShowInQueueRequested += OnShowInQueueRequested;
+            albumsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
+            playlistsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
+            queueViewControl.ShowInSongsRequested += OnShowInSongsRequested;
+            recentlyPlayedViewControl.ShowInSongsRequested += OnShowInSongsRequested;
+            artistsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
+            genresViewControl.ShowInSongsRequested += OnShowInSongsRequested;
+            albumsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
+            playlistsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
 
             songsView.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
             queueViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
@@ -809,9 +837,11 @@ namespace MusicApp
                 searchPopupView.AddToQueueRequested += OnAddToQueueRequested;
                 searchPopupView.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
                 searchPopupView.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+                searchPopupView.InfoRequested += OnInfoRequested;
                 searchPopupView.ShowInArtistsRequested += OnShowInArtistsRequested;
                 searchPopupView.ShowInSongsRequested += OnShowInSongsRequested;
                 searchPopupView.ShowInAlbumsRequested += OnShowInAlbumsRequested;
+                searchPopupView.ShowInQueueRequested += OnShowInQueueRequested;
                 searchPopupView.ShowInExplorerRequested += OnShowInExplorerRequested;
                 searchPopupView.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
                 searchPopupView.DeleteRequested += OnDeleteRequested;
@@ -1242,7 +1272,7 @@ namespace MusicApp
             bool wasPlaying = titleBarPlayer.IsPlaying;
 
             // If we're 3 or more seconds into the song, restart the current song
-            if (currentPosition.TotalSeconds >= 3.0)
+            if (currentPosition.TotalSeconds >= UILayoutConstants.PreviousTrackRestartThresholdSeconds)
             {
                 Console.WriteLine("Restarting current track (3+ seconds elapsed)");
                 if (currentTrack != null)
@@ -1257,7 +1287,7 @@ namespace MusicApp
                 }
             }
             // If we're 2 seconds or less into the song, go to previous track
-            else if (currentPosition.TotalSeconds <= 2.0 && currentIndex > 0)
+            else if (currentPosition.TotalSeconds <= UILayoutConstants.PreviousTrackEdgeThresholdSeconds && currentIndex > 0)
             {
                 Console.WriteLine("Going to previous track (2 seconds or less elapsed)");
                 var previousTrack = GetTrackFromCurrentQueue(currentIndex - 1);
@@ -1298,7 +1328,7 @@ namespace MusicApp
             }
 
             // Reset manual navigation flag after a short delay
-            Task.Delay(100).ContinueWith(_ => isManualNavigation = false);
+            Task.Delay(UILayoutConstants.ManualNavigationResetDelayMs).ContinueWith(_ => isManualNavigation = false);
         }
 
         private void TitleBarPlayer_NextTrackRequested(object? sender, EventArgs e)
@@ -1371,7 +1401,7 @@ namespace MusicApp
             }
 
             // Reset manual navigation flag after a short delay
-            Task.Delay(100).ContinueWith(_ => isManualNavigation = false);
+            Task.Delay(UILayoutConstants.ManualNavigationResetDelayMs).ContinueWith(_ => isManualNavigation = false);
         }
 
         private void TitleBarPlayer_WindowMinimizeRequested(object? sender, EventArgs e)
@@ -1446,7 +1476,7 @@ namespace MusicApp
         {
             // Initialize the save timer for sidebar width
             sidebarWidthSaveTimer = new DispatcherTimer(
-                TimeSpan.FromSeconds(0.5), 
+                UILayoutConstants.SidebarWidthSaveDelay, 
                 DispatcherPriority.Background, 
                 SidebarWidthSaveTimer_Tick, 
                 Dispatcher.CurrentDispatcher);
@@ -1732,6 +1762,46 @@ namespace MusicApp
                 UpdateQueueView();
         }
 
+        /// <summary>
+        /// Returns true when the given track exists in the effective queue view
+        /// (current song + upcoming songs). Idle state returns false.
+        /// </summary>
+        public bool IsTrackInQueue(Song? track)
+        {
+            if (track == null)
+                return false;
+
+            var queue = BuildQueueView();
+            if (queue == null || queue.Count == 0)
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(track.FilePath))
+            {
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    var queued = queue[i];
+                    if (!string.IsNullOrWhiteSpace(queued.FilePath) &&
+                        string.Equals(queued.FilePath, track.FilePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            for (int i = 0; i < queue.Count; i++)
+            {
+                var queued = queue[i];
+                if (string.Equals(queued.Title, track.Title, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(queued.Artist, track.Artist, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(queued.Album, track.Album, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private async void OnAddTrackToPlaylistRequested(object? sender, (Song track, Playlist playlist) args)
         {
             if (args.track == null || args.playlist == null)
@@ -1812,6 +1882,31 @@ namespace MusicApp
 
             ShowLibraryView();
             songsView?.SelectTrack(track);
+        }
+
+        private void OnShowInQueueRequested(object? sender, Song track)
+        {
+            if (track == null)
+                return;
+
+            ShowQueueView();
+            queueViewControl?.SelectTrack(track);
+        }
+
+        private void OnInfoRequested(object? sender, Song track)
+        {
+            if (track == null)
+                return;
+
+            var infoWindow = new InfoMetadataView
+            {
+                Owner = this
+            };
+            infoWindow.ShowInSongsRequested += OnShowInSongsRequested;
+            infoWindow.ShowInArtistsRequested += OnShowInArtistsRequested;
+            infoWindow.ShowInAlbumsRequested += OnShowInAlbumsRequested;
+            infoWindow.LoadTrack(track, allTracks);
+            infoWindow.ShowDialog();
         }
 
         /// <summary>
@@ -2920,7 +3015,7 @@ namespace MusicApp
                 using var originalBitmap = new System.Drawing.Bitmap(originalStream);
 
                 // Get the target size (assuming the Image control is around 60x60 pixels)
-                int targetSize = 120; // Use 2x for high DPI displays
+                int targetSize = UILayoutConstants.TitleBarAlbumArtRenderSize;
 
                 // Calculate new dimensions maintaining aspect ratio
                 int originalWidth = originalBitmap.Width;
@@ -2971,7 +3066,7 @@ namespace MusicApp
                 using var originalBitmap = new System.Drawing.Bitmap(filePath);
 
                 // Get the target size (assuming the Image control is around 60x60 pixels)
-                int targetSize = 120; // Use 2x for high DPI displays
+                int targetSize = UILayoutConstants.TitleBarAlbumArtRenderSize;
 
                 // Calculate new dimensions maintaining aspect ratio
                 int originalWidth = originalBitmap.Width;
@@ -3218,7 +3313,7 @@ namespace MusicApp
             finally
             {
                 // Reset flag after a short delay to allow for cleanup
-                Task.Delay(100).ContinueWith(_ => isManuallyStopping = false);
+                Task.Delay(UILayoutConstants.ManualNavigationResetDelayMs).ContinueWith(_ => isManuallyStopping = false);
             }
         }
 

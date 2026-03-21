@@ -2,3 +2,4 @@
 & (Join-Path -Path $PSScriptRoot -ChildPath 'taskCounter.ps1')
 & (Join-Path -Path $PSScriptRoot -ChildPath 'writeFeatures.ps1')
 & (Join-Path -Path $PSScriptRoot -ChildPath 'updateReleaseLink.ps1')
+& (Join-Path -Path $PSScriptRoot -ChildPath '.buildSetup.ps1')

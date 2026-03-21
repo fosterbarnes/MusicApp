@@ -1,0 +1,56 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Core app surfaces (*-brush suffix) -->
+    <SolidColorBrush x:Key="AppBackground-brush" Color="#1E1E1E"/>
+    <SolidColorBrush x:Key="PanelBackground-brush" Color="#2D2D2D"/>
+    <SolidColorBrush x:Key="ControlBackground-brush" Color="#2B2B2B"/>
+    <SolidColorBrush x:Key="ControlBackgroundAlt-brush" Color="#2A2A2A"/>
+    <SolidColorBrush x:Key="SurfaceDeep-brush" Color="#151515"/>
+    <SolidColorBrush x:Key="SurfaceRaised-brush" Color="#292929"/>
+    <SolidColorBrush x:Key="SurfaceLowered-brush" Color="#222222"/>
+    <SolidColorBrush x:Key="SurfaceOverlay-brush" Color="#0A0A0A"/>
+
+    <!-- Borders and separators -->
+    <SolidColorBrush x:Key="BorderSubtle-brush" Color="#3F3F3F"/>
+    <SolidColorBrush x:Key="BorderDefault-brush" Color="#404040"/>
+    <SolidColorBrush x:Key="BorderStrong-brush" Color="#505050"/>
+    <SolidColorBrush x:Key="BorderMuted-brush" Color="#464646"/>
+    <SolidColorBrush x:Key="Divider-brush" Color="#525252"/>
+
+    <!-- Interaction -->
+    <SolidColorBrush x:Key="Hover-brush" Color="#404040"/>
+    <SolidColorBrush x:Key="Pressed-brush" Color="#383838"/>
+    <SolidColorBrush x:Key="PressedAlt-brush" Color="#484848"/>
+    <SolidColorBrush x:Key="Selected-brush" Color="#505050"/>
+    <SolidColorBrush x:Key="SelectedHover-brush" Color="#585858"/>
+    <SolidColorBrush x:Key="AccentPrimary-brush" Color="#705399"/>
+    <SolidColorBrush x:Key="AccentHover-brush" Color="#856CAA"/>
+    <SolidColorBrush x:Key="Danger-brush" Color="#E81123"/>
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextPrimary-brush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextSecondary-brush" Color="#EAEAEA"/>
+    <SolidColorBrush x:Key="TextTertiary-brush" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="TextMuted-brush" Color="#888888"/>
+    <SolidColorBrush x:Key="TextDim-brush" Color="#666666"/>
+    <SolidColorBrush x:Key="TextInfoLabel-brush" Color="#CFCFCF"/>
+    <SolidColorBrush x:Key="TextSoft-brush" Color="#BDBDBD"/>
+    <SolidColorBrush x:Key="TextMetadata-brush" Color="#B3B3B3"/>
+    <SolidColorBrush x:Key="TextLinkStrong-brush" Color="#F2F2F2"/>
+    <SolidColorBrush x:Key="TextLinkMedium-brush" Color="#D0D0D0"/>
+    <SolidColorBrush x:Key="TextLinkLight-brush" Color="#AFAFAF"/>
+    <SolidColorBrush x:Key="TextLinkMediumHover-brush" Color="#E8E8E8"/>
+    <SolidColorBrush x:Key="TextLinkLightHover-brush" Color="#C8C8C8"/>
+
+    <!-- Color tokens (use when other dictionaries need the raw Color value) -->
+    <Color x:Key="MainAccentColor">#705399</Color>
+    <Color x:Key="MainTextColor">#FFFFFF</Color>
+
+    <!-- Misc -->
+    <SolidColorBrush x:Key="AlbumPlaceholder-brush" Color="#333333"/>
+    <SolidColorBrush x:Key="QueueButton-brush" Color="#717171"/>
+    <SolidColorBrush x:Key="QueueButtonBorder-brush" Color="#434242"/>
+    <SolidColorBrush x:Key="TransparentOverlay-brush" Color="#00000000"/>
+    
+</ResourceDictionary>

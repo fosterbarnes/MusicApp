@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MusicApp"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:titleBar="clr-namespace:MusicApp.TitleBarWithPlayerControls"
+        xmlns:titleBar="clr-namespace:MusicApp.TitleBarPlus"
         xmlns:converters="clr-namespace:MusicApp.Converters"
         xmlns:views="clr-namespace:MusicApp.Views"
         mc:Ignorable="d"
         Title="musicApp" Height="767" Width="1245"
-        Background="#1E1E1E"
+        Background="{StaticResource AppBackground-brush}"
         WindowStyle="None"
         AllowsTransparency="False"
         ResizeMode="CanResize"
@@ -40,8 +40,8 @@
     <!-- ===========================================
          MAIN WINDOW LAYOUT
          =========================================== -->
-    <Border BorderBrush="#404040" BorderThickness="1" Background="#1E1E1E">
-        <Grid Background="#1E1E1E">
+    <Border BorderBrush="{StaticResource BorderDefault-brush}" BorderThickness="{StaticResource Border1-thk}" Background="{StaticResource AppBackground-brush}">
+        <Grid Background="{StaticResource AppBackground-brush}">
             <!-- Main Grid Definitions -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="85"/>
@@ -84,24 +84,24 @@
                      SIDEBAR NAVIGATION SECTION
                      =========================================== -->
                 <Border Grid.Column="0" 
-                        Background="#2D2D2D" 
-                        BorderBrush="#404040" 
+                        Background="{StaticResource PanelBackground-brush}"
+                        BorderBrush="{StaticResource BorderDefault-brush}"
                         BorderThickness="0">
-                    <StackPanel Margin="10">
+                    <StackPanel Margin="{StaticResource Uniform10-thk}">
 
                         <!-- App Title -->
                         <TextBlock Text="musicApp" 
                                    FontSize="20" 
                                    FontWeight="Bold" 
-                                   Foreground="White" 
-                                   Margin="0,0,0,20"/>
+                                   Foreground="{StaticResource TextPrimary-brush}"
+                                   Margin="{StaticResource Bottom20-thk}"/>
 
                         <!-- Navigation Buttons -->
                         <Button x:Name="btnArtists" 
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnArtists_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="AccountMusic" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="AccountMusic" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Artists" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -110,7 +110,7 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnAlbums_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Album" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="Album" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Albums" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -119,7 +119,7 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnLibrary_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Music" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="Music" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Songs" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -128,7 +128,7 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnGenres_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="MusicNote" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="MusicNote" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Genres" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -137,19 +137,19 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnPlaylists_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="PlaylistMusic" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="PlaylistMusic" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Playlists" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
                         <!-- Separator -->
-                        <Separator Margin="0,5" Background="#404040"/>
+                        <Separator Margin="{StaticResource SeparatorVerticalGap-thk}" Background="{StaticResource BorderDefault-brush}"/>
 
                         <Button x:Name="btnRecentlyPlayed" 
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnRecentlyPlayed_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="History" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="History" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Recently Played" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -158,21 +158,21 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnQueue_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="QueueMusic" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="QueueMusic" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Queue" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
                         <!-- Pinned playlists (visible only when any playlist is pinned) -->
                         <StackPanel Visibility="{Binding HasPinnedPlaylists, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <Separator Margin="0,5" Background="#404040"/>
+                            <Separator Margin="{StaticResource SeparatorVerticalGap-thk}" Background="{StaticResource BorderDefault-brush}"/>
                             <ItemsControl ItemsSource="{Binding PinnedPlaylists}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Button Style="{StaticResource SidebarNavigationButton}"
                                                 Click="PinnedPlaylistSidebar_Click">
                                             <StackPanel Orientation="Horizontal">
-                                                <materialDesign:PackIcon Kind="PlaylistMusic" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <materialDesign:PackIcon Kind="PlaylistMusic" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                         </Button>
@@ -182,14 +182,14 @@
                         </StackPanel>
 
                         <!-- Separator -->
-                        <Separator Margin="0,5" Background="#404040"/>
+                        <Separator Margin="{StaticResource SeparatorVerticalGap-thk}" Background="{StaticResource BorderDefault-brush}"/>
 
                         <!-- Action Buttons -->
                         <Button x:Name="btnAddFolder" 
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnAddFolder_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FolderPlus" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="FolderPlus" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Add Music Folder" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -198,7 +198,7 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnRescanLibrary_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Re-Scan Library" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -207,7 +207,7 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnRemoveFolder_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FolderRemove" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="FolderRemove" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Remove Music Folder" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -216,7 +216,7 @@
                                 Style="{StaticResource SidebarNavigationButton}"
                                 Click="BtnClearSettings_Click">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="DeleteSweep" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <materialDesign:PackIcon Kind="DeleteSweep" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}"/>
                                 <TextBlock Text="Clear Settings" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -238,7 +238,7 @@
                 <!-- ===========================================
                      MAIN CONTENT VIEWS SECTION
                      =========================================== -->
-                <Grid Grid.Column="2" Background="#1E1E1E">
+                <Grid Grid.Column="2" Background="{StaticResource AppBackground-brush}">
                     <!-- Content Views Grid Definitions -->
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -255,7 +255,7 @@
                     <!-- ===========================================
                          CONTENT AREA SECTION
                          =========================================== -->
-                    <ContentControl Grid.Row="1" x:Name="contentHost" Margin="0"/>
+                    <ContentControl Grid.Row="1" x:Name="contentHost" Margin="{StaticResource Zero-thk}"/>
                 </Grid>
             </Grid>
 
@@ -263,21 +263,21 @@
                  STATUS BAR SECTION
                  =========================================== -->
             <Border Grid.Row="2" 
-                    Background="#2D2D2D" 
-                    BorderBrush="#404040" 
+                    Background="{StaticResource PanelBackground-brush}"
+                    BorderBrush="{StaticResource BorderDefault-brush}"
                     BorderThickness="0,1,0,0"
                     Height="20"
                     VerticalAlignment="Bottom">
                 <Grid>
                     <!-- Progress Bar Background (integrated) -->
                     <Border x:Name="progressBarBackground"
-                            Background="#2D2D2D"
+                            Background="{StaticResource PanelBackground-brush}"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"/>
 
                     <!-- Progress Bar Fill -->
                     <Border x:Name="progressBarFill"
-                            Background="#705399"
+                            Background="{StaticResource AccentPrimary-brush}"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Stretch"
                             Width="0"
@@ -286,7 +286,7 @@
                     <!-- Status Text (on top of progress bar) -->
                     <TextBlock x:Name="statusBarText" 
                                Text="0 songs, 0 albums, 0.0 days, 0.00 GB" 
-                               Foreground="White" 
+                               Foreground="{StaticResource TextPrimary-brush}"
                                FontSize="12"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"

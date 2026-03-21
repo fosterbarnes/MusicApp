@@ -36,14 +36,22 @@ if (-not (Test-Path -LiteralPath $ReadmePath)) {
 
 $readmeLines = Get-Content -LiteralPath $ReadmePath -Encoding UTF8
 $summaryIndex = -1
-$detailsIndex = -1
 for ($i = 0; $i -lt $readmeLines.Count; $i++) {
-    if ($readmeLines[$i] -match '<summary>Tasks</summary>') { $summaryIndex = $i }
+    if ($readmeLines[$i] -match '<summary>Tasks</summary>') { $summaryIndex = $i; break }
+}
+
+if ($summaryIndex -lt 0) {
+    Write-Error "README.md: could not find <summary>Tasks</summary>"
+    exit 1
+}
+
+$detailsIndex = -1
+for ($i = $summaryIndex + 1; $i -lt $readmeLines.Count; $i++) {
     if ($readmeLines[$i] -eq '</details>') { $detailsIndex = $i; break }
 }
 
-if ($summaryIndex -lt 0 -or $detailsIndex -lt 0) {
-    Write-Error "README.md: could not find <summary>Tasks</summary> or </details>"
+if ($detailsIndex -lt 0) {
+    Write-Error "README.md: could not find closing </details> after <summary>Tasks</summary>"
     exit 1
 }
 

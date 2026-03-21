@@ -10,6 +10,7 @@
     <AssemblyTitle>musicApp</AssemblyTitle>
     <Product>musicApp</Product>
     <Company>musicApp</Company>
+    <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

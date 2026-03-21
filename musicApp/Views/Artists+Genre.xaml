@@ -11,35 +11,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <!-- No ripple/click circle on list items -->
-            <Style x:Key="ArtistGenreListViewItemStyle" TargetType="ListViewItem">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="10,8,10,8"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ListViewItem">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter Content="{TemplateBinding Content}"
-                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
-                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#404040"/>
-                    </Trigger>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="#505050"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
@@ -58,14 +29,14 @@
                        Text="Artists"
                        FontSize="20"
                        FontWeight="Bold"
-                       Foreground="White"
-                       Margin="0,0,0,20"/>
+                       Foreground="{StaticResource TextPrimary-brush}"
+                       Margin="{StaticResource Bottom20-thk}"/>
             <ListView x:Name="lstArtistsOrGenres"
                       Grid.Row="1"
                       Background="Transparent"
-                      Foreground="White"
+                      Foreground="{StaticResource TextPrimary-brush}"
                       Padding="0,0,0,18"
-                      ItemContainerStyle="{StaticResource ArtistGenreListViewItemStyle}"
+                      ItemContainerStyle="{StaticResource SidebarListViewItemStyle}"
                       SelectionChanged="LstArtistsOrGenres_SelectionChanged">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -89,7 +60,7 @@
                                   Visibility="Collapsed"/>
             <TextBlock x:Name="placeholderText"
                        Text="Select an artist"
-                       Foreground="#888888"
+                       Foreground="{StaticResource TextMuted-brush}"
                        FontSize="16"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>
