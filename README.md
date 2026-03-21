@@ -1,44 +1,47 @@
 # ![Icon](https://i.postimg.cc/d3c9vxzF/Music-App-Icon24x24.png) musicApp - an offline music player
 
-<img src="Resources/scr/album.png" alt="Screenshot" />
+<img src="musicApp/Resources/scr/album.png" alt="Screenshot" />
 
 <details>
 <summary>More Screenshots:</summary>
 
 ### Artists
-<img src="Resources/scr/artist.png" alt="Artists" />
+<img src="musicApp/Resources/scr/artist.png" alt="Artists" />
 
 ### Albums
-<img src="Resources/scr/album.png" alt="Albums" />
+<img src="musicApp/Resources/scr/album.png" alt="Albums" />
 
 ### Songs
-<img src="Resources/scr/song.png" alt="Songs" />
+<img src="musicApp/Resources/scr/song.png" alt="Songs" />
 
 ### Genres
-<img src="Resources/scr/genre.png" alt="Genres" />
+<img src="musicApp/Resources/scr/genre.png" alt="Genres" />
 
 ### Playlists
-<img src="Resources/scr/playlist.png" alt="Playlists" />
+<img src="musicApp/Resources/scr/playlist.png" alt="Playlists" />
 
 ### Recently Played
-<img src="Resources/scr/recent.png" alt="Recently Played" />
+<img src="musicApp/Resources/scr/recent.png" alt="Recently Played" />
 
 ### Queue
-<img src="Resources/scr/queue.png" alt="Queue" />
+<img src="musicApp/Resources/scr/queue.png" alt="Queue" />
 
 ### Search
-<img src="Resources/scr/search.png" alt="Search" />
+<img src="musicApp/Resources/scr/search.png" alt="Search" />
+
+### Info
+<img src="musicApp/Resources/scr/info.png" alt="Info" />
 
 </details>
 
 musicApp is in early development, bugs are expected.
 
-If you want to use it, [download the latest release](https://github.com/fosterbarnes/musicApp/releases/download/v0.0.17/musicApp_v0.0.17_papiFunkin.zip), unzip, then run MusicApp.exe
+If you want to use it, [download the latest release](https://github.com/fosterbarnes/musicApp/releases/download/v0.0.18/musicApp_v0.0.18_stainedMonkey.zip), unzip, then run MusicApp.exe
 
 ## Progress
 
-![Progress Bar](https://progress-bars.entcheneric.com/bar.svg?progress=45&backgroundColor=%23212121&height=40&width=800&borderRadius=10&striped=false&animated=false&gradientAnimated=false&animationSpeed=1&stripeAnimationSpeed=1&gradientAnimationSpeed=1&initialAnimationSpeed=1&color=%23705399)  
-**43 / 95 tasks complete (45.3%)**
+![Progress Bar](https://progress-bars.entcheneric.com/bar.svg?progress=60&backgroundColor=%23212121&height=40&width=800&borderRadius=10&striped=false&animated=false&gradientAnimated=false&animationSpeed=1&stripeAnimationSpeed=1&gradientAnimationSpeed=1&initialAnimationSpeed=1&color=%23705399)  
+**82 / 137 tasks complete (59.9%)**
 
 
 <details>
@@ -130,7 +133,6 @@ If you want to use it, [download the latest release](https://github.com/fosterba
 
 
 
-
 ## Settings Menu
 ##### EQ
   - Pre-made EQ options
@@ -154,7 +156,6 @@ If you want to use it, [download the latest release](https://github.com/fosterba
 
 
 
-
 ## General
 #### UI Stuff
 - ~~Unnecessary space between the scroll bar and track menu in artist/genre view~~
@@ -170,6 +171,81 @@ If you want to use it, [download the latest release](https://github.com/fosterba
 - General sluggishness/startup time
 - Window sized is not always properly remembered and restored
 - Queue does not work as intended and needs fixing
+
+#### Right-Click Context Menu
+
+##### General Items
+- ~~Play Next~~
+- ~~Add to Queue~~
+- ~~Add to Playlist:~~
+  -  ~~New playlist~~
+  -  ~~Add to existing~~
+- ~~Show in Artists~~
+- ~~Show in Albums~~
+- ~~Show in Songs~~
+- ~~Show in Queue~~
+- ~~Info/metadata menu:~~
+  
+  ###### Top Info Bar
+  - ~~Song name~~
+  - ~~Artist name~~
+  - ~~Album name~~
+  - ~~Album art~~
+  
+  ###### Details
+  - ~~Song title (text field)~~
+  - ~~Artist (text field)~~
+  - ~~Album (text field)~~
+  - ~~Album artist (text field)~~
+  - ~~Composer (text field)~~
+  - ~~Genre (dropdown menu)~~
+  - ~~Year (text field)~~
+  - ~~Track "#" of "#" (two text fields)~~
+  - ~~Disc number "#" of "#" (two text fields)~~
+  - ~~Compilation (tick box)~~
+  - ~~Favorite (tick box)~~
+  - ~~Bpm (text box)~~
+  - ~~Play Count (text field)~~
+
+  ###### Artwork
+  - To:do
+
+  ###### Lyrics
+  - To:do
+
+  ###### Options
+  - To:do
+
+  ###### Sorting
+  - To:do
+
+  ###### File
+  - To:do
+
+- ~~Show in Explorer~~
+- ~~Remove from Library~~
+- ~~Delete~~
+
+##### Artists
+- ~~Hide "Show in Artists"~~
+
+##### Albums
+- ~~Hide "Show in Albums"~~
+
+##### Songs
+- ~~Hide "Show in Songs"~~
+
+##### Genres
+- ~~Use all general items~~
+
+##### Playlists
+- ~~Use all general items~~
+
+##### Recently Played
+- ~~Hide "Show in Albums"~~
+
+##### Queue
+- ~~Hide "Show in Queue"~~
 
 #### Planned Features
 - Ability to edit metadata
@@ -191,11 +267,13 @@ If you want to use it, [download the latest release](https://github.com/fosterba
 
 #### Backend/Boring Stuff
 - Automatic updates integrated with GitHub releases
-- Installer
-- Option for portable version
+- ~~Installer~~
+- ~~Option for portable version~~
 </details>
 
 # General Usage Info
+
+
 
 
 
@@ -286,5 +364,3 @@ If you'd like to support me, follow me on twitch:
 
 or if you're feeling generous drop a donation:
 [https://coff.ee/fosterbarnes](https://coff.ee/fosterbarnes)
-
-

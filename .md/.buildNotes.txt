@@ -1,35 +1,87 @@
-Song Info View (Title Bar):
-- Add ability to click artist or album to show it in context
+Installer:
+- Add 64 bit .exe installer
+- Add 32 bit .exe installer
 
-Album View:
-- Add album art size slider
-- Optimize image loading
-- Add album song selection flyout menu:
-	- Dynamically resizing columns
-	- Album length and song count info
-	- High quality album art
-	- Artist, genre and year with ability to click artist or genre
+Info/Metadata View:
+- Add menu to show metadata and song info. Opens with "right click > info"
+- Top Info Bar
+  - Song name
+  - Artist name
+  - Album name
+  - Album art
+  
+ - Details
+  - Song title (text field)
+  - Artist (text field)
+  - Album (text field)
+  - Album artist (text field)
+  - Composer (text field)
+  - Genre (dropdown menu)
+  - Year (text field)
+  - Track "#" of "#" (two text fields)
+  - Disc number "#" of "#" (two text fields)
+  - Compilation (tick box)
+  - Favorite (tick box)
+  - Bpm (text box)
+  - Play Count (text field)
 
-Album Art:
-- Store a cache of album art on disk to speed up load times and reduce pop-in
-- Improve resizing logic
+Todo:
+- Artwork
+- Lyrics
+- Options
+- Sorting
+- File
 
-Artist/Genre View:
-- Change default artists/genre list width
+Right-Click Context Menu:
+- Add divider between "Add to ..." and "Info" sections
+- Fix missing/extra items in menu:
+	General Items
+	- Play Next
+	- Add to Queue
+	- Add to Playlist:
+		-  New playlist
+		-  Add to existing
+	- Show in Artists
+	- Show in Albums
+	- Show in Songs
+	- Show in Queue
+	- Info
+	- Show in Explorer
+	- Remove from Library
+	- Delete
 
-Search:
-- Improve search results by having stricter filtering
-- Adjust minimum, default and max window size
-- Add ability to click and drag to resize window
-- Add right click context menu
-- Add artist artwork (use oldest album art from artist)
-- Dynamically resize window based on amount of results
+	Artists View:
+	- Hide "Show in Artists"
 
-Right Click Context Menu:
-- Add " Show in 'Artists' " and " Show in 'Albums' "
+	Albums View:
+	- Wire up right click context menu
+	- Hide "Show in Albums"
+
+	Songs View:
+	- Hide "Show in Songs"
+
+	Genres View:
+	- Use all general items
+
+	Playlists View:
+	- Use all general items
+
+	Recently Played View:
+	- Hide "Show in Albums"
+
+	Queue View:
+	- Hide "Show in Queue"
 
 Scripts:
-- Improve task counter
+- Simplify build script
+- Write build installer script
+- Add installer to draft release script
+- Improve draft release script
 
-.md
-- Consolodate .md files (features & tasks) to their own folder
+Boring Stuff:
+- Consolodate 'Resources' folders
+- Consolodate magic numbers and other shared values
+- Keep track of shared color/spacing values
+- Start preparing for themes
+- Rename a bunch of shit
+- General cleanup

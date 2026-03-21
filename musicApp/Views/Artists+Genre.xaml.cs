@@ -28,6 +28,7 @@ namespace MusicApp.Views
             InitializeComponent();
             lstArtistsOrGenres.ItemsSource = _namesList;
             trackList.ViewName = "Songs";
+            trackList.ContextMenuViewName = ViewName;
             trackList.AddToPlaylistRequested += (s, track) => AddToPlaylistRequested?.Invoke(this, track);
             trackList.AddTrackToPlaylistRequested += (s, args) => AddTrackToPlaylistRequested?.Invoke(this, args);
             trackList.CreateNewPlaylistWithTrackRequested += (s, track) => CreateNewPlaylistWithTrackRequested?.Invoke(this, track);
@@ -35,7 +36,9 @@ namespace MusicApp.Views
             trackList.AddToQueueRequested += (s, track) => AddToQueueRequested?.Invoke(this, track);
             trackList.InfoRequested += (s, track) => InfoRequested?.Invoke(this, track);
             trackList.ShowInArtistsRequested += (s, track) => ShowInArtistsRequested?.Invoke(this, track);
+            trackList.ShowInSongsRequested += (s, track) => ShowInSongsRequested?.Invoke(this, track);
             trackList.ShowInAlbumsRequested += (s, track) => ShowInAlbumsRequested?.Invoke(this, track);
+            trackList.ShowInQueueRequested += (s, track) => ShowInQueueRequested?.Invoke(this, track);
             trackList.ShowInExplorerRequested += (s, track) => ShowInExplorerRequested?.Invoke(this, track);
             trackList.RemoveFromLibraryRequested += (s, track) => RemoveFromLibraryRequested?.Invoke(this, track);
             trackList.DeleteRequested += (s, track) => DeleteRequested?.Invoke(this, track);
@@ -66,7 +69,9 @@ namespace MusicApp.Views
         public event EventHandler<Song>? AddToQueueRequested;
         public event EventHandler<Song>? InfoRequested;
         public event EventHandler<Song>? ShowInArtistsRequested;
+        public event EventHandler<Song>? ShowInSongsRequested;
         public event EventHandler<Song>? ShowInAlbumsRequested;
+        public event EventHandler<Song>? ShowInQueueRequested;
         public event EventHandler<Song>? ShowInExplorerRequested;
         public event EventHandler<Song>? RemoveFromLibraryRequested;
         public event EventHandler<Song>? DeleteRequested;
@@ -120,6 +125,7 @@ namespace MusicApp.Views
             if (d is ArtistGenreView view && e.NewValue is string name)
             {
                 view.trackList.ViewName = "Songs";
+                view.trackList.ContextMenuViewName = name;
                 view.UpdateSidebarTitleAndPlaceholder();
                 view.RefreshNamesList();
             }

@@ -1,10 +1,11 @@
 *.code-workspace
 *.csproj.lnk
-MusicApp Nightly Release.exe
-MusicApp/.vs
-MusicApp/bin
-MusicApp/obj
+*.md.lnk
+musicApp Nightly Release.exe
+musicApp/.vs
+musicApp/bin
+musicApp/obj
+musicApp/.installer/Output/
 .vs/
 obj/
-MusicApp/bin/
 .buildNotes.md

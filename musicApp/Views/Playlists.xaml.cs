@@ -10,6 +10,7 @@ namespace MusicApp.Views
         public PlaylistsView()
         {
             InitializeComponent();
+            trackList.ContextMenuViewName = "Playlists";
             trackList.AddToPlaylistRequested += (s, track) => AddToPlaylistRequested?.Invoke(this, track);
             trackList.AddTrackToPlaylistRequested += (s, args) => AddTrackToPlaylistRequested?.Invoke(this, args);
             trackList.CreateNewPlaylistWithTrackRequested += (s, track) => CreateNewPlaylistWithTrackRequested?.Invoke(this, track);
@@ -17,7 +18,9 @@ namespace MusicApp.Views
             trackList.AddToQueueRequested += (s, track) => AddToQueueRequested?.Invoke(this, track);
             trackList.InfoRequested += (s, track) => InfoRequested?.Invoke(this, track);
             trackList.ShowInArtistsRequested += (s, track) => ShowInArtistsRequested?.Invoke(this, track);
+            trackList.ShowInSongsRequested += (s, track) => ShowInSongsRequested?.Invoke(this, track);
             trackList.ShowInAlbumsRequested += (s, track) => ShowInAlbumsRequested?.Invoke(this, track);
+            trackList.ShowInQueueRequested += (s, track) => ShowInQueueRequested?.Invoke(this, track);
             trackList.ShowInExplorerRequested += (s, track) => ShowInExplorerRequested?.Invoke(this, track);
             trackList.RemoveFromLibraryRequested += (s, track) => RemoveFromLibraryRequested?.Invoke(this, track);
             trackList.DeleteRequested += (s, track) => DeleteRequested?.Invoke(this, track);
@@ -39,7 +42,9 @@ namespace MusicApp.Views
         public event System.EventHandler<Song>? AddToQueueRequested;
         public event System.EventHandler<Song>? InfoRequested;
         public event System.EventHandler<Song>? ShowInArtistsRequested;
+        public event System.EventHandler<Song>? ShowInSongsRequested;
         public event System.EventHandler<Song>? ShowInAlbumsRequested;
+        public event System.EventHandler<Song>? ShowInQueueRequested;
         public event System.EventHandler<Song>? ShowInExplorerRequested;
         public event System.EventHandler<Song>? RemoveFromLibraryRequested;
         public event System.EventHandler<Song>? DeleteRequested;

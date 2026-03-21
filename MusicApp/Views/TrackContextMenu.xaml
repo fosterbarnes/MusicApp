@@ -37,6 +37,13 @@
                   Header="Show in Albums"
                   Click="ShowInAlbumsMenuItem_Click" />
         <MenuItem Style="{StaticResource TrackContextMenuItemStyle}"
+                  Header="Show in Songs"
+                  Click="ShowInSongsMenuItem_Click" />
+        <MenuItem Style="{StaticResource TrackContextMenuItemStyle}"
+                  Header="Show in Queue"
+                  Click="ShowInQueueMenuItem_Click" />
+        <Separator />
+        <MenuItem Style="{StaticResource TrackContextMenuItemStyle}"
                   Header="Info"
                   Click="InfoMenuItem_Click" />
         <MenuItem Style="{StaticResource TrackContextMenuItemStyle}"
@@ -44,7 +51,7 @@
                   Click="ShowInExplorerMenuItem_Click" />
         <Separator />
         <MenuItem Style="{StaticResource TrackContextMenuItemStyle}"
-                  Header="Remove From Library"
+                  Header="Remove from Library"
                   Click="RemoveFromLibraryMenuItem_Click" />
         <MenuItem Style="{StaticResource TrackContextMenuItemStyle}"
                   Header="Delete"

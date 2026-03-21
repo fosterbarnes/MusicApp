@@ -1,0 +1,626 @@
+<Window x:Class="MusicApp.Views.InfoMetadataView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Info"
+        Width="510"
+        Height="730"
+        MinWidth="420"
+        MinHeight="580"
+        MaxWidth="1920"
+        MaxHeight="1080"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBackground-brush}">
+    <Window.Resources>
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextInfoLabel-brush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="{StaticResource FieldLabelMargin-thk}" />
+        </Style>
+        <Style x:Key="FieldInputStyle" TargetType="Control">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
+            <Setter Property="Background" Value="{StaticResource ControlBackground-brush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle-brush}" />
+            <Setter Property="BorderThickness" Value="{StaticResource Border1-thk}" />
+            <Setter Property="Height" Value="{StaticResource FieldHeight-size}" />
+        </Style>
+        <Style x:Key="FieldTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FieldInputStyle}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Padding" Value="{StaticResource Uniform2-thk}" />
+            <Setter Property="CaretBrush" Value="{StaticResource TextSecondary-brush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Chrome"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Focusable="False"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentHover-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentPrimary-brush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- ComboBoxItem: default theme template ignores Style.Background for highlight (blue hot-track). Match CompactListViewItemStyle in Styles.xaml. -->
+        <Style x:Key="DarkComboBoxItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource Hover-brush}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource Selected-brush}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Closed-state chrome needs a custom template; default ToggleButton uses light Aero styling. -->
+        <ControlTemplate x:Key="DarkComboBoxControlTemplate" TargetType="ComboBox">
+            <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
+                <Popup x:Name="PART_Popup"
+                       AllowsTransparency="True"
+                       Focusable="False"
+                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                       Placement="Bottom"
+                       PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                       PopupAnimation="Fade"
+                       StaysOpen="False">
+                    <Border Background="{StaticResource ControlBackground-brush}"
+                            BorderBrush="{StaticResource BorderSubtle-brush}"
+                            BorderThickness="{StaticResource Border1-thk}"
+                            MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                            MinWidth="{Binding ActualWidth, ElementName=templateRoot}">
+                        <ScrollViewer Margin="{StaticResource Zero-thk}" SnapsToDevicePixels="True">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
+
+                <ToggleButton x:Name="DropDownToggle"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              ClickMode="Press"
+                              Focusable="False"
+                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="ChromeBorder"
+                                    Background="{StaticResource ControlBackground-brush}"
+                                    BorderBrush="{StaticResource BorderSubtle-brush}"
+                                    BorderThickness="{StaticResource Border1-thk}"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="22" />
+                                    </Grid.ColumnDefinitions>
+                                    <Path Grid.Column="1"
+                                          Width="8"
+                                          Height="5"
+                                          Margin="{StaticResource Right6-thk}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Data="M 0 0 L 4 4 L 8 0 Z"
+                                          Fill="{StaticResource TextTertiary-brush}"
+                                          SnapsToDevicePixels="True"
+                                          Stretch="Uniform" />
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+
+                <ContentPresenter x:Name="ContentSite"
+                                  Margin="{StaticResource ComboBoxContentMargin-thk}"
+                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  Content="{TemplateBinding SelectionBoxItem}"
+                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                  TextElement.Foreground="{TemplateBinding Foreground}"
+                                  IsHitTestVisible="False"
+                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter TargetName="templateRoot" Property="Opacity" Value="0.55" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style x:Key="DarkFieldComboBoxStyle" TargetType="ComboBox">
+            <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{Binding Color, Source={StaticResource ControlBackground-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="{Binding Color, Source={StaticResource TextSecondary-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding Color, Source={StaticResource TextPrimary-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HotTrackBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.MenuHighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{Binding Color, Source={StaticResource ControlBackground-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{Binding Color, Source={StaticResource TextSecondary-brush}}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
+            </Style.Resources>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
+            <Setter Property="Background" Value="{StaticResource ControlBackground-brush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle-brush}" />
+            <Setter Property="BorderThickness" Value="{StaticResource Border1-thk}" />
+            <Setter Property="Height" Value="{StaticResource FieldHeight-size}" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItemStyle}" />
+            <Setter Property="Template" Value="{StaticResource DarkComboBoxControlTemplate}" />
+        </Style>
+        <Style x:Key="InfoHeaderLinkTitleStyle" TargetType="TextBlock">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{StaticResource TextLinkStrong-brush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
+                    <Setter Property="TextDecorations">
+                        <Setter.Value>
+                            <TextDecorationCollection>Underline</TextDecorationCollection>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="InfoHeaderLinkArtistStyle" TargetType="TextBlock">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{StaticResource TextLinkMedium-brush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TextLinkMediumHover-brush}" />
+                    <Setter Property="TextDecorations">
+                        <Setter.Value>
+                            <TextDecorationCollection>Underline</TextDecorationCollection>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="InfoHeaderLinkAlbumStyle" TargetType="TextBlock">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{StaticResource TextLinkLight-brush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TextLinkLightHover-brush}" />
+                    <Setter Property="TextDecorations">
+                        <Setter.Value>
+                            <TextDecorationCollection>Underline</TextDecorationCollection>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SectionButtonStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{StaticResource TextTertiary-brush}" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{StaticResource ControlBackgroundAlt-brush}"
+                                BorderBrush="{StaticResource BorderMuted-brush}"
+                                BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource Hover-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource Pressed-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SectionButtonActiveStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{StaticResource Selected-brush}"
+                                BorderBrush="{StaticResource BorderStrong-brush}"
+                                BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SelectedHover-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource PressedAlt-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MetadataDialogFooterButtonStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
+            <Setter Property="Width" Value="92" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{StaticResource ControlBackgroundAlt-brush}"
+                                BorderBrush="{StaticResource BorderMuted-brush}"
+                                BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource Hover-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource Pressed-brush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="{StaticResource Uniform12-thk}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceRaised-brush}"
+                BorderBrush="{StaticResource BorderSubtle-brush}"
+                BorderThickness="{StaticResource Border1-thk}"
+                CornerRadius="{StaticResource Md-cr}"
+                Padding="{StaticResource Uniform10-thk}"
+                Margin="{StaticResource Bottom10-thk}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Width="72"
+                        Height="72"
+                        CornerRadius="{StaticResource Md-cr}"
+                        Background="{StaticResource PanelBackground-brush}"
+                        BorderBrush="{StaticResource BorderStrong-brush}"
+                        BorderThickness="{StaticResource Border1-thk}"
+                        ClipToBounds="True">
+                    <Image x:Name="TopAlbumArtImage" Stretch="UniformToFill" />
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="{StaticResource Left10-thk}" VerticalAlignment="Center">
+                    <TextBlock x:Name="TopSongNameText"
+                               Text="Song Name"
+                               Style="{StaticResource InfoHeaderLinkTitleStyle}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               MouseLeftButtonDown="TopSongNameText_MouseLeftButtonDown" />
+                    <TextBlock x:Name="TopArtistNameText"
+                               Text="Artist Name"
+                               Style="{StaticResource InfoHeaderLinkArtistStyle}"
+                               FontSize="15"
+                               Margin="{StaticResource Top4-thk}"
+                               TextTrimming="CharacterEllipsis"
+                               MouseLeftButtonDown="TopArtistNameText_MouseLeftButtonDown" />
+                    <TextBlock x:Name="TopAlbumNameText"
+                               Text="Album Name"
+                               Style="{StaticResource InfoHeaderLinkAlbumStyle}"
+                               FontSize="14"
+                               Margin="{StaticResource Top2-thk}"
+                               TextTrimming="CharacterEllipsis"
+                               MouseLeftButtonDown="TopAlbumNameText_MouseLeftButtonDown" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <WrapPanel Grid.Row="1" Margin="{StaticResource Bottom10-thk}">
+            <Button x:Name="DetailsSectionButton"
+                    Content="Details"
+                    Style="{StaticResource SectionButtonStyle}"
+                    Click="SectionButton_Click"
+                    Tag="Details" />
+            <Button x:Name="ArtworkSectionButton"
+                    Content="Artwork"
+                    Style="{StaticResource SectionButtonStyle}"
+                    Click="SectionButton_Click"
+                    Tag="Artwork" />
+            <Button x:Name="LyricsSectionButton"
+                    Content="Lyrics"
+                    Style="{StaticResource SectionButtonStyle}"
+                    Click="SectionButton_Click"
+                    Tag="Lyrics" />
+            <Button x:Name="OptionsSectionButton"
+                    Content="Options"
+                    Style="{StaticResource SectionButtonStyle}"
+                    Click="SectionButton_Click"
+                    Tag="Options" />
+            <Button x:Name="SortingSectionButton"
+                    Content="Sorting"
+                    Style="{StaticResource SectionButtonStyle}"
+                    Click="SectionButton_Click"
+                    Tag="Sorting" />
+            <Button x:Name="FileSectionButton"
+                    Content="File"
+                    Style="{StaticResource SectionButtonStyle}"
+                    Click="SectionButton_Click"
+                    Tag="File" />
+        </WrapPanel>
+
+        <Border Grid.Row="2"
+                Background="{StaticResource SurfaceLowered-brush}"
+                BorderBrush="{StaticResource BorderSubtle-brush}"
+                BorderThickness="{StaticResource Border1-thk}"
+                CornerRadius="{StaticResource Md-cr}"
+                Padding="{StaticResource Uniform10-thk}">
+            <Grid>
+                <Grid x:Name="DetailsSectionPanel" Visibility="Visible">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <Grid Margin="{StaticResource Right6-thk}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Song title" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="SongTitleTextBox" Grid.Row="0" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Artist" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="ArtistTextBox" Grid.Row="1" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Album" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="AlbumTextBox" Grid.Row="2" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Album artist" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="AlbumArtistTextBox" Grid.Row="3" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Composer" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="ComposerTextBox" Grid.Row="4" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Genre" Style="{StaticResource FieldLabelStyle}" />
+                            <ComboBox x:Name="GenreComboBox"
+                                      Grid.Row="5"
+                                      Grid.Column="1"
+                                      Margin="{StaticResource FieldRowGap-thk}"
+                                      Style="{StaticResource DarkFieldComboBoxStyle}" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Year" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="YearTextBox" Grid.Row="6" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Width="90" HorizontalAlignment="Left" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Track #" Style="{StaticResource FieldLabelStyle}" />
+                            <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="{StaticResource FieldRowGap-thk}">
+                                <TextBox x:Name="TrackNumberTextBox" Width="58" Margin="{StaticResource Right6-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+                                <TextBlock Text="of" Foreground="{StaticResource TextTertiary-brush}" VerticalAlignment="Center" Margin="{StaticResource Right6-thk}" />
+                                <TextBox x:Name="TrackTotalTextBox" Width="58" Style="{StaticResource FieldTextBoxStyle}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Disc number" Style="{StaticResource FieldLabelStyle}" />
+                            <StackPanel Grid.Row="8" Grid.Column="1" Orientation="Horizontal" Margin="{StaticResource FieldRowGap-thk}">
+                                <TextBox x:Name="DiscNumberTextBox" Width="58" Margin="{StaticResource Right6-thk}" Style="{StaticResource FieldTextBoxStyle}" />
+                                <TextBlock Text="of" Foreground="{StaticResource TextTertiary-brush}" VerticalAlignment="Center" Margin="{StaticResource Right6-thk}" />
+                                <TextBox x:Name="DiscTotalTextBox" Width="58" Style="{StaticResource FieldTextBoxStyle}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="Compilation" Style="{StaticResource FieldLabelStyle}" />
+                            <CheckBox x:Name="CompilationCheckBox"
+                                      Grid.Row="9"
+                                      Grid.Column="1"
+                                      Content="Album is part of a compilation"
+                                      Foreground="{StaticResource TextSecondary-brush}"
+                                      Margin="0,2,0,10" />
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="Favorite" Style="{StaticResource FieldLabelStyle}" />
+                            <CheckBox x:Name="FavoriteCheckBox"
+                                      Grid.Row="10"
+                                      Grid.Column="1"
+                                      Content="Favorite"
+                                      Foreground="{StaticResource TextSecondary-brush}"
+                                      Margin="0,2,0,10" />
+
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="Bpm" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="BpmTextBox" Grid.Row="11" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Width="90" HorizontalAlignment="Left" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="12" Grid.Column="0" Text="Play count" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="PlayCountTextBox" Grid.Row="12" Grid.Column="1" Margin="{StaticResource FieldRowGap-thk}" Width="90" HorizontalAlignment="Left" Style="{StaticResource FieldTextBoxStyle}" />
+
+                            <TextBlock Grid.Row="13" Grid.Column="0" Text="Comments" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="CommentsTextBox"
+                                     Grid.Row="13"
+                                     Grid.Column="1"
+                                     Margin="{StaticResource FieldRowGap-thk}"
+                                     Style="{StaticResource FieldTextBoxStyle}" />
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+
+                <Grid x:Name="ArtworkSectionPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="Artwork"
+                                   Foreground="{StaticResource TextPrimary-brush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Artwork menu placeholder."
+                                   Foreground="{StaticResource TextSoft-brush}"
+                                   Margin="{StaticResource Top8-thk}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="LyricsSectionPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="Lyrics"
+                                   Foreground="{StaticResource TextPrimary-brush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Lyrics menu placeholder."
+                                   Foreground="{StaticResource TextSoft-brush}"
+                                   Margin="{StaticResource Top8-thk}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="OptionsSectionPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="Options"
+                                   Foreground="{StaticResource TextPrimary-brush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Options menu placeholder."
+                                   Foreground="{StaticResource TextSoft-brush}"
+                                   Margin="{StaticResource Top8-thk}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="SortingSectionPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="Sorting"
+                                   Foreground="{StaticResource TextPrimary-brush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Sorting menu placeholder."
+                                   Foreground="{StaticResource TextSoft-brush}"
+                                   Margin="{StaticResource Top8-thk}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="FileSectionPanel" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="File"
+                                   Foreground="{StaticResource TextPrimary-brush}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="File menu placeholder."
+                                   Foreground="{StaticResource TextSoft-brush}"
+                                   Margin="{StaticResource Top8-thk}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="3" Margin="{StaticResource Top10-thk}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button x:Name="OkButton"
+                        Content="OK"
+                        Margin="{StaticResource Right8-thk}"
+                        Style="{StaticResource MetadataDialogFooterButtonStyle}"
+                        IsDefault="True"
+                        Click="OkButton_Click" />
+                <Button x:Name="CancelButton"
+                        Content="Cancel"
+                        Style="{StaticResource MetadataDialogFooterButtonStyle}"
+                        IsCancel="True"
+                        Click="CancelButton_Click" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

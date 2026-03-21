@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
 using MusicApp;
+using MusicApp.Constants;
 using MusicApp.Helpers;
 
 namespace MusicApp.Views;
@@ -134,7 +135,9 @@ public partial class SearchPopupView : UserControl
 
         double measureWidth = SearchScrollViewer.ViewportWidth;
         if (measureWidth <= 0)
-            measureWidth = Math.Max(PopupBorder.ActualWidth - 24, PopupBorder.MinWidth - 24);
+            measureWidth = Math.Max(
+                PopupBorder.ActualWidth - UILayoutConstants.SearchPopupHorizontalContentPadding,
+                PopupBorder.MinWidth - UILayoutConstants.SearchPopupHorizontalContentPadding);
 
         SectionsPanel.Measure(new Size(measureWidth, double.PositiveInfinity));
         double contentHeight = Math.Max(SectionsPanel.DesiredSize.Height, SearchScrollViewer.ExtentHeight);
@@ -193,6 +196,7 @@ public partial class SearchPopupView : UserControl
     public event EventHandler<Song>? ShowInArtistsRequested;
     public event EventHandler<Song>? ShowInSongsRequested;
     public event EventHandler<Song>? ShowInAlbumsRequested;
+    public event EventHandler<Song>? ShowInQueueRequested;
     public event EventHandler<Song>? ShowInExplorerRequested;
     public event EventHandler<Song>? RemoveFromLibraryRequested;
     public event EventHandler<Song>? DeleteRequested;
@@ -253,6 +257,14 @@ public partial class SearchPopupView : UserControl
                 }
             }
         }
+
+        var showInQueueItem = FindMenuItemByHeader(menu.Items, "Show in Queue");
+        if (showInQueueItem != null)
+        {
+            var mainWindow = Application.Current.MainWindow as MainWindow;
+            bool isInQueue = _contextMenuSong != null && mainWindow?.IsTrackInQueue(_contextMenuSong) == true;
+            showInQueueItem.Visibility = isInQueue ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
     private static MenuItem? FindMenuItemByHeader(ItemCollection items, string header)
@@ -278,6 +290,7 @@ public partial class SearchPopupView : UserControl
     private void SearchContextMenu_ShowInArtistsClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInArtistsRequested?.Invoke(this, _contextMenuSong); }
     private void SearchContextMenu_ShowInSongsClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInSongsRequested?.Invoke(this, _contextMenuSong); }
     private void SearchContextMenu_ShowInAlbumsClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInAlbumsRequested?.Invoke(this, _contextMenuSong); }
+    private void SearchContextMenu_ShowInQueueClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInQueueRequested?.Invoke(this, _contextMenuSong); }
     private void SearchContextMenu_ShowInExplorerClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) ShowInExplorerRequested?.Invoke(this, _contextMenuSong); }
     private void SearchContextMenu_RemoveFromLibraryClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) RemoveFromLibraryRequested?.Invoke(this, _contextMenuSong); }
     private void SearchContextMenu_DeleteClick(object sender, RoutedEventArgs e) { if (_contextMenuSong != null) DeleteRequested?.Invoke(this, _contextMenuSong); }
@@ -300,7 +313,7 @@ public partial class SearchPopupView : UserControl
             return MaxSearchPopupHeight;
 
         // Leave space so popup does not extend beyond the app window.
-        var windowLimitedMax = hostWindow.ActualHeight - 140;
+        var windowLimitedMax = hostWindow.ActualHeight - UILayoutConstants.SearchPopupWindowVerticalOverhead;
         return Math.Clamp(windowLimitedMax, MinSearchPopupHeight, MaxSearchPopupHeight);
     }
 }

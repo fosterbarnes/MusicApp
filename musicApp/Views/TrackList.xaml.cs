@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using MusicApp;
+using MusicApp.Constants;
 using MusicApp.Helpers;
 
 namespace MusicApp.Views
@@ -26,6 +27,9 @@ namespace MusicApp.Views
 
         public static readonly DependencyProperty SingleClickPlaysProperty = DependencyProperty.Register(
             nameof(SingleClickPlays), typeof(bool), typeof(TrackListView), new PropertyMetadata(false));
+
+        public static readonly DependencyProperty ContextMenuViewNameProperty = DependencyProperty.Register(
+            nameof(ContextMenuViewName), typeof(string), typeof(TrackListView), new PropertyMetadata(string.Empty));
 
         public string ViewName
         {
@@ -46,6 +50,13 @@ namespace MusicApp.Views
             set => SetValue(SingleClickPlaysProperty, value);
         }
 
+        /// <summary>Optional context-menu view identity override for host views that reuse a common TrackList ViewName.</summary>
+        public string ContextMenuViewName
+        {
+            get => (string)GetValue(ContextMenuViewNameProperty);
+            set => SetValue(ContextMenuViewNameProperty, value);
+        }
+
         public event EventHandler<Song>? PlayTrackRequested;
 
         public event EventHandler<Song>? AddToPlaylistRequested;
@@ -56,7 +67,9 @@ namespace MusicApp.Views
         public event EventHandler<Song>? AddToQueueRequested;
         public event EventHandler<Song>? InfoRequested;
         public event EventHandler<Song>? ShowInArtistsRequested;
+        public event EventHandler<Song>? ShowInSongsRequested;
         public event EventHandler<Song>? ShowInAlbumsRequested;
+        public event EventHandler<Song>? ShowInQueueRequested;
         public event EventHandler<Song>? ShowInExplorerRequested;
         public event EventHandler<Song>? RemoveFromLibraryRequested;
         public event EventHandler<Song>? DeleteRequested;
@@ -130,28 +143,76 @@ namespace MusicApp.Views
             var listView = sender as ListView;
             var contextMenu = listView?.ContextMenu;
             if (contextMenu?.Items == null) return;
+            var selectedSong = listView?.SelectedItem as Song;
             var addToPlaylistItem = FindMenuItemByHeader(contextMenu.Items, "Add to Playlist");
-            if (addToPlaylistItem == null) return;
             var mainWindow = Application.Current.MainWindow as MainWindow;
             var playlists = mainWindow?.Playlists;
-            if (playlists == null) return;
-            // Keep "New Playlist" (0) and Separator (1); remove rest and add current playlists
-            while (addToPlaylistItem.Items.Count > 2)
-                addToPlaylistItem.Items.RemoveAt(2);
-            foreach (var playlist in playlists)
+            if (addToPlaylistItem != null && playlists != null)
             {
-                var mi = new MenuItem
+                // Keep "New Playlist" (0) and Separator (1); remove rest and add current playlists
+                while (addToPlaylistItem.Items.Count > 2)
+                    addToPlaylistItem.Items.RemoveAt(2);
+                foreach (var playlist in playlists)
                 {
-                    Header = playlist.Name,
-                    Tag = playlist
-                };
-                mi.Click += PlaylistSubmenuItem_Click;
-                addToPlaylistItem.Items.Add(mi);
+                    var mi = new MenuItem
+                    {
+                        Header = playlist.Name,
+                        Tag = playlist
+                    };
+                    mi.Click += PlaylistSubmenuItem_Click;
+                    addToPlaylistItem.Items.Add(mi);
+                }
             }
             // Show "Remove from Playlist" only when we're showing a playlist's tracks (Playlists view).
             var removeFromPlaylistItem = FindMenuItemByHeader(contextMenu.Items, "Remove from Playlist");
             if (removeFromPlaylistItem != null)
                 removeFromPlaylistItem.Visibility = CurrentPlaylist != null ? Visibility.Visible : Visibility.Collapsed;
+
+            var showInArtistsItem = FindMenuItemByHeader(contextMenu.Items, "Show in Artists");
+            var showInSongsItem = FindMenuItemByHeader(contextMenu.Items, "Show in Songs");
+            var showInAlbumsItem = FindMenuItemByHeader(contextMenu.Items, "Show in Albums");
+            var showInQueueItem = FindMenuItemByHeader(contextMenu.Items, "Show in Queue");
+            bool isInQueue = selectedSong != null && mainWindow?.IsTrackInQueue(selectedSong) == true;
+            ApplyShowInMenuVisibility(showInArtistsItem, showInSongsItem, showInAlbumsItem, showInQueueItem, isInQueue);
+        }
+
+        private void ApplyShowInMenuVisibility(MenuItem? showInArtistsItem, MenuItem? showInSongsItem, MenuItem? showInAlbumsItem, MenuItem? showInQueueItem, bool isInQueue)
+        {
+            var contextName = string.IsNullOrWhiteSpace(ContextMenuViewName) ? ViewName : ContextMenuViewName;
+            bool showArtists = true;
+            bool showSongs = true;
+            bool showAlbums = true;
+            bool showQueue = isInQueue;
+
+            if (string.Equals(contextName, "Artists", StringComparison.OrdinalIgnoreCase))
+            {
+                showArtists = false;
+            }
+            else if (string.Equals(contextName, "Albums", StringComparison.OrdinalIgnoreCase))
+            {
+                showAlbums = false;
+            }
+            else if (string.Equals(contextName, "Songs", StringComparison.OrdinalIgnoreCase))
+            {
+                showSongs = false;
+            }
+            else if (string.Equals(contextName, "Recently Played", StringComparison.OrdinalIgnoreCase))
+            {
+                showAlbums = false;
+            }
+            else if (string.Equals(contextName, "Queue", StringComparison.OrdinalIgnoreCase))
+            {
+                showQueue = false;
+            }
+
+            if (showInArtistsItem != null)
+                showInArtistsItem.Visibility = showArtists ? Visibility.Visible : Visibility.Collapsed;
+            if (showInSongsItem != null)
+                showInSongsItem.Visibility = showSongs ? Visibility.Visible : Visibility.Collapsed;
+            if (showInAlbumsItem != null)
+                showInAlbumsItem.Visibility = showAlbums ? Visibility.Visible : Visibility.Collapsed;
+            if (showInQueueItem != null)
+                showInQueueItem.Visibility = showQueue ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void PlaylistSubmenuItem_Click(object sender, RoutedEventArgs e)
@@ -291,7 +352,7 @@ namespace MusicApp.Views
                 if (!double.IsNaN(w) && w > 0) otherWidth += w;
             }
             double available = lstTracks.ActualWidth - SystemParameters.VerticalScrollBarWidth;
-            double fillWidth = Math.Max(50, available - otherWidth);
+            double fillWidth = Math.Max(UILayoutConstants.TrackListMinimumColumnWidth, available - otherWidth);
             lastColumn.Width = fillWidth;
         }
 
@@ -343,7 +404,7 @@ namespace MusicApp.Views
         private void WireUpColumnWidthMonitoring()
         {
             if (lstTracks.View is not GridView gridView) return;
-            const double minWidth = 50.0;
+            const double minWidth = UILayoutConstants.TrackListMinimumColumnWidth;
             foreach (var column in gridView.Columns)
             {
                 if (_wiredColumnWidthHandlers.Contains(column)) continue;
@@ -367,7 +428,7 @@ namespace MusicApp.Views
         private void SetupColumnWidthTracking()
         {
             _columnWidthSaveTimer = new DispatcherTimer(
-                TimeSpan.FromSeconds(0.5),
+                UILayoutConstants.ColumnWidthSaveDelay,
                 DispatcherPriority.Background,
                 ColumnWidthSaveTimer_Tick,
                 Dispatcher.CurrentDispatcher);
@@ -565,10 +626,22 @@ namespace MusicApp.Views
                 ShowInArtistsRequested?.Invoke(this, song);
         }
 
+        public void RequestShowInSongs(Song song)
+        {
+            if (song != null)
+                ShowInSongsRequested?.Invoke(this, song);
+        }
+
         public void RequestShowInAlbums(Song song)
         {
             if (song != null)
                 ShowInAlbumsRequested?.Invoke(this, song);
+        }
+
+        public void RequestShowInQueue(Song song)
+        {
+            if (song != null)
+                ShowInQueueRequested?.Invoke(this, song);
         }
 
         public void RequestShowInExplorer(Song song)
