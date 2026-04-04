@@ -11,5 +11,6 @@ musicApp/.updater/obj
 musicApp/.updater.swap/obj
 musicApp/.installer/Output/
 .vs/
+.web/
 obj/
 .buildNotes.md
