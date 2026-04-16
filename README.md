@@ -41,7 +41,7 @@ musicApp is in early development, bugs are expected.
 <tr>
 <td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.1.6/musicApp-v0.1.6-crispyFartin-x64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x64.svg" width="180" height="auto" alt="x64 installer"/></a></td>
 <td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.1.6/musicApp-v0.1.6-crispyFartin-x86-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x86.svg" width="180" height="auto" alt="x86 installer"/></a></td>
-<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.1.6/musicApp-v0.1.6-crispyFartin-arm-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_arm.svg" width="180" height="auto" alt="arm64 installer"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.1.6/musicApp-v0.1.6-crispyFartin-arm64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_arm.svg" width="180" height="auto" alt="arm64 installer"/></a></td>
 </tr>
 <tr>
 <td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.1.6/musicApp-v0.1.6-crispyFartin-portable.zip"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_portable.svg" width="180" height="auto" alt="portable .zip"/></a></td>
