@@ -5,6 +5,7 @@ internal enum VersionBuild
     Portable,
     X64Installer,
     X86Installer,
+    Arm64Installer,
 }
 
 internal static class VersionBuildExtensions
@@ -15,19 +16,27 @@ internal static class VersionBuildExtensions
         if (string.IsNullOrWhiteSpace(raw))
             return true;
 
-        switch (raw.Trim().ToLowerInvariant())
+        var s = raw.Trim();
+        if (string.Equals(s, "portable", StringComparison.OrdinalIgnoreCase))
         {
-            case "portable":
-                kind = VersionBuild.Portable;
-                return true;
-            case "x64":
-                kind = VersionBuild.X64Installer;
-                return true;
-            case "x86":
-                kind = VersionBuild.X86Installer;
-                return true;
-            default:
-                return false;
+            kind = VersionBuild.Portable;
+            return true;
         }
+        if (string.Equals(s, "x64", StringComparison.OrdinalIgnoreCase))
+        {
+            kind = VersionBuild.X64Installer;
+            return true;
+        }
+        if (string.Equals(s, "x86", StringComparison.OrdinalIgnoreCase))
+        {
+            kind = VersionBuild.X86Installer;
+            return true;
+        }
+        if (string.Equals(s, "arm64", StringComparison.OrdinalIgnoreCase))
+        {
+            kind = VersionBuild.Arm64Installer;
+            return true;
+        }
+        return false;
     }
 }

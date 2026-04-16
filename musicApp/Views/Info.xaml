@@ -17,23 +17,14 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource AppBackground-brush}">
     <Window.Resources>
-        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="{StaticResource FieldLabelMargin-thk}" />
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Theme/SettingsDialogFormResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         <Style x:Key="OptionsFieldLabelStyle" TargetType="TextBlock" BasedOn="{StaticResource FieldLabelStyle}">
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="Margin" Value="0,0,10,10" />
-        </Style>
-        <Style x:Key="FileInfoValueStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="{StaticResource FieldRowGap-thk}" />
         </Style>
         <Style x:Key="FieldInputStyle" TargetType="Control">
             <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
@@ -79,135 +70,6 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        <!-- ComboBoxItem: default theme template ignores Style.Background for highlight (blue hot-track). Match CompactListViewItemStyle in Styles.xaml. -->
-        <Style x:Key="DarkComboBoxItemStyle" TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="6,4" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder"
-                                Background="{TemplateBinding Background}"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource Hover-brush}" />
-                                <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource Selected-brush}" />
-                                <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <!-- Closed-state chrome needs a custom template; default ToggleButton uses light Aero styling. -->
-        <ControlTemplate x:Key="DarkComboBoxControlTemplate" TargetType="ComboBox">
-            <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
-                <Popup x:Name="PART_Popup"
-                       AllowsTransparency="True"
-                       Focusable="False"
-                       IsOpen="{TemplateBinding IsDropDownOpen}"
-                       Placement="Bottom"
-                       PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
-                       PopupAnimation="Fade"
-                       StaysOpen="False">
-                    <Border Background="{StaticResource ControlBackground-brush}"
-                            BorderBrush="{StaticResource BorderSubtle-brush}"
-                            BorderThickness="{StaticResource Border1-thk}"
-                            MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                            MinWidth="{Binding ActualWidth, ElementName=templateRoot}">
-                        <ScrollViewer Margin="{StaticResource Zero-thk}" SnapsToDevicePixels="True">
-                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
-                        </ScrollViewer>
-                    </Border>
-                </Popup>
-
-                <ToggleButton x:Name="DropDownToggle"
-                              HorizontalAlignment="Stretch"
-                              VerticalAlignment="Stretch"
-                              ClickMode="Press"
-                              Focusable="False"
-                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <Border x:Name="ChromeBorder"
-                                    Background="{StaticResource ControlBackground-brush}"
-                                    BorderBrush="{StaticResource BorderSubtle-brush}"
-                                    BorderThickness="{StaticResource Border1-thk}"
-                                    SnapsToDevicePixels="True">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="22" />
-                                    </Grid.ColumnDefinitions>
-                                    <Path Grid.Column="1"
-                                          Width="8"
-                                          Height="5"
-                                          Margin="{StaticResource Right6-thk}"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          Data="M 0 0 L 4 4 L 8 0 Z"
-                                          Fill="{StaticResource TextTertiary-brush}"
-                                          SnapsToDevicePixels="True"
-                                          Stretch="Uniform" />
-                                </Grid>
-                            </Border>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                </ToggleButton>
-
-                <ContentPresenter x:Name="ContentSite"
-                                  Margin="{StaticResource ComboBoxContentMargin-thk}"
-                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                  Content="{TemplateBinding SelectionBoxItem}"
-                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                  TextElement.Foreground="{TemplateBinding Foreground}"
-                                  IsHitTestVisible="False"
-                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-            </Grid>
-            <ControlTemplate.Triggers>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter TargetName="templateRoot" Property="Opacity" Value="0.55" />
-                </Trigger>
-            </ControlTemplate.Triggers>
-        </ControlTemplate>
-
-        <Style x:Key="DarkFieldComboBoxStyle" TargetType="ComboBox">
-            <Style.Resources>
-                <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{Binding Color, Source={StaticResource ControlBackground-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="{Binding Color, Source={StaticResource TextSecondary-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding Color, Source={StaticResource TextPrimary-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.HotTrackBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.MenuHighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{Binding Color, Source={StaticResource ControlBackground-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{Binding Color, Source={StaticResource TextSecondary-brush}}" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
-            </Style.Resources>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
-            <Setter Property="Background" Value="{StaticResource ControlBackground-brush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle-brush}" />
-            <Setter Property="BorderThickness" Value="{StaticResource Border1-thk}" />
-            <Setter Property="Height" Value="{StaticResource FieldHeight-size}" />
-            <Setter Property="Padding" Value="6,2" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItemStyle}" />
-            <Setter Property="Template" Value="{StaticResource DarkComboBoxControlTemplate}" />
         </Style>
         <Style x:Key="InfoHeaderLinkTitleStyle" TargetType="TextBlock">
             <Setter Property="Cursor" Value="Hand" />
@@ -336,6 +198,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="{StaticResource Uniform12-thk}">

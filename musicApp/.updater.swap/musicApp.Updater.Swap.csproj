@@ -10,6 +10,15 @@
     <AssemblyTitle>musicApp Updater Swap</AssemblyTitle>
     <Product>musicApp</Product>
     <Company>musicApp</Company>
+    <Platforms>portable;arm64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='portable'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='arm64'">
+    <PlatformTarget>ARM64</PlatformTarget>
   </PropertyGroup>
 
 </Project>

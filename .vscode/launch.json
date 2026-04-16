@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "musicApp",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build musicApp (Debug)",
+      "program": "${workspaceFolder}/musicApp/bin/Debug/net8.0-windows/musicApp.exe",
+      "cwd": "${workspaceFolder}/musicApp/bin/Debug/net8.0-windows",
+      "stopAtEntry": false
+    },
+    {
+      "name": "musicApp (workspace = project folder)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build musicApp (Debug, project folder)",
+      "program": "${workspaceFolder}/bin/Debug/net8.0-windows/musicApp.exe",
+      "cwd": "${workspaceFolder}/bin/Debug/net8.0-windows",
+      "stopAtEntry": false
+    }
+  ]
+}

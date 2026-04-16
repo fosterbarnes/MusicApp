@@ -1,28 +1,17 @@
-v0.1.5 release (shaqSpeedrunner)
-
-Main Window:
-- Add ability to select multiple items in a track view
-- Change selection color to #523e6e
-- Show "..." when text gets cut off by the next column in grid view
-- Alternate colors in grid views
-- Shorten row height of grid items 
-
-Albums:
-- Fix broken loading logic that would sometimes cause multiple refreshes of albums view
-- Fix broken loading animation
-- Fix issue with reliably getting to album items from 'right click > show in albums'
+v0.1.6 release (crispyFartin)
 
 Backend/Boring stuff:
-- Fix issue that would sometimes result in album art getting cut off
+- Move `/musicApp/Resources` to `/.resources`
+- Move `/musicApp/Scripts` to `/.scripts`
+- Move `/.web/mainPage/Scripts` to `/.scripts/web`
+
+Build config:
+- Add arm64 config
+- Rename "AnyCPU" > "portable"
 
 Installer:
-- Autodetect pre-existing installs of .NET 8.0 desktop runtime
-
-Website:
-- Create barebones main page using hugo
+- Add arm64 support
 
 Scripts:
-- Add codeCount script to count total lines of code with scc
-
-README.md:
-- Keep track of code line count
+- Consolidate powershell script location
+- Clean up script logic

@@ -1,42 +1,42 @@
 # ![Icon](https://i.postimg.cc/d3c9vxzF/Music-App-Icon24x24.png) musicApp - an offline music player
 
-<img src="musicApp/Resources/scr/album.png" alt="Screenshot" />
+<img src=".resources/scr/album.png" alt="Screenshot" />
 
 <details>
 <summary>More Screenshots:</summary>
 
 ### Artists
-<img src="musicApp/Resources/scr/artist.png" alt="Artists" />
+<img src=".resources/scr/artist.png" alt="Artists" />
 
 ### Albums
-<img src="musicApp/Resources/scr/album.png" alt="Albums" />
+<img src=".resources/scr/album.png" alt="Albums" />
 
 ### Songs
-<img src="musicApp/Resources/scr/song.png" alt="Songs" />
+<img src=".resources/scr/song.png" alt="Songs" />
 
 ### Genres
-<img src="musicApp/Resources/scr/genre.png" alt="Genres" />
+<img src=".resources/scr/genre.png" alt="Genres" />
 
 ### Playlists
-<img src="musicApp/Resources/scr/playlist.png" alt="Playlists" />
+<img src=".resources/scr/playlist.png" alt="Playlists" />
 
 ### Recently Played
-<img src="musicApp/Resources/scr/recent.png" alt="Recently Played" />
+<img src=".resources/scr/recent.png" alt="Recently Played" />
 
 ### Queue
-<img src="musicApp/Resources/scr/queue.png" alt="Queue" />
+<img src=".resources/scr/queue.png" alt="Queue" />
 
 ### Search
-<img src="musicApp/Resources/scr/search.png" alt="Search" />
+<img src=".resources/scr/search.png" alt="Search" />
 
 ### Info
-<img src="musicApp/Resources/scr/info.png" alt="Info" />
+<img src=".resources/scr/info.png" alt="Info" />
 
 </details>
 
 musicApp is in early development, bugs are expected.
 
-If you want to use it, [download the latest release](https://github.com/fosterbarnes/musicApp/releases/download/v0.1.5/musicApp-v0.1.5-shaqSpeedrunner-portable.zip), unzip, then run MusicApp.exe
+If you want to use it, [download the latest release](https://github.com/fosterbarnes/musicApp/releases/download/v0.1.6/musicApp-v0.1.6-crispyFartin-portable.zip), unzip, then run MusicApp.exe
 
 ## Progress
 
@@ -44,7 +44,7 @@ If you want to use it, [download the latest release](https://github.com/fosterba
 **124 / 166 tasks complete (74.7%)**
 [Tasks.md](https://github.com/fosterbarnes/musicApp/blob/main/.md/Tasks.md#main-window)
 
-[50,930](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
+[31,330](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
 
 # General Usage Info
 

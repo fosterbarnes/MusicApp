@@ -35,6 +35,7 @@ public static class AppVersionFiles
             "portable" => " (portable)",
             "x64" => " (x64)",
             "x86" => " (x86)",
+            "arm64" => " (arm64)",
             _ => ""
         };
     }

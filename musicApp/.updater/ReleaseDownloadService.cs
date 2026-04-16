@@ -27,6 +27,7 @@ internal static class ReleaseDownloadService
             VersionBuild.Portable => $"musicApp-v{v}-{seg}-portable.zip",
             VersionBuild.X64Installer => $"musicApp-v{v}-{seg}-x64-installer.exe",
             VersionBuild.X86Installer => $"musicApp-v{v}-{seg}-x86-installer.exe",
+            VersionBuild.Arm64Installer => $"musicApp-v{v}-{seg}-arm64-installer.exe",
             _ => throw new ArgumentOutOfRangeException(nameof(kind))
         };
     }
@@ -115,6 +116,7 @@ internal static class ReleaseDownloadService
                 VersionBuild.Portable => "-portable.zip",
                 VersionBuild.X64Installer => "-x64-installer.exe",
                 VersionBuild.X86Installer => "-x86-installer.exe",
+                VersionBuild.Arm64Installer => "-arm64-installer.exe",
                 _ => ""
             };
             if (suffix.Length > 0)

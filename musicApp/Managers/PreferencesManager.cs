@@ -62,6 +62,10 @@ namespace musicApp
 
         public class GeneralPreferences
         {
+            public const double UiFontSizeMin = 10;
+            public const double UiFontSizeMax = 22;
+            public const double UiFontSizeDefault = 14;
+
             public bool CheckForUpdates { get; set; }
 
             public bool AutomaticallyInstallUpdates { get; set; }
@@ -69,6 +73,11 @@ namespace musicApp
             public bool LaunchAppAfterUpdate { get; set; }
 
             public string Language { get; set; } = "en-system";
+
+            /// <summary>WPF font family source string; empty = system / message font.</summary>
+            public string UiFontFamily { get; set; } = "";
+
+            public double UiFontSize { get; set; } = UiFontSizeDefault;
         }
 
         public class SidebarPreferences
@@ -209,6 +218,11 @@ namespace musicApp
             preferences.Playback ??= new PlaybackPreferences();
             preferences.Library ??= new LibraryPreferences();
             preferences.General.Language ??= "en-system";
+            preferences.General.UiFontFamily ??= "";
+            preferences.General.UiFontSize = Math.Clamp(
+                preferences.General.UiFontSize,
+                GeneralPreferences.UiFontSizeMin,
+                GeneralPreferences.UiFontSizeMax);
             preferences.Playback.CrossfadeSeconds = Math.Clamp(preferences.Playback.CrossfadeSeconds, 0, 15);
             if (preferences.Playback.CrossfadeSeconds <= 0)
                 preferences.Playback.CrossfadeRampSeconds = 0;

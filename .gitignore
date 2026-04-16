@@ -14,3 +14,4 @@ musicApp/.installer/Output/
 .web/
 obj/
 .buildNotes.md
+.resources/exe/yapBot.json

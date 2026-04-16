@@ -6,11 +6,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Resources\icon\musicApp Icon.ico</ApplicationIcon>
+    <ApplicationIcon>..\.resources\icon\musicApp Icon.ico</ApplicationIcon>
     <AssemblyTitle>musicApp</AssemblyTitle>
     <Product>musicApp</Product>
     <Company>musicApp</Company>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>portable;x64;x86;arm64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='portable'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='arm64'">
+    <PlatformTarget>ARM64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,15 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\svg\*.xaml" />
+    <Resource Include="..\.resources\svg\*.xaml" Link="Resources\svg\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
-    <Page Include="Resources\icon\musicApp Icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Resources\icon\musicApp Icon.png" />
+    <Resource Include="..\.resources\icon\musicApp Icon.ico" Link="Resources\icon\musicApp Icon.ico" />
+    <Resource Include="..\.resources\icon\musicApp Icon.png" Link="Resources\icon\musicApp Icon.png" />
+    <Resource Include="..\.resources\icon\musicApp Icon (Desaturated).png" Link="Resources\icon\musicApp Icon (Desaturated).png" />
   </ItemGroup>
 
   <ItemGroup>

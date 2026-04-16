@@ -140,7 +140,7 @@ public partial class UpdaterWindow : Window
             var vbRaw = InstallVersionReader.TryReadVersionBuild(_installRoot);
             if (!VersionBuildExtensions.TryParseFromFileContent(vbRaw, out _buildKind))
             {
-                SetDone($"Unknown VersionBuild value: '{vbRaw ?? "(missing)"}'. Expected portable, x64, or x86.");
+                SetDone($"Unknown VersionBuild value: '{vbRaw ?? "(missing)"}'. Expected portable, x64, x86, or arm64.");
                 return;
             }
 

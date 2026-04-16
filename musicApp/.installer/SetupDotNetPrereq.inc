@@ -109,7 +109,7 @@ begin
       Root, BasePath + '\InstalledVersions', MinVer);
 end;
 
-function HasMinWindowsDesktopRuntimeImpl: Boolean;
+function HasMinWindowsDesktopRuntimeForArch(const RegArch: String): Boolean;
 var
   MinVer: String;
   Paths: TArrayOfString;
@@ -120,9 +120,9 @@ begin
   MinVer := '{#DotNetPrereqVersion}';
   SetArrayLength(Paths, 2);
   Paths[0] :=
-    'SOFTWARE\dotnet\Setup\InstalledVersions\{#DotNetPrereqRegArch}\sharedfx\Microsoft.WindowsDesktop.App';
+    'SOFTWARE\dotnet\Setup\InstalledVersions\' + RegArch + '\sharedfx\Microsoft.WindowsDesktop.App';
   Paths[1] :=
-    'SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\{#DotNetPrereqRegArch}\sharedfx\Microsoft.WindowsDesktop.App';
+    'SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\' + RegArch + '\sharedfx\Microsoft.WindowsDesktop.App';
   if IsWin64 then
   begin
     SetArrayLength(Roots, 3);
@@ -142,6 +142,21 @@ begin
         Result := True;
         Exit;
       end;
+end;
+
+function HasMinWindowsDesktopRuntimeImpl: Boolean;
+begin
+#ifdef DotNetPrereqMultiArch
+  case ProcessorArchitecture of
+    paArm64: Result := HasMinWindowsDesktopRuntimeForArch('arm64');
+    paX64: Result := HasMinWindowsDesktopRuntimeForArch('x64');
+    paX86: Result := HasMinWindowsDesktopRuntimeForArch('x86');
+  else
+    Result := HasMinWindowsDesktopRuntimeForArch('x86');
+  end;
+#else
+  Result := HasMinWindowsDesktopRuntimeForArch('{#DotNetPrereqRegArch}');
+#endif
 end;
 
 function HasMinWindowsDesktopRuntime: Boolean;
@@ -195,6 +210,8 @@ var
   ExePath: String;
   ExitCode: Integer;
   InstallParams: String;
+  PrereqUrl: String;
+  PrereqFile: String;
 begin
   Result := '';
   NeedsRestart := False;
@@ -203,24 +220,52 @@ begin
   if not WizardIsTaskSelected('dotnetdesktop8') then
     Exit;
 
+#ifdef DotNetPrereqMultiArch
+  case ProcessorArchitecture of
+    paArm64:
+    begin
+      PrereqUrl := '{#DotNetPrereqUrlArm64}';
+      PrereqFile := '{#DotNetPrereqFileArm64}';
+    end;
+    paX64:
+    begin
+      PrereqUrl := '{#DotNetPrereqUrlX64}';
+      PrereqFile := '{#DotNetPrereqFileX64}';
+    end;
+    paX86:
+    begin
+      PrereqUrl := '{#DotNetPrereqUrlX86}';
+      PrereqFile := '{#DotNetPrereqFileX86}';
+    end;
+  else
+    begin
+      PrereqUrl := '{#DotNetPrereqUrlX86}';
+      PrereqFile := '{#DotNetPrereqFileX86}';
+    end;
+  end;
+#else
+  PrereqUrl := '{#DotNetPrereqUrl}';
+  PrereqFile := '{#DotNetPrereqFile}';
+#endif
+
   try
     if WizardSilent then
     begin
       DownloadTemporaryFile(
-        '{#DotNetPrereqUrl}', '{#DotNetPrereqFile}', '', nil);
+        PrereqUrl, PrereqFile, '', nil);
     end
     else
     begin
       DotNetDownloadPage.Show;
       try
         DotNetDownloadPage.Clear;
-        DotNetDownloadPage.Add('{#DotNetPrereqUrl}', '{#DotNetPrereqFile}', '');
+        DotNetDownloadPage.Add(PrereqUrl, PrereqFile, '');
         DotNetDownloadPage.Download;
       finally
         DotNetDownloadPage.Hide;
       end;
     end;
-    ExePath := ExpandConstant('{tmp}\{#DotNetPrereqFile}');
+    ExePath := ExpandConstant('{tmp}\') + PrereqFile;
   except
     Result :=
       'Could not download the Microsoft .NET 8 Desktop Runtime installer.' + #13#10#13#10 +
@@ -246,7 +291,7 @@ begin
     try
       DotNetInstallPage.SetText(
         'Running Microsoft .NET Desktop Runtime {#DotNetPrereqVersion} setup.',
-        '{#DotNetPrereqFile} — a separate Microsoft window may also appear.');
+        PrereqFile + ' — a separate Microsoft window may also appear.');
       DotNetInstallPage.Animate;
       if not Exec(ExePath, InstallParams, '', SW_SHOW, ewWaitUntilTerminated, ExitCode) then
         Result := 'Could not start the Microsoft .NET Desktop Runtime installer.';

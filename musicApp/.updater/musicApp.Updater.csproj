@@ -11,9 +11,17 @@
     <AssemblyTitle>musicApp Updater</AssemblyTitle>
     <Product>musicApp</Product>
     <Company>musicApp</Company>
-    <ApplicationIcon>..\Resources\icon\musicApp Icon.ico</ApplicationIcon>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <ApplicationIcon>..\..\.resources\icon\musicApp Icon.ico</ApplicationIcon>
+    <Platforms>portable;x64;x86;arm64</Platforms>
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='portable'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='arm64'">
+    <PlatformTarget>ARM64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="..\Resources\icon\musicApp Icon.ico" Link="Resources\icon\musicApp Icon.ico" />
+    <Resource Include="..\..\.resources\icon\musicApp Icon.ico" Link="Resources\icon\musicApp Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

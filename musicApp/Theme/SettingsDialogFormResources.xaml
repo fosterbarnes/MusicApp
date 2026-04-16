@@ -152,7 +152,7 @@
         </Setter>
     </Style>
     <Style x:Key="DarkComboBoxItemStyle" TargetType="ComboBoxItem">
-        <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="6,4" />
         <Setter Property="BorderThickness" Value="0" />
@@ -182,6 +182,44 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- Full template + OverridesDefaultStyle so MaterialDesign (or Aero) implicit ToggleButton never adds split-button chrome. -->
+    <Style x:Key="DarkComboBoxDropDownToggleStyle" TargetType="ToggleButton">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="ChromeBorder"
+                            Background="{StaticResource ControlBackground-brush}"
+                            BorderBrush="{StaticResource BorderSubtle-brush}"
+                            BorderThickness="{StaticResource Border1-thk}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="22" />
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="1"
+                                  Width="8"
+                                  Height="5"
+                                  Margin="{StaticResource Right6-thk}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Data="M 0 0 L 4 4 L 8 0 Z"
+                                  Fill="{StaticResource TextPrimary-brush}"
+                                  SnapsToDevicePixels="True"
+                                  Stretch="Uniform" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <ControlTemplate x:Key="DarkComboBoxControlTemplate" TargetType="ComboBox">
         <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
             <Popup x:Name="PART_Popup"
@@ -204,38 +242,12 @@
             </Popup>
 
             <ToggleButton x:Name="DropDownToggle"
+                          Style="{StaticResource DarkComboBoxDropDownToggleStyle}"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
                           ClickMode="Press"
                           Focusable="False"
-                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                <ToggleButton.Template>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Border x:Name="ChromeBorder"
-                                Background="{StaticResource ControlBackground-brush}"
-                                BorderBrush="{StaticResource BorderSubtle-brush}"
-                                BorderThickness="{StaticResource Border1-thk}"
-                                SnapsToDevicePixels="True">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="22" />
-                                </Grid.ColumnDefinitions>
-                                <Path Grid.Column="1"
-                                      Width="8"
-                                      Height="5"
-                                      Margin="{StaticResource Right6-thk}"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"
-                                      Data="M 0 0 L 4 4 L 8 0 Z"
-                                      Fill="{StaticResource TextTertiary-brush}"
-                                      SnapsToDevicePixels="True"
-                                      Stretch="Uniform" />
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </ToggleButton.Template>
-            </ToggleButton>
+                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" />
 
             <ContentPresenter x:Name="ContentSite"
                               Margin="{StaticResource ComboBoxContentMargin-thk}"
@@ -270,17 +282,18 @@
     <Style x:Key="DarkFieldComboBoxStyle" TargetType="ComboBox">
         <Style.Resources>
             <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{Binding Color, Source={StaticResource ControlBackground-brush}}" />
-            <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="{Binding Color, Source={StaticResource TextSecondary-brush}}" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="{Binding Color, Source={StaticResource TextPrimary-brush}}" />
             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding Color, Source={StaticResource TextPrimary-brush}}" />
             <SolidColorBrush x:Key="{x:Static SystemColors.HotTrackBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
             <SolidColorBrush x:Key="{x:Static SystemColors.MenuHighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
             <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{Binding Color, Source={StaticResource ControlBackground-brush}}" />
-            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{Binding Color, Source={StaticResource TextSecondary-brush}}" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{Binding Color, Source={StaticResource TextPrimary-brush}}" />
             <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding Color, Source={StaticResource Hover-brush}}" />
         </Style.Resources>
+        <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="Foreground" Value="{StaticResource TextSecondary-brush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary-brush}" />
         <Setter Property="Background" Value="{StaticResource ControlBackground-brush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle-brush}" />
         <Setter Property="BorderThickness" Value="{StaticResource Border1-thk}" />

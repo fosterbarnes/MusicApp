@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
@@ -31,6 +32,8 @@ namespace musicApp.Views
         private bool _playbackNormalizationCheckLoading;
         private bool _sidebarLibraryActionCheckLoading;
         private bool _libraryAlbumArtScanGuiBusy;
+        private bool _generalFontUiLoading;
+        private bool _generalUIFontSizeTextLoading;
 
         public SettingsView(string? launchSection = null)
         {
@@ -88,8 +91,18 @@ namespace musicApp.Views
 
             _ = LoadFileStorageMusicPathsAsync();
 
-            AppLanguageCatalog.PopulateGeneralLanguageComboBox(GeneralLanguageComboBox);
-            LoadPreferencesIntoUi();
+            _generalFontUiLoading = true;
+            try
+            {
+                AppLanguageCatalog.PopulateGeneralLanguageComboBox(GeneralLanguageComboBox);
+                SystemFontCatalog.PopulateFontFamilyComboBox(GeneralFontFamilyComboBox);
+                LoadPreferencesIntoUi();
+            }
+            finally
+            {
+                _generalFontUiLoading = false;
+            }
+
             UpdateLibraryActionButtonsEnabled();
             RefreshPlaybackNormalizationStatsLine();
         }
@@ -297,6 +310,33 @@ namespace musicApp.Views
                 ?? GeneralLanguageComboBox.Items.OfType<ComboBoxItem>()
                     .FirstOrDefault(i => i.Tag is string s && s == AppLanguageCatalog.SystemLanguageTag);
 
+            var wantFont = _preferences.General.UiFontFamily ?? SystemFontCatalog.SystemDefaultTag;
+            var fontItem = GeneralFontFamilyComboBox.Items.OfType<ComboBoxItem>()
+                .FirstOrDefault(i =>
+                    i.Tag is string t && string.Equals(t, wantFont, StringComparison.OrdinalIgnoreCase));
+            GeneralFontFamilyComboBox.SelectedItem = fontItem
+                ?? GeneralFontFamilyComboBox.Items.OfType<ComboBoxItem>().FirstOrDefault();
+
+            GeneralUIFontSizeSlider.ValueChanged -= GeneralUIFontSizeSlider_ValueChanged;
+            GeneralUIFontSizeSlider.Value = _preferences.General.UiFontSize;
+            GeneralUIFontSizeSlider.ValueChanged += GeneralUIFontSizeSlider_ValueChanged;
+
+            if (GeneralUIFontSizeTextBox is not null)
+            {
+                _generalUIFontSizeTextLoading = true;
+                try
+                {
+                    GeneralUIFontSizeTextBox.Text = ((int)Math.Round(_preferences.General.UiFontSize)).ToString(
+                        CultureInfo.CurrentCulture);
+                }
+                finally
+                {
+                    _generalUIFontSizeTextLoading = false;
+                }
+            }
+
+            UpdateGeneralFontPreview();
+
             var sb = _preferences.Sidebar;
             _sidebarLibraryActionCheckLoading = true;
             try
@@ -413,6 +453,7 @@ namespace musicApp.Views
         private void ReadUiIntoPreferences()
         {
             PreferencesManager.EnsureInitialized(_preferences);
+            CommitGeneralUIFontSizeFromTextBox();
 
             _preferences.General.CheckForUpdates = GeneralCheckForUpdatesCheckBox.IsChecked == true;
             _preferences.General.AutomaticallyInstallUpdates = GeneralAutoInstallUpdatesCheckBox.IsChecked == true;
@@ -421,6 +462,16 @@ namespace musicApp.Views
                 _preferences.General.Language = code;
             else
                 _preferences.General.Language = AppLanguageCatalog.SystemLanguageTag;
+
+            if (GeneralFontFamilyComboBox.SelectedItem is ComboBoxItem fontItem && fontItem.Tag is string fontTag)
+                _preferences.General.UiFontFamily = fontTag;
+            else
+                _preferences.General.UiFontFamily = SystemFontCatalog.SystemDefaultTag;
+
+            _preferences.General.UiFontSize = Math.Clamp(
+                GeneralUIFontSizeSlider.Value,
+                PreferencesManager.GeneralPreferences.UiFontSizeMin,
+                PreferencesManager.GeneralPreferences.UiFontSizeMax);
 
             _preferences.Sidebar.ShowAddMusic = SidebarAddMusicCheckBox.IsChecked == true;
             _preferences.Sidebar.ShowRescanLibrary = SidebarRescanLibraryCheckBox.IsChecked == true;
@@ -458,6 +509,98 @@ namespace musicApp.Views
                 _preferences.Playback.OutputBits = PlaybackOutputBitsUtil.Normalize(bitsParsed);
             else
                 _preferences.Playback.OutputBits = PlaybackOutputBitsUtil.Default;
+        }
+
+        private void UpdateGeneralFontPreview()
+        {
+            if (GeneralFontFamilyComboBox.SelectedItem is ComboBoxItem ci && ci.Tag is string tag)
+                GeneralFontPreviewText.FontFamily = SystemFontCatalog.ResolveFontFamily(tag);
+            else
+                GeneralFontPreviewText.FontFamily = SystemFonts.MessageFontFamily;
+        }
+
+        private void GeneralFontFamilyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_generalFontUiLoading)
+                return;
+            UpdateGeneralFontPreview();
+            PreferencesManager.EnsureInitialized(_preferences);
+            if (GeneralFontFamilyComboBox.SelectedItem is ComboBoxItem fontItem && fontItem.Tag is string ft)
+                _preferences.General.UiFontFamily = ft;
+            else
+                _preferences.General.UiFontFamily = SystemFontCatalog.SystemDefaultTag;
+            PreferencesManager.Instance.SavePreferencesSync(_preferences);
+            NotifyMainWindowIfOwner();
+        }
+
+        private void GeneralUIFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_generalFontUiLoading)
+                return;
+            // ValueChanged can run during InitializeComponent before named fields (e.g. TextBox) exist.
+            if (GeneralUIFontSizeTextBox is null)
+                return;
+
+            if (!_generalUIFontSizeTextLoading)
+            {
+                _generalUIFontSizeTextLoading = true;
+                try
+                {
+                    GeneralUIFontSizeTextBox.Text = ((int)Math.Round(GeneralUIFontSizeSlider.Value)).ToString(
+                        CultureInfo.CurrentCulture);
+                }
+                finally
+                {
+                    _generalUIFontSizeTextLoading = false;
+                }
+            }
+
+            PreferencesManager.EnsureInitialized(_preferences);
+            _preferences.General.UiFontSize = Math.Clamp(
+                GeneralUIFontSizeSlider.Value,
+                PreferencesManager.GeneralPreferences.UiFontSizeMin,
+                PreferencesManager.GeneralPreferences.UiFontSizeMax);
+            PreferencesManager.Instance.SavePreferencesSync(_preferences);
+            NotifyMainWindowIfOwner();
+        }
+
+        private void CommitGeneralUIFontSizeFromTextBox()
+        {
+            if (GeneralUIFontSizeTextBox is null || _generalFontUiLoading || _generalUIFontSizeTextLoading)
+                return;
+
+            var min = (int)PreferencesManager.GeneralPreferences.UiFontSizeMin;
+            var max = (int)PreferencesManager.GeneralPreferences.UiFontSizeMax;
+
+            if (!int.TryParse(GeneralUIFontSizeTextBox.Text.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out var parsed))
+                parsed = (int)Math.Round(GeneralUIFontSizeSlider.Value);
+
+            var clamped = Math.Clamp(parsed, min, max);
+
+            _generalUIFontSizeTextLoading = true;
+            try
+            {
+                GeneralUIFontSizeTextBox.Text = clamped.ToString(CultureInfo.CurrentCulture);
+                GeneralUIFontSizeSlider.Value = clamped;
+            }
+            finally
+            {
+                _generalUIFontSizeTextLoading = false;
+            }
+        }
+
+        private void GeneralUIFontSizeTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            CommitGeneralUIFontSizeFromTextBox();
+        }
+
+        private void GeneralUIFontSizeTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                CommitGeneralUIFontSizeFromTextBox();
+                e.Handled = true;
+            }
         }
 
         private void PlaybackCrossfadeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

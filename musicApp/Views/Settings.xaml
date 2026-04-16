@@ -159,6 +159,10 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
@@ -216,11 +220,73 @@
 
                             <TextBlock Grid.Row="6"
                                        Grid.Column="0"
+                                       Grid.RowSpan="3"
+                                       Text="Font"
+                                       Style="{StaticResource FieldLabelStyle}"
+                                       VerticalAlignment="Top" />
+                            <ComboBox x:Name="GeneralFontFamilyComboBox"
+                                      Grid.Row="6"
+                                      Grid.Column="1"
+                                      Margin="{StaticResource FieldRowGap-thk}"
+                                      Style="{StaticResource DarkFieldComboBoxStyle}"
+                                      HorizontalAlignment="Stretch"
+                                      IsTextSearchEnabled="True"
+                                      SelectionChanged="GeneralFontFamilyComboBox_SelectionChanged" />
+                            <StackPanel Grid.Row="7"
+                                        Grid.Column="1"
+                                        Margin="{StaticResource FieldRowGap-thk}"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Size"
+                                           Style="{StaticResource SettingsPlaybackCrossfadeLabelStyle}"
+                                           VerticalAlignment="Center" />
+                                <Slider x:Name="GeneralUIFontSizeSlider"
+                                        Minimum="{StaticResource SettingsUIFontSizeSliderMin-size}"
+                                        Maximum="{StaticResource SettingsUIFontSizeSliderMax-size}"
+                                        TickFrequency="1"
+                                        IsSnapToTickEnabled="True"
+                                        Value="{StaticResource SettingsUIFontSizeSliderDefault-size}"
+                                        Width="{StaticResource SettingsUIFontSizeSliderWidth-size}"
+                                        VerticalAlignment="Center"
+                                        IsMoveToPointEnabled="True"
+                                        Style="{StaticResource CustomVolumeSlider}"
+                                        Foreground="{StaticResource AccentPrimary-brush}"
+                                        Background="Transparent"
+                                        ValueChanged="GeneralUIFontSizeSlider_ValueChanged" />
+                                <TextBox x:Name="GeneralUIFontSizeTextBox"
+                                         Width="44"
+                                         Margin="{StaticResource Left10-thk}"
+                                         Style="{StaticResource DarkFieldTextBoxStyle}"
+                                         VerticalAlignment="Center"
+                                         TextAlignment="Center"
+                                         LostFocus="GeneralUIFontSizeTextBox_LostFocus"
+                                         KeyDown="GeneralUIFontSizeTextBox_KeyDown" />
+                                <TextBlock Text="pt"
+                                           Style="{StaticResource SettingsPlaybackAuxTextStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="{StaticResource Left8-thk}" />
+                            </StackPanel>
+                            <TextBlock x:Name="GeneralFontPreviewText"
+                                       Grid.Row="8"
+                                       Grid.Column="1"
+                                       Margin="{StaticResource FieldRowGap-thk}"
+                                       Text="Preview — The quick brown fox jumps over the lazy dog."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource TextSecondary-brush}"
+                                       FontSize="{Binding ElementName=GeneralUIFontSizeSlider, Path=Value}" />
+
+                            <Separator Grid.Row="9"
+                                       Grid.ColumnSpan="2"
+                                       Margin="{StaticResource SettingsGeneralDividerMargin-thk}"
+                                       Background="{StaticResource BorderDefault-brush}" />
+
+                            <TextBlock Grid.Row="10"
+                                       Grid.Column="0"
                                        Text="Import/Export Settings"
                                        Style="{StaticResource FieldLabelStyle}"
                                        TextWrapping="Wrap"
                                        VerticalAlignment="Center" />
-                            <StackPanel Grid.Row="6"
+                            <StackPanel Grid.Row="10"
                                         Grid.Column="1"
                                         Orientation="Horizontal"
                                         Margin="{StaticResource FieldRowGap-thk}"

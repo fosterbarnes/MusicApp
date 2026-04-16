@@ -272,6 +272,7 @@
                             <Border.Width>
                                 <MultiBinding Converter="{StaticResource SliderValueToWidthMultiConverter}">
                                     <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Value"/>
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Minimum"/>
                                     <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Maximum"/>
                                     <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="ActualWidth"/>
                                 </MultiBinding>

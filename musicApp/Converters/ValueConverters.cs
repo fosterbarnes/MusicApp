@@ -8,20 +8,35 @@ using musicApp.Helpers;
 namespace musicApp.Converters
 {
     /// <summary>
-    /// Converts slider value, maximum, and width to a percentage-based width for visual feedback
+    /// Maps slider value to accent fill width so it matches the thumb center (20px thumb in CustomVolumeSlider).
     /// </summary>
     public class SliderValueToWidthMultiConverter : IMultiValueConverter
     {
+        public const double ThumbDiameter = 20;
+
         public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            if (values.Length >= 3 && values[0] is double value && values[1] is double maximum && values[2] is double width)
+            if (values.Length < 4
+                || values[0] is not double value
+                || values[1] is not double minimum
+                || values[2] is not double maximum
+                || values[3] is not double width)
             {
-                if (maximum > 0)
-                {
-                    return (value / maximum) * width;
-                }
+                return 0.0;
             }
-            return 0.0;
+
+            var range = maximum - minimum;
+            if (range <= 0 || width <= 0)
+                return 0.0;
+
+            var t = (value - minimum) / range;
+            if (t < 0)
+                t = 0;
+            else if (t > 1)
+                t = 1;
+
+            var usable = Math.Max(0, width - ThumbDiameter);
+            return ThumbDiameter * 0.5 + t * usable;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)

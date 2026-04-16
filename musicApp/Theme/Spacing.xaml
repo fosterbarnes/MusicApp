@@ -91,6 +91,11 @@
     <sys:Double x:Key="AboutVersionSubtitleFontSize-size">14</sys:Double>
     <sys:Double x:Key="SettingsLibraryActionButtonHeight-size">40</sys:Double>
     <sys:Double x:Key="SettingsFormAuxFontSize-size">12</sys:Double>
+    <!-- General » Font: UI scale controls (values applied app-wide when wired in code-behind) -->
+    <sys:Double x:Key="SettingsUIFontSizeSliderMin-size">10</sys:Double>
+    <sys:Double x:Key="SettingsUIFontSizeSliderMax-size">22</sys:Double>
+    <sys:Double x:Key="SettingsUIFontSizeSliderDefault-size">14</sys:Double>
+    <sys:Double x:Key="SettingsUIFontSizeSliderWidth-size">180</sys:Double>
     <sys:Double x:Key="ProgressBarThin5-size">5</sys:Double>
     <sys:Double x:Key="UpdaterProgressBarHeight-size">8</sys:Double>
     <Thickness x:Key="SettingsLibraryActionButtonTopRowMargin-thk">24,8,8,4</Thickness>

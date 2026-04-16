@@ -9,6 +9,10 @@
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="600">
     <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Theme/SettingsDialogFormResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         <converters:HalfWidthConverter x:Key="HalfWidthConverter"/>
         <converters:AlternatingRowBrushConverter x:Key="AlternatingRowBrushConverter"/>
         <converters:StringEqualsMultiConverter x:Key="StringEqualsMultiConverter"/>
@@ -115,6 +119,7 @@
                 </Grid>
             </Border>
         </DataTemplate>
+        </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -137,7 +142,7 @@
                           SelectedIndex="0"
                           VerticalAlignment="Center"
                           SelectionChanged="SortModeCombo_SelectionChanged"
-                          Foreground="{StaticResource TextPrimary-brush}"
+                          Style="{StaticResource DarkFieldComboBoxStyle}"
                           Margin="0,0,16,0">
                     <ComboBoxItem Content="Album"/>
                     <ComboBoxItem Content="Artist"/>
