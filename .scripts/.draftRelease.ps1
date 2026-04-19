@@ -48,9 +48,9 @@ foreach ($p in @($finalPortable, $finalX64, $finalX86, $finalArm)) {
 }
 
 & 7z a -tzip -mx=5 "$finalPortable" "$portableZip\*"
-Copy-Item -Path "$appRoot\.installer\Output\musicApp-x64-installer.exe" -Destination $finalX64 -Force
-Copy-Item -Path "$appRoot\.installer\Output\musicApp-x86-installer.exe" -Destination $finalX86 -Force
-Copy-Item -Path "$appRoot\.installer\Output\musicApp-arm64-installer.exe" -Destination $finalArm -Force
+Copy-Item -Path "$root\.installer\Output\musicApp-x64-installer.exe" -Destination $finalX64 -Force
+Copy-Item -Path "$root\.installer\Output\musicApp-x86-installer.exe" -Destination $finalX86 -Force
+Copy-Item -Path "$root\.installer\Output\musicApp-arm64-installer.exe" -Destination $finalArm -Force
 
 if (git tag -l $tagName) {
     Write-Host "Local tag $tagName exists. Deleting..."

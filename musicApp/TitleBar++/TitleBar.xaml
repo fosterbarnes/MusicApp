@@ -288,13 +288,18 @@
                             Width="50" 
                             Height="50" 
                             Background="{StaticResource BorderDefault-brush}"
-                            
+                            UseLayoutRounding="True"
+                            SnapsToDevicePixels="True"
                             CornerRadius="{StaticResource Lg-cr}" 
                             Margin="{StaticResource Right15-thk}">
                         <Border.Clip>
                             <RectangleGeometry Rect="0,0,50,50" RadiusX="5" RadiusY="5"/>
                         </Border.Clip>
-                        <Image x:Name="imgAlbumArt" Stretch="UniformToFill"/>
+                        <Image x:Name="imgAlbumArt"
+                               Stretch="UniformToFill"
+                               SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               RenderOptions.CachingHint="Cache"/>
                     </Border>
 
                     <!-- Song Information -->

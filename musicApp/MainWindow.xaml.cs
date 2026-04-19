@@ -201,6 +201,7 @@ namespace musicApp
             genresViewControl = new ArtistGenreView { ViewName = "Genres" };
             albumsViewControl = new AlbumsView();
             playlistsViewControl = new PlaylistsView();
+            playlistsViewControl.LibraryTracks = allTracks;
 
             void OnPlayTrackRequested(object? s, Song track) => PlayTrack(track, s);
             songsView.PlayTrackRequested += OnPlayTrackRequested;
@@ -295,6 +296,10 @@ namespace musicApp
             playlistsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
 
             songsView.AddMusicFolderRequested += OnAddMusicFolderRequested;
+            artistsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
+            genresViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
+            albumsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
+            playlistsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
 
             songsView.DeleteRequested += OnDeleteRequested;
             queueViewControl.DeleteRequested += OnDeleteRequested;
@@ -1017,12 +1022,27 @@ namespace musicApp
             playlistsViewControl?.RefreshTrackListBindings();
         }
 
+        private int GetTitleBarAlbumArtTargetPixelSize()
+        {
+            try
+            {
+                if (titleBarPlayer != null)
+                    return AlbumArtLoader.GetTitleBarTargetPixelSize(VisualTreeHelper.GetDpi(titleBarPlayer));
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return (int)Math.Ceiling(UILayoutConstants.TitleBarAlbumArtLogicalSizeDip);
+        }
+
         private void RefreshTitleBarFromCurrentTrack()
         {
             if (currentTrack == null)
                 return;
 
-            var albumArt = AlbumArtLoader.LoadAlbumArt(currentTrack);
+            var albumArt = AlbumArtLoader.LoadAlbumArt(currentTrack, GetTitleBarAlbumArtTargetPixelSize());
             titleBarPlayer.SetTrackInfo(currentTrack.Title, currentTrack.Artist, currentTrack.Album, albumArt);
         }
 
@@ -2598,7 +2618,7 @@ namespace musicApp
                 SyncCurrentTrackIndices(track, requestSource);
                 UpdateShuffleIndicesAfterTrackChange(track);
 
-                var albumArt = AlbumArtLoader.LoadAlbumArt(track);
+                var albumArt = AlbumArtLoader.LoadAlbumArt(track, GetTitleBarAlbumArtTargetPixelSize());
 
                 titleBarPlayer.SetTrackInfo(track.Title, track.Artist, track.Album, albumArt);
                 TitleBarSetAudioObjects(waveOut, audioFileReader);
@@ -2666,7 +2686,7 @@ namespace musicApp
                 SyncCurrentTrackIndices(track);
                 UpdateShuffleIndicesAfterTrackChange(track);
 
-                var albumArt = AlbumArtLoader.LoadAlbumArt(track);
+                var albumArt = AlbumArtLoader.LoadAlbumArt(track, GetTitleBarAlbumArtTargetPixelSize());
 
                 titleBarPlayer.SetTrackInfo(track.Title, track.Artist, track.Album, albumArt);
 

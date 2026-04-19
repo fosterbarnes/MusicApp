@@ -1,12 +1,12 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 
 namespace musicApp.Views;
 
 public sealed class AlbumRowViewModel : INotifyPropertyChanged
 {
-    private BitmapImage? _albumArtSource;
+    private ImageSource? _albumArtSource;
 
     public AlbumRowViewModel(AlbumSearchItem album) => Album = album;
 
@@ -14,7 +14,7 @@ public sealed class AlbumRowViewModel : INotifyPropertyChanged
     public string AlbumTitle => Album.AlbumTitle;
     public string Artist => Album.Artist;
 
-    public BitmapImage? AlbumArtSource
+    public ImageSource? AlbumArtSource
     {
         get => _albumArtSource;
         set { _albumArtSource = value; OnPropertyChanged(); }
@@ -27,7 +27,7 @@ public sealed class AlbumRowViewModel : INotifyPropertyChanged
 
 public sealed class SongRowViewModel : INotifyPropertyChanged
 {
-    private BitmapImage? _albumArtSource;
+    private ImageSource? _albumArtSource;
     private bool _isNowPlaying;
     private bool _isSelected;
 
@@ -49,7 +49,7 @@ public sealed class SongRowViewModel : INotifyPropertyChanged
         set { _isSelected = value; OnPropertyChanged(); }
     }
 
-    public BitmapImage? AlbumArtSource
+    public ImageSource? AlbumArtSource
     {
         get => _albumArtSource;
         set { _albumArtSource = value; OnPropertyChanged(); }
@@ -62,7 +62,7 @@ public sealed class SongRowViewModel : INotifyPropertyChanged
 
 public sealed class ArtistRowViewModel : INotifyPropertyChanged
 {
-    private BitmapImage? _albumArtSource;
+    private ImageSource? _albumArtSource;
 
     public ArtistRowViewModel(ArtistSearchItem artist) => Artist = artist;
 
@@ -72,7 +72,7 @@ public sealed class ArtistRowViewModel : INotifyPropertyChanged
 
     public Song? RepresentativeTrack => Artist.RepresentativeTrack;
 
-    public BitmapImage? AlbumArtSource
+    public ImageSource? AlbumArtSource
     {
         get => _albumArtSource;
         set { _albumArtSource = value; OnPropertyChanged(); }

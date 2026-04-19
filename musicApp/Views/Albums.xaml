@@ -162,8 +162,8 @@
                     Thumb.DragCompleted="AlbumSizeSlider_DragCompleted"/>
         </StackPanel>
 
+        <Grid Grid.Row="1">
         <ScrollViewer x:Name="AlbumScrollViewer"
-                      Grid.Row="1"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
                       Padding="24,8,24,16"
@@ -408,6 +408,11 @@
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
         </ScrollViewer>
+        <views:EmptyLibraryAddOverlay x:Name="emptyLibraryOverlay"
+                                      VerticalAlignment="Stretch"
+                                      HorizontalAlignment="Stretch"
+                                      Visibility="Visible"/>
+        </Grid>
 
         <Grid x:Name="LoadingIndicator" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed"
               HorizontalAlignment="Center" VerticalAlignment="Center">

@@ -23,7 +23,8 @@ public static class UILayoutConstants
     public const double PreviousTrackEdgeThresholdSeconds = 2.0;
 
     // Shared image sizing
-    public const int TitleBarAlbumArtRenderSize = 120;
+    /// <summary>Logical width/height (dip) of the title bar album slot (<see cref="TitleBarPlus.TitleBar"/>).</summary>
+    public const double TitleBarAlbumArtLogicalSizeDip = 50;
     public const int InfoMetadataAlbumArtSize = 144;
     /// <summary>Logical width/height of the Artwork tab inner square; Viewbox scales it to fit the window.</summary>
     public const double InfoMetadataArtworkViewboxLogicalExtent = 512;

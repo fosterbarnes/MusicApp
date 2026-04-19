@@ -250,7 +250,7 @@ namespace musicApp
             currentTrack = next;
             SyncCurrentTrackIndices(next);
 
-            var art = AlbumArtLoader.LoadAlbumArt(next);
+            var art = AlbumArtLoader.LoadAlbumArt(next, GetTitleBarAlbumArtTargetPixelSize());
             titleBarPlayer.SetTrackInfo(next.Title, next.Artist, next.Album, art);
             TitleBarSetAudioObjects(waveOut, _incomingAudioFileReader);
             RefreshVisibleViews();
@@ -323,7 +323,7 @@ namespace musicApp
                 SyncCurrentTrackIndices(promoted);
                 UpdateShuffleIndicesAfterTrackChange(promoted);
 
-                var albumArt = AlbumArtLoader.LoadAlbumArt(promoted);
+                var albumArt = AlbumArtLoader.LoadAlbumArt(promoted, GetTitleBarAlbumArtTargetPixelSize());
                 titleBarPlayer.SetTrackInfo(promoted.Title, promoted.Artist, promoted.Album, albumArt);
                 TitleBarSetAudioObjects(waveOut, audioFileReader);
 
@@ -364,7 +364,7 @@ namespace musicApp
                 SyncCurrentTrackIndices(back);
                 try
                 {
-                    var artBack = AlbumArtLoader.LoadAlbumArt(back);
+                    var artBack = AlbumArtLoader.LoadAlbumArt(back, GetTitleBarAlbumArtTargetPixelSize());
                     titleBarPlayer.SetTrackInfo(back.Title, back.Artist, back.Album, artBack);
                     TitleBarSetAudioObjects(waveOut, audioFileReader);
                 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -19,6 +20,8 @@ namespace musicApp.Views
 {
     public partial class AlbumsView
     {
+        private INotifyCollectionChanged? _itemsSourceCollectionNotify;
+
         public IEnumerable? ItemsSource
         {
             get => _itemsSource;
@@ -27,13 +30,32 @@ namespace musicApp.Views
                 int newCount = TryGetCount(value);
                 if (ReferenceEquals(_itemsSource, value) && newCount == _itemsSourceCount && _albumItems.Count > 0 &&
                     BrowseMode == _lastGridBuildBrowseMode)
+                {
+                    UpdateEmptyLibraryOverlay();
                     return;
+                }
+
+                if (_itemsSourceCollectionNotify != null)
+                {
+                    _itemsSourceCollectionNotify.CollectionChanged -= OnItemsSourceCollectionChangedForEmptyOverlay;
+                    _itemsSourceCollectionNotify = null;
+                }
 
                 _itemsSource = value;
                 _itemsSourceCount = newCount;
+
+                if (value is INotifyCollectionChanged incc)
+                {
+                    _itemsSourceCollectionNotify = incc;
+                    incc.CollectionChanged += OnItemsSourceCollectionChangedForEmptyOverlay;
+                }
+
+                UpdateEmptyLibraryOverlay();
                 _ = RebuildAlbumItemsAsync(preserveViewState: true);
             }
         }
+
+        public event EventHandler? AddMusicFolderRequested;
 
         public event EventHandler<AlbumGridItem>? AlbumClicked;
 
@@ -211,6 +233,22 @@ namespace musicApp.Views
             return -1;
         }
 
+        private void OnItemsSourceCollectionChangedForEmptyOverlay(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            _itemsSourceCount = TryGetCount(_itemsSource);
+            UpdateEmptyLibraryOverlay();
+            RefreshAlbumGridFromLibrary();
+        }
+
+        private void UpdateEmptyLibraryOverlay()
+        {
+            if (emptyLibraryOverlay == null)
+                return;
+            emptyLibraryOverlay.Visibility = EmptyLibraryAddOverlay.IsTrackLibraryEmpty(_itemsSource)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
         private void AlbumSizeSlider_DragStarted(object sender, DragStartedEventArgs e)
         {
             CloseAlbumDetail();
@@ -345,7 +383,7 @@ namespace musicApp.Views
                 .Select(g =>
                 {
                     var rep = g.First();
-                    BitmapImage? art = null;
+                    BitmapSource? art = null;
                     if (!string.IsNullOrEmpty(rep.ThumbnailCachePath))
                         art = AlbumArtCacheManager.LoadFromCachePath(rep.ThumbnailCachePath);
                     return new AlbumGridItem(g.Key.Album, g.Key.Artist, rep, art);
@@ -386,7 +424,7 @@ namespace musicApp.Views
                 {
                     var maxAdded = g.Max(t => t.DateAdded).Date;
                     var rep = g.OrderByDescending(t => t.DateAdded).First();
-                    BitmapImage? art = null;
+                    BitmapSource? art = null;
                     if (!string.IsNullOrEmpty(rep.ThumbnailCachePath))
                         art = AlbumArtCacheManager.LoadFromCachePath(rep.ThumbnailCachePath);
                     return (new AlbumGridItem(g.Key.Album, g.Key.Artist, rep, art), maxAdded);

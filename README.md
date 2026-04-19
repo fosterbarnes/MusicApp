@@ -55,7 +55,7 @@ musicApp is in early development, bugs are expected.
 **124 / 166 tasks complete (74.7%)**
 [Tasks.md](https://github.com/fosterbarnes/musicApp/blob/main/.md/Tasks.md#main-window)
 
-[31,330](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
+[30,231](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
 
 # General Usage Info
 

@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:musicApp.Views"
              xmlns:converters="clr-namespace:musicApp.Converters"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
@@ -18,18 +17,7 @@
                              ViewName="Songs"
                              SingleClickPlays="False"
                              PlayTrackRequested="TrackList_PlayTrackRequested" />
-        <!-- Empty library overlay: click to open folder picker and scan for music -->
-        <Border x:Name="emptyOverlay"
-                Background="Transparent"
-                Visibility="{Binding IsLibraryEmpty, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibilityConverter}}"
-                Cursor="Hand"
-                MouseLeftButtonDown="EmptyOverlay_MouseLeftButtonDown">
-            <materialDesign:PackIcon Kind="MusicNotePlus"
-                                     Width="64"
-                                     Height="64"
-                                     Foreground="#888888"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"/>
-        </Border>
+        <views:EmptyLibraryAddOverlay x:Name="emptyOverlay"
+                                      Visibility="{Binding IsLibraryEmpty, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibilityConverter}}"/>
     </Grid>
 </UserControl>

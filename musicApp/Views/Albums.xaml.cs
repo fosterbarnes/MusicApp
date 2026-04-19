@@ -279,6 +279,7 @@ namespace musicApp.Views
         public AlbumsView()
         {
             InitializeComponent();
+            emptyLibraryOverlay.AddMusicFolderRequested += (_, __) => AddMusicFolderRequested?.Invoke(this, EventArgs.Empty);
             AlbumGrid.ItemsSource = _albumItems;
 
             _artLoadDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
@@ -306,6 +307,7 @@ namespace musicApp.Views
                 UpdateSortBarVisibility();
                 SyncSectionHeaderWidth();
                 KickViewportAlbumArtNow();
+                UpdateEmptyLibraryOverlay();
             };
             IsVisibleChanged += (_, __) =>
             {
@@ -340,6 +342,12 @@ namespace musicApp.Views
         {
             try
             {
+                if (_itemsSourceCollectionNotify != null)
+                {
+                    _itemsSourceCollectionNotify.CollectionChanged -= OnItemsSourceCollectionChangedForEmptyOverlay;
+                    _itemsSourceCollectionNotify = null;
+                }
+
                 _rebuildCts?.Cancel();
                 _rebuildCts?.Dispose();
                 _rebuildCts = null;

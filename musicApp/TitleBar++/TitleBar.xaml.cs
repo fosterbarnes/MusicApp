@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using MaterialDesignThemes.Wpf;
@@ -515,7 +514,7 @@ namespace musicApp.TitleBarPlus
         }
 
         // === Public Methods ===
-        public void SetTrackInfo(string title, string artist, string? album = null, BitmapImage? albumArt = null)
+        public void SetTrackInfo(string title, string artist, string? album = null, ImageSource? albumArt = null)
         {
             if (txtCurrentTrack != null)
                 txtCurrentTrack.Text = title ?? "No track selected";

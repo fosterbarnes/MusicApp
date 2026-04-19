@@ -836,7 +836,7 @@ public partial class InfoMetadataView : Window
 
             _pendingFrontCoverPicture = bytes;
             ArtworkPreviewImage.Source = img;
-            var headerThumb = AlbumArtThumbnailHelper.ScaleToBitmapImage(bytes, UILayoutConstants.InfoMetadataAlbumArtSize);
+            var headerThumb = AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(bytes, UILayoutConstants.InfoMetadataAlbumArtSize);
             TopAlbumArtImage.Source = headerThumb ?? img;
         }
         catch (Exception ex)

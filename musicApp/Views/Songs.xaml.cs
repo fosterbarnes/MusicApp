@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace musicApp.Views
 {
@@ -18,6 +16,8 @@ namespace musicApp.Views
         public SongsView()
         {
             InitializeComponent();
+
+            emptyOverlay.AddMusicFolderRequested += (_, __) => AddMusicFolderRequested?.Invoke(this, EventArgs.Empty);
 
             trackList.AddToPlaylistRequested += (s, track) => AddToPlaylistRequested?.Invoke(this, track);
             trackList.AddTrackToPlaylistRequested += (s, args) => AddTrackToPlaylistRequested?.Invoke(this, args);
@@ -143,25 +143,8 @@ namespace musicApp.Views
 
         private void UpdateIsLibraryEmpty(System.Collections.IEnumerable? source)
         {
-            bool empty = true;
-            if (source != null)
-            {
-                if (source is ICollection col)
-                    empty = col.Count == 0;
-                else
-                {
-                    var e = source.GetEnumerator();
-                    try { empty = !e.MoveNext(); }
-                    finally { if (e is IDisposable d) d.Dispose(); }
-                }
-            }
-            IsLibraryEmpty = empty;
+            IsLibraryEmpty = EmptyLibraryAddOverlay.IsTrackLibraryEmpty(source);
         }
 
-        private void EmptyOverlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true;
-            AddMusicFolderRequested?.Invoke(this, System.EventArgs.Empty);
-        }
     }
 }

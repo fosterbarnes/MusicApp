@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 
 namespace musicApp.Views;
 
 public sealed class AlbumGridItem : INotifyPropertyChanged
 {
-    private BitmapImage? _albumArtSource;
+    private ImageSource? _albumArtSource;
 
-    public AlbumGridItem(string albumTitle, string artist, Song representativeTrack, BitmapImage? initialArt = null)
+    public AlbumGridItem(string albumTitle, string artist, Song representativeTrack, ImageSource? initialArt = null)
     {
         AlbumTitle = albumTitle;
         Artist = artist;
@@ -21,7 +21,7 @@ public sealed class AlbumGridItem : INotifyPropertyChanged
     public string Artist { get; }
     public Song RepresentativeTrack { get; }
 
-    public BitmapImage? AlbumArtSource
+    public ImageSource? AlbumArtSource
     {
         get => _albumArtSource;
         set { _albumArtSource = value; OnPropertyChanged(); }
@@ -40,7 +40,7 @@ public sealed class AlbumSectionHeaderItem
 
 public sealed class AlbumFlyoutItem : INotifyPropertyChanged
 {
-    private BitmapImage? _albumArtSource;
+    private ImageSource? _albumArtSource;
 
     public string AlbumTitle { get; set; } = "";
     public string Artist { get; set; } = "";
@@ -51,7 +51,7 @@ public sealed class AlbumFlyoutItem : INotifyPropertyChanged
     public List<Song> TracksColumn1 { get; set; } = new();
     public List<Song> TracksColumn2 { get; set; } = new();
 
-    public BitmapImage? AlbumArtSource
+    public ImageSource? AlbumArtSource
     {
         get => _albumArtSource;
         set { _albumArtSource = value; OnPropertyChanged(); }

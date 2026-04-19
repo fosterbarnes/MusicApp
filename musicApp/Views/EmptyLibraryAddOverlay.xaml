@@ -1,0 +1,19 @@
+<UserControl x:Class="musicApp.Views.EmptyLibraryAddOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="120" d:DesignWidth="200">
+    <Border Background="Transparent"
+            Cursor="Hand"
+            MouseLeftButtonDown="Root_MouseLeftButtonDown">
+        <materialDesign:PackIcon Kind="MusicNotePlus"
+                                 Width="64"
+                                 Height="64"
+                                 Foreground="#888888"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"/>
+    </Border>
+</UserControl>

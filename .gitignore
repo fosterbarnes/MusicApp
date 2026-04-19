@@ -9,7 +9,7 @@ musicApp/.updater/bin
 musicApp/.updater.swap/bin
 musicApp/.updater/obj
 musicApp/.updater.swap/obj
-musicApp/.installer/Output/
+.installer/Output/
 .vs/
 .web/
 obj/

@@ -2,15 +2,16 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ATL;
+using PhotoSauce.MagicScaler;
 
 namespace musicApp.Helpers;
 
@@ -27,14 +28,12 @@ public static class AlbumArtCacheManager
         "musicApp", "thumbnails");
 
     private const int MemoryCacheMaxEntries = 512;
-    private static readonly ConcurrentDictionary<string, BitmapImage?> _memoryCache = new();
+    private static readonly ConcurrentDictionary<string, BitmapSource?> _memoryCache = new();
 
-    /// <summary>Limits parallel album-art work; GDI+ is fragile under heavy parallel load.</summary>
-    private static readonly SemaphoreSlim ThumbnailGdiSemaphore = new(2, 2);
+    /// <summary>Limits parallel on-disk thumbnail generation (decode + MagicScaler + JPEG encode).</summary>
+    private static readonly SemaphoreSlim ThumbnailGenerationSemaphore = new(2, 2);
 
     private static readonly ConcurrentDictionary<string, object> ThumbnailPathLocks = new();
-
-    private static readonly object JpegEncodeLock = new();
 
     private static void TrimMemoryCacheIfNeeded()
     {
@@ -69,7 +68,7 @@ public static class AlbumArtCacheManager
     /// Loads a cached thumbnail as a frozen BitmapImage, with optional WPF-side decode scaling.
     /// Returns null if no cache file exists.
     /// </summary>
-    public static BitmapImage? TryGetCached(string album, string artist, int decodePixelWidth = 0)
+    public static BitmapSource? TryGetCached(string album, string artist, int decodePixelWidth = 0)
     {
         var path = GetCachedPath(album, artist);
         return LoadFromCachePath(path, decodePixelWidth);
@@ -79,7 +78,7 @@ public static class AlbumArtCacheManager
     /// Loads a cached thumbnail by its file path with optional WPF-side decode scaling.
     /// Uses an in-memory dictionary so the same file is only read from disk once per session.
     /// </summary>
-    public static BitmapImage? LoadFromCachePath(string cachePath, int decodePixelWidth = 0)
+    public static BitmapSource? LoadFromCachePath(string cachePath, int decodePixelWidth = 0)
     {
         if (string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath))
             return null;
@@ -161,7 +160,7 @@ public static class AlbumArtCacheManager
             if (File.Exists(cachePath))
                 return cachePath;
 
-            ThumbnailGdiSemaphore.Wait();
+            ThumbnailGenerationSemaphore.Wait();
             try
             {
                 if (File.Exists(cachePath))
@@ -218,7 +217,7 @@ public static class AlbumArtCacheManager
             }
             finally
             {
-                ThumbnailGdiSemaphore.Release();
+                ThumbnailGenerationSemaphore.Release();
             }
         }
     }
@@ -330,10 +329,10 @@ public static class AlbumArtCacheManager
             if (w < 1 || h < 1 || w > MaxAlbumArtDimensionPx || h > MaxAlbumArtDimensionPx)
                 return null;
 
-            var bmp = new Bitmap(w, h, PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(bmp))
             {
-                g.Clear(Color.White);
+                g.Clear(System.Drawing.Color.White);
                 g.DrawImage(src, 0, 0, w, h);
             }
 
@@ -353,45 +352,29 @@ public static class AlbumArtCacheManager
             if (flat == null)
                 return false;
 
-            int w = flat.Width;
-            int h = flat.Height;
-            double ratio = Math.Min((double)targetSize / w, (double)targetSize / h);
-            int newW = Math.Max(1, (int)(w * ratio));
-            int newH = Math.Max(1, (int)(h * ratio));
-
-            using var scaled = new Bitmap(newW, newH, PixelFormat.Format32bppArgb);
-            using (var g = Graphics.FromImage(scaled))
+            // PNG in memory: WIC-friendly container for MagicScaler input (not for on-screen display).
+            using var pngMs = new MemoryStream();
+            flat.Save(pngMs, ImageFormat.Png);
+            pngMs.Position = 0;
+            var imageInfo = ImageFileInfo.Load(pngMs);
+            pngMs.Position = 0;
+            var settings = new ProcessImageSettings
             {
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.SmoothingMode = SmoothingMode.HighQuality;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.CompositingQuality = CompositingQuality.HighQuality;
-                g.DrawImage(flat, 0, 0, newW, newH);
-            }
-
-            byte[] jpegBytes;
-            lock (JpegEncodeLock)
-            {
-                using var ms = new MemoryStream();
-                var jpegEncoder = ImageCodecInfo.GetImageEncoders()
-                    .FirstOrDefault(e => e.FormatID == ImageFormat.Jpeg.Guid);
-
-                if (jpegEncoder != null)
-                {
-                    using var encoderParams = new EncoderParameters(1);
-                    encoderParams.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
-                    scaled.Save(ms, jpegEncoder, encoderParams);
-                }
-                else
-                    scaled.Save(ms, ImageFormat.Jpeg);
-
-                jpegBytes = ms.ToArray();
-            }
+                Width = targetSize,
+                Height = targetSize,
+                ResizeMode = CropScaleMode.Max,
+                DpiX = 96,
+                DpiY = 96,
+                EncoderOptions = new JpegEncoderOptions(90, ChromaSubsampleMode.Default, false),
+            };
+            settings = ProcessImageSettings.Calculate(settings, imageInfo);
+            settings.TrySetEncoderFormat(ImageMimeTypes.Jpeg);
+            pngMs.Position = 0;
 
             var tmpPath = outputPath + ".writing";
             try
             {
-                File.WriteAllBytes(tmpPath, jpegBytes);
+                MagicImageProcessor.ProcessImage(pngMs, tmpPath, settings);
                 File.Move(tmpPath, outputPath, overwrite: true);
             }
             catch

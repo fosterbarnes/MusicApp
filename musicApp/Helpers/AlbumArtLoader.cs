@@ -1,8 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
@@ -16,13 +13,24 @@ public static class AlbumArtLoader
 {
     private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
 
-    public static BitmapImage? LoadAlbumArt(Song track)
+    /// <summary>Physical pixel size for the title bar album square at the given DPI (matches <see cref="UILayoutConstants.TitleBarAlbumArtLogicalSizeDip"/> dip).</summary>
+    public static int GetTitleBarTargetPixelSize(System.Windows.DpiScale dpi)
+    {
+        double scale = Math.Max(dpi.DpiScaleX, dpi.DpiScaleY);
+        return Math.Max(1, (int)Math.Ceiling(UILayoutConstants.TitleBarAlbumArtLogicalSizeDip * scale));
+    }
+
+    /// <summary>Loads art for the title bar; <paramref name="targetSizePx"/> sets JPEG decode width and downscale target.</summary>
+    public static BitmapSource? LoadAlbumArt(Song track, int targetSizePx)
     {
         try
         {
+            if (targetSizePx < 1)
+                targetSizePx = (int)Math.Ceiling(UILayoutConstants.TitleBarAlbumArtLogicalSizeDip);
+
             if (!string.IsNullOrEmpty(track.ThumbnailCachePath))
             {
-                var cached = AlbumArtCacheManager.LoadFromCachePath(track.ThumbnailCachePath);
+                var cached = AlbumArtCacheManager.LoadFromCachePath(track.ThumbnailCachePath, targetSizePx);
                 if (cached != null)
                     return cached;
             }
@@ -34,7 +42,7 @@ public static class AlbumArtLoader
 
                 if (embeddedPictures != null && embeddedPictures.Count > 0)
                 {
-                    return CreateScaledImage(embeddedPictures[0].PictureData);
+                    return AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(embeddedPictures[0].PictureData, targetSizePx);
                 }
             }
             catch (Exception ex)
@@ -62,10 +70,10 @@ public static class AlbumArtLoader
             }) ?? imageFiles.FirstOrDefault();
 
             if (albumArtFile != null)
-                return CreateScaledImageFromFile(albumArtFile);
+                return AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(albumArtFile, targetSizePx);
 
             var itcBytes = FruitAppLocalAlbumArtCache.TryGetCoverImageBytesForAudioPath(track.FilePath);
-            return itcBytes != null ? CreateScaledImage(itcBytes) : null;
+            return itcBytes != null ? AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(itcBytes, targetSizePx) : null;
         }
         catch (Exception ex)
         {
@@ -74,66 +82,7 @@ public static class AlbumArtLoader
         }
     }
 
-    private static BitmapImage? CreateScaledImage(byte[] imageData)
-    {
-        try
-        {
-            using var originalStream = new MemoryStream(imageData);
-            using var originalBitmap = new Bitmap(originalStream);
-            return ScaleBitmapToWpfImage(originalBitmap);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error creating high-quality scaled image: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static BitmapImage? CreateScaledImageFromFile(string filePath)
-    {
-        try
-        {
-            using var originalBitmap = new Bitmap(filePath);
-            return ScaleBitmapToWpfImage(originalBitmap);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error creating high-quality scaled image from file: {ex.Message}");
-            return null;
-        }
-    }
-
-    private static BitmapImage ScaleBitmapToWpfImage(Bitmap originalBitmap)
-    {
-        int targetSize = UILayoutConstants.TitleBarAlbumArtRenderSize;
-        int originalWidth = originalBitmap.Width;
-        int originalHeight = originalBitmap.Height;
-
-        double ratio = Math.Min((double)targetSize / originalWidth, (double)targetSize / originalHeight);
-        int newWidth = (int)(originalWidth * ratio);
-        int newHeight = (int)(originalHeight * ratio);
-
-        using var scaledBitmap = new Bitmap(newWidth, newHeight, PixelFormat.Format32bppArgb);
-        using (var graphics = Graphics.FromImage(scaledBitmap))
-        {
-            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            graphics.SmoothingMode = SmoothingMode.HighQuality;
-            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            graphics.CompositingQuality = CompositingQuality.HighQuality;
-            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
-        }
-
-        var wpfBitmap = new BitmapImage();
-        using var stream = new MemoryStream();
-        scaledBitmap.Save(stream, ImageFormat.Png);
-        stream.Position = 0;
-
-        wpfBitmap.BeginInit();
-        wpfBitmap.CacheOption = BitmapCacheOption.OnLoad;
-        wpfBitmap.StreamSource = stream;
-        wpfBitmap.EndInit();
-        wpfBitmap.Freeze();
-
-        return wpfBitmap;
-    }
+    /// <summary>Loads at 96 DPI logical size (50 px); prefer <see cref="LoadAlbumArt(Song, int)"/> with DPI-aware size from the title bar.</summary>
+    public static BitmapSource? LoadAlbumArt(Song track) =>
+        LoadAlbumArt(track, (int)Math.Ceiling(UILayoutConstants.TitleBarAlbumArtLogicalSizeDip));
 }

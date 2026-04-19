@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -8,9 +9,13 @@ namespace musicApp.Views
 {
     public partial class PlaylistsView : UserControl
     {
+        private ObservableCollection<Song>? _libraryTracks;
+        private INotifyCollectionChanged? _libraryCollectionNotify;
+
         public PlaylistsView()
         {
             InitializeComponent();
+            emptyLibraryOverlay.AddMusicFolderRequested += (_, __) => AddMusicFolderRequested?.Invoke(this, EventArgs.Empty);
             trackList.ContextMenuViewName = "Playlists";
             trackList.AddToPlaylistRequested += (s, track) => AddToPlaylistRequested?.Invoke(this, track);
             trackList.AddTrackToPlaylistRequested += (s, args) => AddTrackToPlaylistRequested?.Invoke(this, args);
@@ -27,6 +32,31 @@ namespace musicApp.Views
             trackList.DeleteRequested += (s, track) => DeleteRequested?.Invoke(this, track);
             trackList.RemoveFromPlaylistRequested += (s, args) => RemoveFromPlaylistRequested?.Invoke(this, args);
         }
+
+        /// <summary>Main library track list; used to show the empty-library add-music affordance in the detail pane.</summary>
+        public ObservableCollection<Song>? LibraryTracks
+        {
+            get => _libraryTracks;
+            set
+            {
+                if (_libraryCollectionNotify != null)
+                {
+                    _libraryCollectionNotify.CollectionChanged -= OnLibraryTracksChanged;
+                    _libraryCollectionNotify = null;
+                }
+
+                _libraryTracks = value;
+                if (value is INotifyCollectionChanged incc)
+                {
+                    _libraryCollectionNotify = incc;
+                    incc.CollectionChanged += OnLibraryTracksChanged;
+                }
+
+                ApplyPlaylistRightPaneState();
+            }
+        }
+
+        public event EventHandler? AddMusicFolderRequested;
 
         public ObservableCollection<Playlist>? Playlists
         {
@@ -53,8 +83,30 @@ namespace musicApp.Views
         public event System.EventHandler<Song>? DeleteRequested;
         public event System.EventHandler<(Song track, Playlist playlist)>? RemoveFromPlaylistRequested;
 
+        private void OnLibraryTracksChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            ApplyPlaylistRightPaneState();
+        }
+
         private void LstPlaylists_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            ApplyPlaylistRightPaneState();
+        }
+
+        private void ApplyPlaylistRightPaneState()
+        {
+            if (EmptyLibraryAddOverlay.IsTrackLibraryEmpty(_libraryTracks))
+            {
+                trackList.CurrentPlaylist = null;
+                trackList.ItemsSource = null;
+                trackList.Visibility = Visibility.Collapsed;
+                placeholderText.Visibility = Visibility.Collapsed;
+                emptyLibraryOverlay.Visibility = Visibility.Visible;
+                return;
+            }
+
+            emptyLibraryOverlay.Visibility = Visibility.Collapsed;
+
             if (lstPlaylists.SelectedItem is Playlist playlist)
             {
                 trackList.CurrentPlaylist = playlist;

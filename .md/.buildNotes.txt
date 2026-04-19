@@ -1,17 +1,26 @@
-v0.1.6 release (crispyFartin)
+v0.1.7 release (grandpaGuava)
+
+Main Window:
+- On fresh install, we only got the icon/button to scan for music in songs view. Added this behavior to all track views
+
+Title bar / Now playing:
+- Scale title-bar artwork to the real pixel size of the slot (DPI-aware) instead of a fixed 120px
+- Use high-quality bitmap scaling and caching hints on the title-bar image so WPF doesn’t add a second resize
+- Match `DecodePixelWidth` to the on-screen size to avoid a double downscale from the disk cache
+
+Albums, search, queue, Info:
+- Use the same downscale path for thumbnails and metadata art as for the title bar
+- Treat album art as ImageSource/BitmapSource end-to-end where it’s shown everywhere
 
 Backend/Boring stuff:
-- Move `/musicApp/Resources` to `/.resources`
-- Move `/musicApp/Scripts` to `/.scripts`
-- Move `/.web/mainPage/Scripts` to `/.scripts/web`
+- Remove thin wrapper methods. call AlbumArtDownscaleHelper directly where needed
+- Trim outdated comments and unused shit
 
-Build config:
-- Add arm64 config
-- Rename "AnyCPU" > "portable"
+Image pipeline:
+- Stop saving resized art as PNG and reloading it. MagicScaler feeds the UI directly.
+- Generate on-disk thumbnail JPEGs (250px cache) with MagicScaler + JPEG encode instead of GDI+ resize + GDI JPEG
+- Only build a few saved thumbnails at the same time so the app doesn’t "trip over itself"
 
-Installer:
-- Add arm64 support
 
 Scripts:
-- Consolidate powershell script location
-- Clean up script logic
+- Only count relevant file types when counting code

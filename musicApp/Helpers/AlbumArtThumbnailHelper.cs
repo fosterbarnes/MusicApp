@@ -1,9 +1,6 @@
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
-using System.Collections.Concurrent;
 using System.Windows.Media.Imaging;
 using ATL;
 
@@ -26,7 +23,7 @@ public static class AlbumArtThumbnailHelper
     }
 
     /// <summary>Load album art for a track and scale to the given size. Returns null if none found.</summary>
-    public static BitmapImage? LoadForTrack(Song track, int targetSizePx = DefaultThumbnailSize)
+    public static BitmapSource? LoadForTrack(Song track, int targetSizePx = DefaultThumbnailSize)
     {
         if (track == null || string.IsNullOrWhiteSpace(track.FilePath))
             return null;
@@ -51,7 +48,7 @@ public static class AlbumArtThumbnailHelper
                 if (embeddedPictures != null && embeddedPictures.Count > 0)
                 {
                     var picture = embeddedPictures[0];
-                    return ScaleToBitmapImage(picture.PictureData, targetSizePx);
+                    return AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(picture.PictureData, targetSizePx);
                 }
             }
             catch
@@ -76,11 +73,11 @@ public static class AlbumArtThumbnailHelper
             }) ?? imageFiles.FirstOrDefault();
 
             if (albumArtFile != null)
-                return ScaleToBitmapImageFromFile(albumArtFile, targetSizePx);
+                return AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(albumArtFile, targetSizePx);
 
             var itcBytes = FruitAppLocalAlbumArtCache.TryGetCoverImageBytesForAudioPath(track.FilePath);
             if (itcBytes != null)
-                return ScaleToBitmapImage(itcBytes, targetSizePx);
+                return AlbumArtDownscaleHelper.TryDownscaleToBitmapSource(itcBytes, targetSizePx);
 
             return null;
         }
@@ -162,86 +159,6 @@ public static class AlbumArtThumbnailHelper
         if (string.IsNullOrWhiteSpace(filePath))
             return;
         _fullSizeCache.TryRemove(filePath, out _);
-    }
-
-    /// <summary>Scale raw image data to a square-ish thumbnail and return as frozen WPF BitmapImage.</summary>
-    public static BitmapImage? ScaleToBitmapImage(byte[] imageData, int targetSizePx)
-    {
-        if (imageData == null || imageData.Length == 0) return null;
-        try
-        {
-            using var ms = new MemoryStream(imageData);
-            using var bmp = new Bitmap(ms);
-            return ScaleToWpfBitmapImage(bmp, targetSizePx);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>Load a file and scale to thumbnail.</summary>
-    public static BitmapImage? ScaleToBitmapImageFromFile(string filePath, int targetSizePx)
-    {
-        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return null;
-        try
-        {
-            using var bmp = new Bitmap(filePath);
-            return ScaleToWpfBitmapImage(bmp, targetSizePx);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static BitmapImage? ScaleToWpfBitmapImage(Bitmap originalBitmap, int targetSizePx)
-    {
-        try
-        {
-            int w = originalBitmap.Width;
-            int h = originalBitmap.Height;
-            if (w <= 0 || h <= 0) return null;
-
-            double ratio = Math.Min((double)targetSizePx / w, (double)targetSizePx / h);
-            int newW = (int)(w * ratio);
-            int newH = (int)(h * ratio);
-            if (newW <= 0 || newH <= 0) return null;
-
-            using var scaled = new Bitmap(newW, newH, PixelFormat.Format32bppArgb);
-            using var g = Graphics.FromImage(scaled);
-            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            g.SmoothingMode = SmoothingMode.HighQuality;
-            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            g.CompositingQuality = CompositingQuality.HighQuality;
-            g.DrawImage(originalBitmap, 0, 0, newW, newH);
-
-            byte[] pngBytes;
-            using (var pngStream = new MemoryStream())
-            {
-                scaled.Save(pngStream, ImageFormat.Png);
-                pngBytes = pngStream.ToArray();
-            }
-
-            var wpfBitmap = new BitmapImage();
-            using (var ms = new MemoryStream(pngBytes, 0, pngBytes.Length, writable: false, publiclyVisible: true))
-            {
-                wpfBitmap.BeginInit();
-                wpfBitmap.CacheOption = BitmapCacheOption.OnLoad;
-                wpfBitmap.StreamSource = ms;
-                wpfBitmap.EndInit();
-            }
-
-            if (wpfBitmap.PixelWidth <= 0 || wpfBitmap.PixelHeight <= 0)
-                return null;
-
-            wpfBitmap.Freeze();
-            return wpfBitmap;
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private static BitmapImage? LoadBitmapImageFromBytes(byte[] imageData)

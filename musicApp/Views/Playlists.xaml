@@ -115,6 +115,8 @@
                        FontSize="16"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>
+            <views:EmptyLibraryAddOverlay x:Name="emptyLibraryOverlay"
+                                          Visibility="Collapsed"/>
         </Grid>
     </Grid>
 </UserControl>

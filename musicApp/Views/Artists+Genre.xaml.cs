@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,6 +23,7 @@ namespace musicApp.Views
 
         private IEnumerable? _allTracks;
         private int _itemsSourceCount = -1;
+        private INotifyCollectionChanged? _libraryCollectionNotify;
         private readonly ObservableCollection<string> _namesList = new ObservableCollection<string>();
 
         public ArtistGenreView()
@@ -43,8 +45,11 @@ namespace musicApp.Views
             trackList.ShowInExplorerRequested += (s, track) => ShowInExplorerRequested?.Invoke(this, track);
             trackList.RemoveFromLibraryRequested += (s, tracks) => RemoveFromLibraryRequested?.Invoke(this, tracks);
             trackList.DeleteRequested += (s, track) => DeleteRequested?.Invoke(this, track);
+            emptyLibraryOverlay.AddMusicFolderRequested += (_, __) => AddMusicFolderRequested?.Invoke(this, EventArgs.Empty);
             Loaded += (_, _) => UpdateSidebarTitleAndPlaceholder();
         }
+
+        public event EventHandler? AddMusicFolderRequested;
 
         /// <summary>Full library of tracks. Used to build artist/genre list and to filter when one is selected.</summary>
         public IEnumerable? ItemsSource
@@ -56,9 +61,22 @@ namespace musicApp.Views
                 if (ReferenceEquals(_allTracks, value) && newCount == _itemsSourceCount)
                     return;
 
+                if (_libraryCollectionNotify != null)
+                {
+                    _libraryCollectionNotify.CollectionChanged -= OnLibraryCollectionChanged;
+                    _libraryCollectionNotify = null;
+                }
+
                 _allTracks = value;
                 _itemsSourceCount = newCount;
+                if (value is INotifyCollectionChanged incc)
+                {
+                    _libraryCollectionNotify = incc;
+                    incc.CollectionChanged += OnLibraryCollectionChanged;
+                }
+
                 RefreshNamesList();
+                ApplySidebarSelectionToRightPane();
             }
         }
 
@@ -163,8 +181,32 @@ namespace musicApp.Views
                 lstArtistsOrGenres.SelectedItem = prevSelected;
         }
 
+        private void OnLibraryCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            _itemsSourceCount = _allTracks is ICollection c ? c.Count : _itemsSourceCount;
+            RefreshNamesList();
+            ApplySidebarSelectionToRightPane();
+        }
+
         private void LstArtistsOrGenres_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            ApplySidebarSelectionToRightPane();
+        }
+
+        private void ApplySidebarSelectionToRightPane()
+        {
+            if (EmptyLibraryAddOverlay.IsTrackLibraryEmpty(_allTracks))
+            {
+                trackList.CurrentPlaylist = null;
+                trackList.ItemsSource = null;
+                trackList.Visibility = Visibility.Collapsed;
+                placeholderText.Visibility = Visibility.Collapsed;
+                emptyLibraryOverlay.Visibility = Visibility.Visible;
+                return;
+            }
+
+            emptyLibraryOverlay.Visibility = Visibility.Collapsed;
+
             if (lstArtistsOrGenres.SelectedItem is not string selectedName || _allTracks == null)
             {
                 trackList.CurrentPlaylist = null;
