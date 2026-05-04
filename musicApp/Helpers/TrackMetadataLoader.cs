@@ -52,8 +52,6 @@ public static class TrackMetadataLoader
                 {
                     track.AlbumArtPath = "embedded";
                 }
-
-                track.ThumbnailCachePath = AlbumArtCacheManager.GenerateAndCache(track);
             }
             catch (Exception ex)
             {
@@ -79,9 +77,6 @@ public static class TrackMetadataLoader
                 {
                     Debug.WriteLine($"NAudio failed for {filePath}: {audioEx.Message}");
                 }
-
-                if (string.IsNullOrEmpty(track.ThumbnailCachePath))
-                    track.ThumbnailCachePath = AlbumArtCacheManager.GenerateAndCache(track);
             }
 
             EnsureFileStatsFromDisk(track, filePath);

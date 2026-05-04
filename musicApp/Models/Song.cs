@@ -40,6 +40,9 @@ namespace musicApp
         public string Lyrics { get; set; } = "";
         public bool IsCompilation { get; set; }
         public bool IsFavorite { get; set; }
+
+        [JsonIgnore]
+        public bool IsUserQueued { get; set; }
         public int TrackTotal { get; set; }
         public int DiscTotal { get; set; }
 

@@ -57,4 +57,14 @@ public partial class CompactSongRow : UserControl
     public static readonly DependencyProperty IsSelectedProperty =
         DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(CompactSongRow),
             new PropertyMetadata(false));
+
+    public bool IsUserQueued
+    {
+        get => (bool)GetValue(IsUserQueuedProperty);
+        set => SetValue(IsUserQueuedProperty, value);
+    }
+
+    public static readonly DependencyProperty IsUserQueuedProperty =
+        DependencyProperty.Register(nameof(IsUserQueued), typeof(bool), typeof(CompactSongRow),
+            new PropertyMetadata(false));
 }

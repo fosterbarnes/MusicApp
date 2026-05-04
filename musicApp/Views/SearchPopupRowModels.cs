@@ -30,8 +30,13 @@ public sealed class SongRowViewModel : INotifyPropertyChanged
     private ImageSource? _albumArtSource;
     private bool _isNowPlaying;
     private bool _isSelected;
+    private bool _isUserQueued;
 
-    public SongRowViewModel(Song song) => Song = song;
+    public SongRowViewModel(Song song)
+    {
+        Song = song;
+        _isUserQueued = song?.IsUserQueued ?? false;
+    }
 
     public Song Song { get; }
     public string Title => Song.Title;
@@ -47,6 +52,12 @@ public sealed class SongRowViewModel : INotifyPropertyChanged
     {
         get => _isSelected;
         set { _isSelected = value; OnPropertyChanged(); }
+    }
+
+    public bool IsUserQueued
+    {
+        get => _isUserQueued;
+        set { _isUserQueued = value; OnPropertyChanged(); }
     }
 
     public ImageSource? AlbumArtSource

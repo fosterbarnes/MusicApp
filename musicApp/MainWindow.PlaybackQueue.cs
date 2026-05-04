@@ -11,10 +11,10 @@ namespace musicApp;
 public partial class MainWindow
 {
     private ObservableCollection<Song>? contextualPlaybackFuture;
-    private readonly List<Song> contextualLinearFuture = new();
+    private readonly List<Song> contextualShuffledFuture = new();
     private readonly List<Song> contextualPlaybackHistoryMru = new();
     private List<Song>? contextualSessionOrderedFull;
-    private bool contextualSessionWholeSourceShuffleLinear;
+    private readonly HashSet<Song> userQueuedSongs = new();
 
     private static void FisherYatesRange(IList<Song> list, int loInclusive, int hiInclusive, Random? rnd = null)
     {
@@ -83,43 +83,111 @@ public partial class MainWindow
         }
     }
 
-    private void RebuildContextualDisplayFromLinear()
+    private HashSet<string> ContextualHistoryPathSet()
     {
-        if (contextualLinearFuture.Count == 0)
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var t in contextualPlaybackHistoryMru)
+            if (t != null && !string.IsNullOrWhiteSpace(t.FilePath))
+                set.Add(t.FilePath);
+        return set;
+    }
+
+    /// <summary>
+    /// Returns the natural-order future from <paramref name="anchor"/> onward, dropping anything
+    /// already in history (unless the user explicitly queued it).
+    /// </summary>
+    private List<Song> DeriveNaturalFutureFromAnchor(Song? anchor)
+    {
+        var result = new List<Song>();
+        if (contextualSessionOrderedFull == null || contextualSessionOrderedFull.Count == 0)
+            return result;
+
+        var hist = ContextualHistoryPathSet();
+        int idx = anchor != null
+            ? ArtistPlaybackOrder.IndexOfTrackInOrderedList(contextualSessionOrderedFull, anchor)
+            : -1;
+        int start = idx >= 0 ? idx : 0;
+
+        var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = start; i < contextualSessionOrderedFull.Count; i++)
+        {
+            var t = contextualSessionOrderedFull[i];
+            if (t == null || string.IsNullOrWhiteSpace(t.FilePath))
+                continue;
+            bool isAnchor = i == idx;
+            bool inHistory = hist.Contains(t.FilePath);
+            bool isInjected = userQueuedSongs.Contains(t);
+            if (!isAnchor && inHistory && !isInjected)
+                continue;
+            if (!seenPaths.Add(t.FilePath))
+                continue;
+            result.Add(t);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Builds <see cref="contextualShuffledFuture"/> with <paramref name="anchor"/> as head and a
+    /// fresh Fisher-Yates of the remaining unplayed (and injected) tracks.
+    /// </summary>
+    private void BuildShuffledFutureForAnchor(Song? anchor)
+    {
+        contextualShuffledFuture.Clear();
+        if (contextualSessionOrderedFull == null || contextualSessionOrderedFull.Count == 0)
             return;
 
-        if (!titleBarPlayer.IsShuffleEnabled &&
-            contextualSessionWholeSourceShuffleLinear &&
-            contextualSessionOrderedFull != null &&
-            contextualSessionOrderedFull.Count > 0)
-        {
-            var head = contextualLinearFuture[0];
-            int curIdx = ArtistPlaybackOrder.IndexOfTrackInOrderedList(contextualSessionOrderedFull, head);
-            if (curIdx >= 0)
-            {
-                contextualLinearFuture.Clear();
-                for (int i = curIdx; i < contextualSessionOrderedFull.Count; i++)
-                {
-                    var t = contextualSessionOrderedFull[i];
-                    if (t != null)
-                        contextualLinearFuture.Add(t);
-                }
-            }
+        var hist = ContextualHistoryPathSet();
+        var pool = new List<Song>();
+        var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            contextualSessionWholeSourceShuffleLinear = false;
+        if (anchor != null && !string.IsNullOrWhiteSpace(anchor.FilePath))
+            seenPaths.Add(anchor.FilePath);
+
+        foreach (var t in contextualSessionOrderedFull)
+        {
+            if (t == null || string.IsNullOrWhiteSpace(t.FilePath))
+                continue;
+            if (anchor != null && SameSongPath(t, anchor))
+                continue;
+            bool inHistory = hist.Contains(t.FilePath);
+            bool isInjected = userQueuedSongs.Contains(t);
+            if (inHistory && !isInjected)
+                continue;
+            if (!seenPaths.Add(t.FilePath))
+                continue;
+            pool.Add(t);
         }
 
+        if (anchor != null)
+            contextualShuffledFuture.Add(anchor);
+
+        if (pool.Count > 1)
+            FisherYatesRange(pool, 0, pool.Count - 1);
+
+        foreach (var t in pool)
+            contextualShuffledFuture.Add(t);
+    }
+
+    /// <summary>
+    /// Repopulates <see cref="contextualPlaybackFuture"/> from the active source (shuffled tail or
+    /// natural derivation), with <paramref name="anchor"/> as the implied head.
+    /// </summary>
+    private void SetActivePlaybackFuture(Song? anchor)
+    {
         contextualPlaybackFuture ??= new ObservableCollection<Song>();
         contextualPlaybackFuture.Clear();
-        foreach (var t in contextualLinearFuture)
-            contextualPlaybackFuture.Add(t);
 
-        if (titleBarPlayer.IsShuffleEnabled && contextualPlaybackFuture.Count > 1)
-            ShuffleRangeUntilOrderDiffersFromLinear(
-                contextualPlaybackFuture,
-                contextualLinearFuture,
-                1,
-                contextualPlaybackFuture.Count - 1);
+        if (titleBarPlayer.IsShuffleEnabled)
+        {
+            foreach (var t in contextualShuffledFuture)
+                contextualPlaybackFuture.Add(t);
+        }
+        else
+        {
+            var nat = DeriveNaturalFutureFromAnchor(anchor);
+            foreach (var t in nat)
+                contextualPlaybackFuture.Add(t);
+        }
     }
 
     private void InitializeContextualSession(IReadOnlyList<Song> ordered, Song selected)
@@ -135,37 +203,24 @@ public partial class MainWindow
         if (idx < 0)
             return;
 
+        ResetUserQueuedFlagsForCurrentSession();
+
         contextualSessionOrderedFull = new List<Song>(src);
-
         contextualPlaybackHistoryMru.Clear();
-        contextualLinearFuture.Clear();
+        contextualShuffledFuture.Clear();
+        userQueuedSongs.Clear();
 
-        bool shuffleOnAtStart = titleBarPlayer.IsShuffleEnabled;
-
-        if (shuffleOnAtStart)
+        if (titleBarPlayer.IsShuffleEnabled)
         {
-            contextualSessionWholeSourceShuffleLinear = true;
-            for (int i = idx; i < src.Count; i++)
-                contextualLinearFuture.Add(src[i]);
-
-            for (int i = 0; i < idx; i++)
-                contextualLinearFuture.Add(src[i]);
+            BuildShuffledFutureForAnchor(selected);
         }
         else
         {
-            contextualSessionWholeSourceShuffleLinear = false;
-            contextualPlaybackHistoryMru.AddRange(src.Take(idx).Reverse());
-            for (int i = idx; i < src.Count; i++)
-                contextualLinearFuture.Add(src[i]);
+            for (int i = idx - 1; i >= 0; i--)
+                contextualPlaybackHistoryMru.Add(src[i]);
         }
 
-        if (contextualLinearFuture.Count == 0)
-        {
-            ClearContextualPlaybackQueue();
-            return;
-        }
-
-        RebuildContextualDisplayFromLinear();
+        SetActivePlaybackFuture(selected);
         if (contextualPlaybackFuture == null || contextualPlaybackFuture.Count == 0)
             ClearContextualPlaybackQueue();
     }
@@ -283,41 +338,99 @@ public partial class MainWindow
         return contextualPlaybackFuture != null && contextualPlaybackFuture.Count > 0;
     }
 
-    private void ClearContextualPlaybackQueue()
+    private void ResetUserQueuedFlagsForCurrentSession()
     {
-        contextualPlaybackFuture = null;
-        contextualLinearFuture.Clear();
-        contextualPlaybackHistoryMru.Clear();
-        contextualSessionOrderedFull = null;
-        contextualSessionWholeSourceShuffleLinear = false;
+        foreach (var s in userQueuedSongs)
+        {
+            if (s != null)
+                s.IsUserQueued = false;
+        }
     }
 
-    private static void RemoveFirstMatchingSongFromList(IList<Song> list, Song song)
+    private void ClearContextualPlaybackQueue()
     {
-        if (list == null || song == null)
-            return;
+        ResetUserQueuedFlagsForCurrentSession();
+        userQueuedSongs.Clear();
 
-        if (!string.IsNullOrWhiteSpace(song.FilePath))
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                var t = list[i];
-                if (t != null && string.Equals(t.FilePath, song.FilePath, StringComparison.OrdinalIgnoreCase))
-                {
-                    list.RemoveAt(i);
-                    return;
-                }
-            }
-        }
+        contextualPlaybackFuture = null;
+        contextualShuffledFuture.Clear();
+        contextualPlaybackHistoryMru.Clear();
+        contextualSessionOrderedFull = null;
+    }
 
+    /// <summary>
+    /// Wraps the contextual session for Repeat-All: clears history, regenerates the active future
+    /// rooted at the first track of the session, and yields the new starting track.
+    /// </summary>
+    private bool TryWrapContextualForRepeatAll(out Song? startTrack)
+    {
+        startTrack = null;
+        if (contextualSessionOrderedFull == null || contextualSessionOrderedFull.Count == 0)
+            return false;
+
+        var first = contextualSessionOrderedFull[0];
+        if (first == null)
+            return false;
+
+        contextualPlaybackHistoryMru.Clear();
+
+        if (titleBarPlayer.IsShuffleEnabled)
+            BuildShuffledFutureForAnchor(first);
+        else
+            contextualShuffledFuture.Clear();
+
+        SetActivePlaybackFuture(first);
+
+        if (contextualPlaybackFuture == null || contextualPlaybackFuture.Count == 0)
+            return false;
+
+        startTrack = contextualPlaybackFuture[0];
+        return startTrack != null;
+    }
+
+    private void ClearInjectedFlagFor(Song? song)
+    {
+        if (song == null) return;
+        if (userQueuedSongs.Remove(song))
+            song.IsUserQueued = false;
+    }
+
+    private static int IndexOfBySongPath(IList<Song> list, Song target)
+    {
+        if (list == null || target == null)
+            return -1;
         for (int i = 0; i < list.Count; i++)
         {
-            if (ReferenceEquals(list[i], song))
-            {
-                list.RemoveAt(i);
-                return;
-            }
+            if (SameSongPath(list[i], target))
+                return i;
         }
+        return -1;
+    }
+
+    private Song? FindNaturalNextAfter(Song finished)
+    {
+        if (contextualSessionOrderedFull == null || finished == null)
+            return null;
+
+        int idx = ArtistPlaybackOrder.IndexOfTrackInOrderedList(contextualSessionOrderedFull, finished);
+        var hist = ContextualHistoryPathSet();
+        int start = idx >= 0 ? idx + 1 : 0;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int i = start; i < contextualSessionOrderedFull.Count; i++)
+        {
+            var t = contextualSessionOrderedFull[i];
+            if (t == null || string.IsNullOrWhiteSpace(t.FilePath))
+                continue;
+            bool inHistory = hist.Contains(t.FilePath);
+            bool isInjected = userQueuedSongs.Contains(t);
+            if (inHistory && !isInjected)
+                continue;
+            if (!seen.Add(t.FilePath))
+                continue;
+            return t;
+        }
+        return null;
     }
 
     private bool TryAdvanceContextualSessionMovingFinishedToHistory(out Song? nextTrack)
@@ -329,25 +442,27 @@ public partial class MainWindow
             return false;
 
         var finished = contextualPlaybackFuture[0];
+        if (finished == null)
+            return false;
+
         contextualPlaybackHistoryMru.Insert(0, finished);
-        contextualPlaybackFuture.RemoveAt(0);
-        RemoveFirstMatchingSongFromList(contextualLinearFuture, finished);
-        nextTrack = contextualPlaybackFuture[0];
+        ClearInjectedFlagFor(finished);
+
+        if (titleBarPlayer.IsShuffleEnabled && contextualShuffledFuture.Count > 0)
+            contextualShuffledFuture.RemoveAt(0);
+
+        Song? next = titleBarPlayer.IsShuffleEnabled
+            ? (contextualShuffledFuture.Count > 0 ? contextualShuffledFuture[0] : null)
+            : FindNaturalNextAfter(finished);
+
+        SetActivePlaybackFuture(next);
+        nextTrack = next;
         return nextTrack != null;
     }
 
     private bool TryManualAdvanceContextualSession()
     {
-        if (!HasContextualPlaybackQueue() || contextualPlaybackFuture == null)
-            return false;
-        if (contextualPlaybackFuture.Count < 2)
-            return false;
-
-        var skipped = contextualPlaybackFuture[0];
-        contextualPlaybackHistoryMru.Insert(0, skipped);
-        contextualPlaybackFuture.RemoveAt(0);
-        RemoveFirstMatchingSongFromList(contextualLinearFuture, skipped);
-        return true;
+        return TryAdvanceContextualSessionMovingFinishedToHistory(out _);
     }
 
     private bool TryRewindContextualSessionOne(out Song? trackToPlay)
@@ -360,8 +475,16 @@ public partial class MainWindow
 
         var prev = contextualPlaybackHistoryMru[0];
         contextualPlaybackHistoryMru.RemoveAt(0);
-        contextualPlaybackFuture.Insert(0, prev);
-        contextualLinearFuture.Insert(0, prev);
+
+        if (titleBarPlayer.IsShuffleEnabled)
+        {
+            int existing = IndexOfBySongPath(contextualShuffledFuture, prev);
+            if (existing >= 0)
+                contextualShuffledFuture.RemoveAt(existing);
+            contextualShuffledFuture.Insert(0, prev);
+        }
+
+        SetActivePlaybackFuture(prev);
         trackToPlay = prev;
         return trackToPlay != null;
     }
@@ -420,10 +543,7 @@ public partial class MainWindow
                 return false;
 
             var head = contextualPlaybackFuture[0];
-            bool headMatches = head != null &&
-                ((!string.IsNullOrWhiteSpace(t.FilePath) &&
-                  string.Equals(head.FilePath, t.FilePath, StringComparison.OrdinalIgnoreCase)) ||
-                 ReferenceEquals(head, t));
+            bool headMatches = head != null && SameSongPath(head, t);
 
             if (!headMatches)
                 return false;
@@ -455,29 +575,7 @@ public partial class MainWindow
         if (!HasContextualPlaybackQueue() || contextualPlaybackFuture == null)
             return;
 
-        int j = -1;
-        for (int i = 0; i < contextualPlaybackFuture.Count; i++)
-        {
-            var t = contextualPlaybackFuture[i];
-            if (t != null && string.Equals(t.FilePath, track.FilePath, StringComparison.OrdinalIgnoreCase))
-            {
-                j = i;
-                break;
-            }
-        }
-
-        if (j < 0)
-        {
-            for (int i = 0; i < contextualPlaybackFuture.Count; i++)
-            {
-                if (ReferenceEquals(contextualPlaybackFuture[i], track))
-                {
-                    j = i;
-                    break;
-                }
-            }
-        }
-
+        int j = IndexOfBySongPath(contextualPlaybackFuture, track);
         if (j < 0)
         {
             ClearContextualPlaybackQueue();
@@ -487,10 +585,17 @@ public partial class MainWindow
         for (int k = 0; k < j; k++)
         {
             var head = contextualPlaybackFuture[0];
+            if (head == null) break;
+
             contextualPlaybackHistoryMru.Insert(0, head);
+            if (titleBarPlayer.IsShuffleEnabled && contextualShuffledFuture.Count > 0)
+                contextualShuffledFuture.RemoveAt(0);
             contextualPlaybackFuture.RemoveAt(0);
-            RemoveFirstMatchingSongFromList(contextualLinearFuture, head);
+
+            ClearInjectedFlagFor(head);
         }
+
+        SetActivePlaybackFuture(track);
     }
 
     private void SyncCurrentTrackIndices(Song track, object? requestSource = null)
@@ -514,10 +619,7 @@ public partial class MainWindow
                 contextualPlaybackFuture.Count > 0)
             {
                 var head = contextualPlaybackFuture[0];
-                bool headMatches = head != null &&
-                    ((!string.IsNullOrWhiteSpace(t.FilePath) &&
-                      string.Equals(head.FilePath, t.FilePath, StringComparison.OrdinalIgnoreCase)) ||
-                     ReferenceEquals(head, t));
+                bool headMatches = head != null && SameSongPath(head, t);
 
                 if (headMatches)
                 {
@@ -532,6 +634,33 @@ public partial class MainWindow
 
         currentTrackIndex = filteredTracks.IndexOf(t);
         currentShuffledIndex = shuffledTracks.IndexOf(t);
+    }
+
+    /// <summary>
+    /// Removes <paramref name="song"/> from <see cref="contextualSessionOrderedFull"/> by path,
+    /// skipping the current track. Used to dedupe before injecting a Play Next / Add to Queue.
+    /// </summary>
+    private void RemoveFromSessionOrderedFullSkippingCurrent(Song song)
+    {
+        if (contextualSessionOrderedFull == null || song == null) return;
+        for (int i = contextualSessionOrderedFull.Count - 1; i >= 0; i--)
+        {
+            var t = contextualSessionOrderedFull[i];
+            if (t == null) continue;
+            if (currentTrack != null && SameSongPath(t, currentTrack)) continue;
+            if (SameSongPath(t, song))
+                contextualSessionOrderedFull.RemoveAt(i);
+        }
+    }
+
+    private void RemoveFromShuffledFutureSkippingHead(Song song)
+    {
+        if (song == null) return;
+        for (int i = contextualShuffledFuture.Count - 1; i >= 1; i--)
+        {
+            if (SameSongPath(contextualShuffledFuture[i], song))
+                contextualShuffledFuture.RemoveAt(i);
+        }
     }
 
     private void OnQueueTracksReordered(object? sender, (int fromViewIndex, int toViewIndex) e)
@@ -553,24 +682,45 @@ public partial class MainWindow
         if (fromQ == toQ)
             return;
 
-        try
-        {
-            queue.Move(fromQ, toQ);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"OnQueueTracksReordered Move: {ex.Message}");
+        Song fromTrack = queue[fromQ];
+        Song toTrack = queue[toQ];
+        if (fromTrack == null || toTrack == null)
             return;
-        }
 
-        if (HasContextualPlaybackQueue() &&
-            contextualLinearFuture.Count == queue.Count &&
-            fromQ >= 0 &&
-            fromQ < contextualLinearFuture.Count)
+        if (HasContextualPlaybackQueue() && contextualSessionOrderedFull != null)
         {
-            var moved = contextualLinearFuture[fromQ];
-            contextualLinearFuture.RemoveAt(fromQ);
-            contextualLinearFuture.Insert(toQ, moved);
+            if (titleBarPlayer.IsShuffleEnabled &&
+                fromQ < contextualShuffledFuture.Count &&
+                toQ < contextualShuffledFuture.Count)
+            {
+                var movedShuffle = contextualShuffledFuture[fromQ];
+                contextualShuffledFuture.RemoveAt(fromQ);
+                contextualShuffledFuture.Insert(toQ, movedShuffle);
+            }
+
+            int absFrom = ArtistPlaybackOrder.IndexOfTrackInOrderedList(contextualSessionOrderedFull, fromTrack);
+            int absTo = ArtistPlaybackOrder.IndexOfTrackInOrderedList(contextualSessionOrderedFull, toTrack);
+            if (absFrom >= 0 && absTo >= 0)
+            {
+                var movedNatural = contextualSessionOrderedFull[absFrom];
+                contextualSessionOrderedFull.RemoveAt(absFrom);
+                if (absTo > absFrom) absTo -= 1;
+                contextualSessionOrderedFull.Insert(absTo, movedNatural);
+            }
+
+            SetActivePlaybackFuture(currentTrack);
+        }
+        else
+        {
+            try
+            {
+                queue.Move(fromQ, toQ);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"OnQueueTracksReordered Move: {ex.Message}");
+                return;
+            }
         }
 
         UpdateQueueView();

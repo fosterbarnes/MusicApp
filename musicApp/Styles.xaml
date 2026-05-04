@@ -539,6 +539,10 @@
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="{StaticResource TrackRowSelection-brush}"/>
             </Trigger>
+            <DataTrigger Binding="{Binding IsUserQueued}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource AccentPrimary-brush}"/>
+                <Setter Property="BorderThickness" Value="3,0,0,0"/>
+            </DataTrigger>
         </Style.Triggers>
     </Style>
 

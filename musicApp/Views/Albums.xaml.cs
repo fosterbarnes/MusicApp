@@ -259,6 +259,7 @@ namespace musicApp.Views
         private readonly DispatcherTimer _artLoadDebounce;
         private readonly DispatcherTimer _flyoutResizeDebounce;
         private readonly DispatcherTimer _resizeAnchorDebounce;
+        private readonly DispatcherTimer _collectionChangeRebuildDebounce;
 
         private readonly HashSet<string> _flyoutSelectedKeys = new(StringComparer.OrdinalIgnoreCase);
         private int _flyoutAnchorIndex = -1;
@@ -300,6 +301,17 @@ namespace musicApp.Views
             {
                 _resizeAnchorDebounce.Stop();
                 RestoreResizeAnchorIfPending();
+            };
+            _collectionChangeRebuildDebounce = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(400)
+            };
+            _collectionChangeRebuildDebounce.Tick += (_, __) =>
+            {
+                _collectionChangeRebuildDebounce.Stop();
+                _itemsSourceCount = TryGetCount(_itemsSource);
+                UpdateEmptyLibraryOverlay();
+                RefreshAlbumGridFromLibrary();
             };
 
             Loaded += (_, __) =>
@@ -363,6 +375,7 @@ namespace musicApp.Views
                 _artLoadDebounce.Stop();
                 _flyoutResizeDebounce.Stop();
                 _resizeAnchorDebounce.Stop();
+                _collectionChangeRebuildDebounce.Stop();
             }
             catch
             {

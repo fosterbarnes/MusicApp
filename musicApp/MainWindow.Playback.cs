@@ -94,6 +94,14 @@ namespace musicApp
                     return;
                 }
 
+                var repeatMode = titleBarPlayer.RepeatMode;
+
+                if (repeatMode == SettingsManager.RepeatMode.One && currentTrack != null)
+                {
+                    if (TryRepeatOneRestart())
+                        return;
+                }
+
                 var currentQueue = GetCurrentPlayQueue();
                 var currentIndex = GetCurrentTrackIndex();
 
@@ -116,12 +124,20 @@ namespace musicApp
                     {
                         PlayTrack(nextContext);
                         RefreshVisibleViews();
+                        return;
                     }
-                    else
+
+                    if (repeatMode == SettingsManager.RepeatMode.All &&
+                        TryWrapContextualForRepeatAll(out var wrapStart) &&
+                        wrapStart != null)
                     {
-                        CleanupAudioObjects();
-                        ClearContextualPlaybackQueue();
+                        PlayTrack(wrapStart);
+                        RefreshVisibleViews();
+                        return;
                     }
+
+                    CleanupAudioObjects();
+                    ClearContextualPlaybackQueue();
                     return;
                 }
 
@@ -131,6 +147,19 @@ namespace musicApp
                     if (nextTrack != null)
                     {
                         PlayTrack(nextTrack);
+                        RefreshVisibleViews();
+                    }
+                    else
+                    {
+                        CleanupAudioObjects();
+                        ClearContextualPlaybackQueue();
+                    }
+                }
+                else if (repeatMode == SettingsManager.RepeatMode.All)
+                {
+                    if (TryWrapLibraryForRepeatAll(out var libStart) && libStart != null)
+                    {
+                        PlayTrack(libStart);
                         RefreshVisibleViews();
                     }
                     else
@@ -158,6 +187,50 @@ namespace musicApp
                     LogDebug($"Error stopping playback: {stopEx.Message}");
                 }
             }
+        }
+
+        private bool TryRepeatOneRestart()
+        {
+            try
+            {
+                if (waveOut == null || audioFileReader == null || currentTrack == null)
+                    return false;
+                audioFileReader.CurrentTime = TimeSpan.Zero;
+                waveOut.Play();
+                titleBarPlayer.IsPlaying = true;
+                _crossfadeOverlapStartedForThisOutgoing = false;
+                EnsureCrossfadePollTimer();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogDebug($"TryRepeatOneRestart failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private bool TryWrapLibraryForRepeatAll(out Song? startTrack)
+        {
+            startTrack = null;
+            if (filteredTracks == null || filteredTracks.Count == 0)
+                return false;
+
+            if (titleBarPlayer.IsShuffleEnabled)
+            {
+                RegenerateShuffledTracks();
+                if (shuffledTracks.Count == 0)
+                    return false;
+                currentShuffledIndex = 0;
+                currentTrackIndex = filteredTracks.IndexOf(shuffledTracks[0]);
+                startTrack = shuffledTracks[0];
+            }
+            else
+            {
+                currentTrackIndex = 0;
+                currentShuffledIndex = 0;
+                startTrack = filteredTracks[0];
+            }
+            return startTrack != null;
         }
 
         internal MetadataAudioReleaseResult ReleasePlaybackForMetadataWrite(string filePath)

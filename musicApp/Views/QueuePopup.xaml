@@ -120,6 +120,7 @@
                                                               AlbumArtSource="{Binding AlbumArtSource}"
                                                               IsNowPlaying="{Binding IsNowPlaying}"
                                                               IsSelected="{Binding IsSelected}"
+                                                              IsUserQueued="{Binding IsUserQueued}"
                                                               MouseLeftButtonDown="QueueSongItem_MouseLeftButtonDown"
                                                               PreviewMouseRightButtonDown="QueueSongItem_PreviewMouseRightButtonDown"
                                                               MouseDoubleClick="QueueSongItem_MouseDoubleClick"
