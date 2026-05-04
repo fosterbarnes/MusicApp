@@ -3,8 +3,12 @@ $tagName = "v$versionContents"
 $zipFileName = "musicApp-v${versionContents}-${versionTagContents}-portable.zip"
 $releaseUrl = "https://github.com/fosterbarnes/musicApp/releases/download/$tagName/$zipFileName"
 $oldLinkRegex = '\[download the latest release\]\(https://github\.com/' + [regex]::Escape('fosterbarnes/musicApp') + '/releases/download/v[^)]+\)'
+$semverVRe = '\bv\d+\.\d+\.\d+\b'
+$tagSlugRe = '(musicApp-' + [regex]::Escape($tagName) + '-)[^-]+-(x64-installer\.exe|x86-installer\.exe|arm64-installer\.exe|portable\.zip)'
 
 $text = Get-Content -LiteralPath $readme -Raw -Encoding UTF8
+$text = [regex]::Replace($text, $semverVRe, $tagName)
+$text = [regex]::Replace($text, $tagSlugRe, '${1}' + $versionTagContents + '-${2}')
 $updated = [regex]::Replace($text, $oldLinkRegex, "[download the latest release]($releaseUrl)").TrimEnd()
 Write-Host "`nUpdating release link in README..." -ForegroundColor Yellow; Write-Host $releaseUrl
 Write-RepoUtf8NoBomFile -LiteralPath $readme -Content $updated

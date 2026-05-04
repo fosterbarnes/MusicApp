@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace musicApp.Helpers;
 
 /// <summary>Maps system resource snapshots to parallel scan degree (smoothed across batches).</summary>
@@ -29,8 +27,9 @@ public static class ScanConcurrencyAdvisor
             ? MaxParallelismAggressive
             : MaxParallelismConservative;
 
-        // Never exceed logical CPU count; Aggressive constant is only an upper bound.
-        var maxCap = Math.Clamp(processorCount, 1, tierMax);
+        // Reserve one logical CPU for the UI thread so the window stays responsive during scans.
+        var reserved = Math.Max(1, processorCount - 1);
+        var maxCap = Math.Clamp(reserved, 1, tierMax);
         var raw = maxCap;
 
         if (!memComfort)
@@ -43,26 +42,10 @@ public static class ScanConcurrencyAdvisor
 
         raw = Math.Clamp(raw, 1, maxCap);
 
-        var prevSmoothed = previousSmoothedDop;
         if (previousSmoothedDop <= 0)
             previousSmoothedDop = raw;
         else
             previousSmoothedDop = Math.Max(1, (raw + previousSmoothedDop + 1) / 2);
-
-        var speedMode = tierMax == MaxParallelismAggressive
-            ? $"High throughput (idle PC): policy allows up to {tierMax} parallel; " +
-              $"this machine has {processorCount} logical CPUs so effective ceiling is {maxCap}."
-            : $"Throttled (busy/tight RAM): policy allows up to {tierMax} parallel; " +
-              $"effective ceiling is {maxCap} ({processorCount} logical CPUs).";
-        var ramGb = totalRam == 0
-            ? "RAM unknown"
-            : $"{availRam / (1024.0 * 1024.0):F1} GB free of {totalRam / (1024.0 * 1024.0):F1} GB total";
-        string workerLine = prevSmoothed <= 0
-            ? $"Parallel worker target is now {previousSmoothedDop}."
-            : prevSmoothed == previousSmoothedDop
-                ? $"Keeping {previousSmoothedDop} parallel workers."
-                : $"Adjusting workers: was {prevSmoothed}, now {previousSmoothedDop} (this step wanted ~{raw}).";
-        Debug.WriteLine($"[LibraryScan] {speedMode} — {ramGb}, CPU ~{snapshot.CpuBusyPercent:F0}% busy. {workerLine}");
 
         return previousSmoothedDop;
     }

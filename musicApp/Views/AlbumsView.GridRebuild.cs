@@ -235,9 +235,8 @@ namespace musicApp.Views
 
         private void OnItemsSourceCollectionChangedForEmptyOverlay(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            _itemsSourceCount = TryGetCount(_itemsSource);
-            UpdateEmptyLibraryOverlay();
-            RefreshAlbumGridFromLibrary();
+            _collectionChangeRebuildDebounce.Stop();
+            _collectionChangeRebuildDebounce.Start();
         }
 
         private void UpdateEmptyLibraryOverlay()

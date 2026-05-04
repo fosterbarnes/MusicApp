@@ -1,26 +1,38 @@
-v0.1.7 release (grandpaGuava)
+v0.2.0 release (bangarangRotting)
 
-Main Window:
-- On fresh install, we only got the icon/button to scan for music in songs view. Added this behavior to all track views
+Shuffle & Queue:
+- Replaced the broken queing system with a clean two-list model (natural order + shuffled order), so toggling shuffle no longer loses tracks
+- Currently playing track now stays pinned at the top of the queue across any number of shuffle toggles
+- Clicking shuffle ON re-randomizes from the current track; clicking again re-randomizes (per spec)
+- Clicking shuffle OFF returns to natural order starting at the current track, accounting for already-played songs
 
-Title bar / Now playing:
-- Scale title-bar artwork to the real pixel size of the slot (DPI-aware) instead of a fixed 120px
-- Use high-quality bitmap scaling and caching hints on the title-bar image so WPF doesn’t add a second resize
-- Match `DecodePixelWidth` to the on-screen size to avoid a double downscale from the disk cache
+Queue edits:
+- Play Next and Add to Queue now insert into both natural and shuffled orders, so edits survive shuffle toggles
+- Remove-from-queue removes by song identity instead of by index, fixing "remove A, watch B disappear"
 
-Albums, search, queue, Info:
-- Use the same downscale path for thumbnails and metadata art as for the title bar
-- Treat album art as ImageSource/BitmapSource end-to-end where it’s shown everywhere
+Library shuffle:
+- Stopped rewriting the played half of the library shuffled list to linear, which was destroying real play history
+- Now only re-randomizes the upcoming tail when needed
 
-Backend/Boring stuff:
-- Remove thin wrapper methods. call AlbumArtDownscaleHelper directly where needed
-- Trim outdated comments and unused shit
+Repeat:
+- Make the repeat button actually do something
+- Repeat One: track restarts from zero on song end
+- Repeat All: queue wraps at the end. With shuffle on, generates new shuffle
 
-Image pipeline:
-- Stop saving resized art as PNG and reloading it. MagicScaler feeds the UI directly.
-- Generate on-disk thumbnail JPEGs (250px cache) with MagicScaler + JPEG encode instead of GDI+ resize + GDI JPEG
-- Only build a few saved thumbnails at the same time so the app doesn’t "trip over itself"
+UI highlight:
+- New IsUserQueued flag set when Play Next / Add to Queue is used, cleared when track starts playing or is removed
+- Subtle 3px left-edge accent on queued rows in the main queue view and the title-bar queue popup
 
+Backend / cleanup:
+- Removed contextualLinearFuture, contextualSessionWholeSourceShuffleLinear, RebuildContextualDisplayFromLinear, RemoveFirstMatchingSongFromList
+- Advance / rewind / repair logic now keeps natural, shuffled, and history lists in sync by song identity, not index
 
-Scripts:
-- Only count relevant file types when counting code
+Library scan:
+- Fixed "musicApp is not responding" hangs during initial library scanning
+- Scan workers no longer fight over the UI thread; tracks now stream into the list in coalesced 200ms batches
+- Removed thumbnail generation from the per-file scan path (was a major contention source); thumbnails now generate on demand
+- End-of-scan sort no longer freezes the window — it sorts off-thread and rebuilds the list in chunks so the UI stays interactive
+- Resource sampling between scan batches throttled (less Thread.Sleep overhead during big scans)
+
+Pre-push / tooling:
+- Removed extra library-scan debug logging from the scan batch loop and concurrency advisor (less Output noise during big folder scans)
