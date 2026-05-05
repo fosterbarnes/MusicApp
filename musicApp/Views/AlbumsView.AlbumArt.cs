@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using musicApp.Constants;
 using musicApp.Helpers;
@@ -41,80 +40,6 @@ namespace musicApp.Views
             _prefetchArtCts?.Cancel();
             _prefetchArtCts?.Dispose();
             _prefetchArtCts = null;
-        }
-
-        private void ShowLoadingIndicatorImmediate()
-        {
-            _loadingIndicatorDelayCts?.Cancel();
-            if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(ShowLoadingIndicatorImmediate); return; }
-            LoadingIndicator.Visibility = Visibility.Visible;
-            StartBounceAnimation();
-        }
-
-        private void ShowLoadingIndicatorDeferred(int delayMs = 200)
-        {
-            _loadingIndicatorDelayCts?.Cancel();
-            _loadingIndicatorDelayCts = new CancellationTokenSource();
-            var ct = _loadingIndicatorDelayCts.Token;
-            _ = ShowLoadingIndicatorAfterDelayAsync(delayMs, ct);
-        }
-
-        private async Task ShowLoadingIndicatorAfterDelayAsync(int delayMs, CancellationToken ct)
-        {
-            try
-            {
-                await Task.Delay(delayMs, ct).ConfigureAwait(false);
-                if (!ct.IsCancellationRequested)
-                    await Dispatcher.InvokeAsync(() =>
-                    {
-                        if (!ct.IsCancellationRequested)
-                        {
-                            LoadingIndicator.Visibility = Visibility.Visible;
-                            StartBounceAnimation();
-                        }
-                    });
-            }
-            catch (OperationCanceledException) { }
-        }
-
-        private void HideLoadingIndicator()
-        {
-            _loadingIndicatorDelayCts?.Cancel();
-            if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(HideLoadingIndicator); return; }
-            StopBounceAnimation();
-            LoadingIndicator.Visibility = Visibility.Collapsed;
-        }
-
-        private void StartBounceAnimation()
-        {
-            var dots = new[] { LoadDot0, LoadDot1, LoadDot2, LoadDot3 };
-            double bounce = 8;
-            double step = 1000.0 / 6.0;
-
-            for (int i = 0; i < dots.Length; i++)
-            {
-                var anim = new DoubleAnimationUsingKeyFrames
-                {
-                    Duration = TimeSpan.FromSeconds(1),
-                    RepeatBehavior = RepeatBehavior.Forever
-                };
-
-                double offset = i * step;
-                if (offset > 0)
-                    anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(offset))));
-                anim.KeyFrames.Add(new LinearDoubleKeyFrame(-bounce, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(offset + step))));
-                anim.KeyFrames.Add(new LinearDoubleKeyFrame(bounce, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(offset + step * 2))));
-                anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(offset + step * 3))));
-
-                ((TranslateTransform)dots[i].RenderTransform).BeginAnimation(TranslateTransform.YProperty, anim);
-            }
-        }
-
-        private void StopBounceAnimation()
-        {
-            var dots = new[] { LoadDot0, LoadDot1, LoadDot2, LoadDot3 };
-            foreach (var dot in dots)
-                ((TranslateTransform)dot.RenderTransform).BeginAnimation(TranslateTransform.YProperty, null);
         }
 
         private void GetAlbumArtViewportIndexRange(out int firstIdx, out int lastIdx)

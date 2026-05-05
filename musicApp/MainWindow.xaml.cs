@@ -172,7 +172,7 @@ namespace musicApp
             }
 
             TrackListColumnConfig.Initialize();
-            CreateViewsAndWirePlayback();
+            InitAlbumsView();
             SetupEventHandlers();
             DataContext = this;
 
@@ -192,28 +192,55 @@ namespace musicApp
             _pendingLaunchInfoSection = launch.InfoSection;
         }
 
-        private void CreateViewsAndWirePlayback()
+        private bool _otherViewsCreated;
+
+        private void InitAlbumsView()
         {
+            albumsViewControl = new AlbumsView();
+            albumsViewControl.PlayTrackRequested += (s, track) => PlayTrack(track, s);
+            albumsViewControl.PlayNextRequested += OnPlayNextRequested;
+            albumsViewControl.AddToQueueRequested += OnAddToQueueRequested;
+            albumsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
+            albumsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
+            albumsViewControl.InfoRequested += OnInfoRequested;
+            albumsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
+            albumsViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
+            albumsViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
+            albumsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
+            albumsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
+            albumsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
+            albumsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
+            albumsViewControl.DeleteRequested += OnDeleteRequested;
+            albumsViewControl.ArtistNavigationRequested += AlbumsView_ArtistNavigationRequested;
+            albumsViewControl.GenreNavigationRequested += AlbumsView_GenreNavigationRequested;
+            albumsViewControl.AlbumGridRebuildStatus = (phase, done, total, songs) =>
+                Dispatcher.BeginInvoke(
+                    () => UpdateStatusBarAlbumGridRebuild(phase, done, total, songs),
+                    DispatcherPriority.Normal);
+
+            // Defer creating all other views until the app is idle, or until navigated to
+            Dispatcher.InvokeAsync(EnsureOtherViewsCreated, DispatcherPriority.Background);
+        }
+
+        private void EnsureOtherViewsCreated()
+        {
+            if (_otherViewsCreated) return;
+            _otherViewsCreated = true;
+
             songsView = new SongsView();
             queueViewControl = new QueueView();
             recentlyPlayedViewControl = new RecentlyPlayedView();
             artistsViewControl = new ArtistGenreView { ViewName = "Artists" };
             genresViewControl = new ArtistGenreView { ViewName = "Genres" };
-            albumsViewControl = new AlbumsView();
             playlistsViewControl = new PlaylistsView();
             playlistsViewControl.LibraryTracks = allTracks;
 
             void OnPlayTrackRequested(object? s, Song track) => PlayTrack(track, s);
             songsView.PlayTrackRequested += OnPlayTrackRequested;
             queueViewControl.PlayTrackRequested += OnPlayTrackRequested;
-            queueViewControl.TracksReordered += OnQueueTracksReordered;
-            queueViewControl.QueueToolbarRemoveRequested += OnQueueToolbarRemoveRequested;
-            queueViewControl.QueueToolbarMoveUpRequested += OnQueueToolbarMoveUpRequested;
-            queueViewControl.QueueToolbarMoveDownRequested += OnQueueToolbarMoveDownRequested;
             recentlyPlayedViewControl.PlayTrackRequested += OnPlayTrackRequested;
             artistsViewControl.PlayTrackRequested += OnPlayTrackRequested;
             genresViewControl.PlayTrackRequested += OnPlayTrackRequested;
-            albumsViewControl.PlayTrackRequested += OnPlayTrackRequested;
             playlistsViewControl.PlayTrackRequested += OnPlayTrackRequested;
 
             songsView.PlayNextRequested += OnPlayNextRequested;
@@ -221,7 +248,6 @@ namespace musicApp
             recentlyPlayedViewControl.PlayNextRequested += OnPlayNextRequested;
             artistsViewControl.PlayNextRequested += OnPlayNextRequested;
             genresViewControl.PlayNextRequested += OnPlayNextRequested;
-            albumsViewControl.PlayNextRequested += OnPlayNextRequested;
             playlistsViewControl.PlayNextRequested += OnPlayNextRequested;
 
             songsView.AddToQueueRequested += OnAddToQueueRequested;
@@ -244,10 +270,6 @@ namespace musicApp
             genresViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             genresViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
             genresViewControl.InfoRequested += OnInfoRequested;
-            albumsViewControl.AddToQueueRequested += OnAddToQueueRequested;
-            albumsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
-            albumsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
-            albumsViewControl.InfoRequested += OnInfoRequested;
             playlistsViewControl.AddToQueueRequested += OnAddToQueueRequested;
             playlistsViewControl.AddTrackToPlaylistRequested += OnAddTrackToPlaylistRequested;
             playlistsViewControl.CreateNewPlaylistWithTrackRequested += OnCreateNewPlaylistWithTrackRequested;
@@ -258,33 +280,28 @@ namespace musicApp
             recentlyPlayedViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
             artistsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
             genresViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
-            albumsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
             playlistsViewControl.ShowInExplorerRequested += OnShowInExplorerRequested;
             songsView.ShowInArtistsRequested += OnShowInArtistsRequested;
             queueViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
             recentlyPlayedViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
             artistsViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
             genresViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
-            albumsViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
             playlistsViewControl.ShowInArtistsRequested += OnShowInArtistsRequested;
             songsView.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             queueViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             recentlyPlayedViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             artistsViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             genresViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
-            albumsViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             playlistsViewControl.ShowInAlbumsRequested += OnShowInAlbumsRequested;
             songsView.ShowInQueueRequested += OnShowInQueueRequested;
             recentlyPlayedViewControl.ShowInQueueRequested += OnShowInQueueRequested;
             artistsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
             genresViewControl.ShowInQueueRequested += OnShowInQueueRequested;
-            albumsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
             playlistsViewControl.ShowInQueueRequested += OnShowInQueueRequested;
             queueViewControl.ShowInSongsRequested += OnShowInSongsRequested;
             recentlyPlayedViewControl.ShowInSongsRequested += OnShowInSongsRequested;
             artistsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
             genresViewControl.ShowInSongsRequested += OnShowInSongsRequested;
-            albumsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
             playlistsViewControl.ShowInSongsRequested += OnShowInSongsRequested;
 
             songsView.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
@@ -292,13 +309,11 @@ namespace musicApp
             recentlyPlayedViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
             artistsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
             genresViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
-            albumsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
             playlistsViewControl.RemoveFromLibraryRequested += OnRemoveFromLibraryRequested;
 
             songsView.AddMusicFolderRequested += OnAddMusicFolderRequested;
             artistsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
             genresViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
-            albumsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
             playlistsViewControl.AddMusicFolderRequested += OnAddMusicFolderRequested;
 
             songsView.DeleteRequested += OnDeleteRequested;
@@ -306,11 +321,12 @@ namespace musicApp
             recentlyPlayedViewControl.DeleteRequested += OnDeleteRequested;
             artistsViewControl.DeleteRequested += OnDeleteRequested;
             genresViewControl.DeleteRequested += OnDeleteRequested;
-            albumsViewControl.DeleteRequested += OnDeleteRequested;
             playlistsViewControl.DeleteRequested += OnDeleteRequested;
 
-            albumsViewControl.ArtistNavigationRequested += AlbumsView_ArtistNavigationRequested;
-            albumsViewControl.GenreNavigationRequested += AlbumsView_GenreNavigationRequested;
+            queueViewControl.TracksReordered += OnQueueTracksReordered;
+            queueViewControl.QueueToolbarRemoveRequested += OnQueueToolbarRemoveRequested;
+            queueViewControl.QueueToolbarMoveUpRequested += OnQueueToolbarMoveUpRequested;
+            queueViewControl.QueueToolbarMoveDownRequested += OnQueueToolbarMoveDownRequested;
 
             playlistsViewControl.CreatePlaylistRequested += PlaylistsViewControl_CreatePlaylistRequested;
             playlistsViewControl.ImportPlaylistRequested += PlaylistsViewControl_ImportPlaylistRequested;
@@ -389,11 +405,14 @@ namespace musicApp
         {
             try
             {
-                var libraryCache = await libraryManager.LoadLibraryCacheAsync();
+                var libraryCacheTask = libraryManager.LoadLibraryCacheAsync();
+                var recentlyPlayedTask = libraryManager.LoadRecentlyPlayedAsync();
+                var playlistsTask = libraryManager.LoadPlaylistsAsync();
+                await Task.WhenAll(libraryCacheTask, recentlyPlayedTask, playlistsTask);
 
-                var recentlyPlayedCache = await libraryManager.LoadRecentlyPlayedAsync();
-
-                var playlistsCache = await libraryManager.LoadPlaylistsAsync();
+                var libraryCache = libraryCacheTask.Result;
+                var recentlyPlayedCache = recentlyPlayedTask.Result;
+                var playlistsCache = playlistsTask.Result;
 
                 await LoadMusicFromSavedFoldersAsync(libraryCache);
 
@@ -465,7 +484,8 @@ namespace musicApp
         /// </summary>
         private async Task LoadMusicFromSavedFoldersAsync(LibraryManager.LibraryCache? libraryCache = null)
         {
-            var musicFolders = await libraryManager.GetMusicFoldersAsync();
+            var libraryFolders = await libraryManager.LoadLibraryFoldersAsync();
+            var musicFolders = libraryFolders.MusicFolders;
             if (musicFolders == null || musicFolders.Count == 0)
                 return;
 
@@ -478,7 +498,7 @@ namespace musicApp
             {
                 if (Directory.Exists(folderPath))
                 {
-                    bool hasNewFiles = await libraryManager.HasNewFilesInFolderAsync(folderPath);
+                    bool hasNewFiles = await libraryManager.HasNewFilesInFolderAsync(folderPath, libraryFolders);
 
                     if (hasNewFiles)
                     {
@@ -508,10 +528,16 @@ namespace musicApp
                     .Where(t => !string.IsNullOrWhiteSpace(t.FilePath) && LibraryPathHelper.IsFileUnderMusicFolder(t.FilePath, folderPath))
                     .ToList();
 
-                foreach (var track in cachedTracks)
+                // File.Exists + metadata patching on background thread
+                var (validTracks, tracksNeedingThumbnails) = await Task.Run(() =>
                 {
-                    if (File.Exists(track.FilePath))
+                    var valid = new List<Song>(cachedTracks.Count);
+                    var needThumb = new List<Song>();
+
+                    foreach (var track in cachedTracks)
                     {
+                        if (!File.Exists(track.FilePath))
+                            continue;
                         if (!TryRegisterLibraryPath(track.FilePath))
                             continue;
 
@@ -519,106 +545,45 @@ namespace musicApp
                         {
                             var extension = Path.GetExtension(track.FilePath);
                             if (!string.IsNullOrEmpty(extension))
-                            {
                                 track.FileType = extension.TrimStart('.').ToUpper();
-                            }
                         }
-                        
-                        if (string.IsNullOrEmpty(track.Bitrate) || string.IsNullOrEmpty(track.SampleRate))
-                        {
-                            try
-                            {
-                                var atlTrack = new ATL.Track(track.FilePath);
-                                if (string.IsNullOrEmpty(track.Bitrate) && atlTrack.Bitrate > 0)
-                                {
-                                    track.Bitrate = $"{atlTrack.Bitrate} kbps";
-                                }
-                                if (string.IsNullOrEmpty(track.SampleRate) && atlTrack.SampleRate > 0)
-                                {
-                                    track.SampleRate = $"{atlTrack.SampleRate / 1000.0:F1} kHz";
-                                }
-                            }
-                            catch
-                            {
-                                // If ATL fails, will try to calculate below
-                            }
-                        }
-                        
-                        // Try NAudio fallback for sample rate if still not set
-                        if (string.IsNullOrEmpty(track.SampleRate))
-                        {
-                            try
-                            {
-                                using var audioFile = new AudioFileReader(track.FilePath);
-                                var sampleRate = audioFile.WaveFormat.SampleRate;
-                                if (sampleRate > 0)
-                                {
-                                    track.SampleRate = $"{sampleRate / 1000.0:F1} kHz";
-                                }
-                            }
-                            catch
-                            {
-                                // Ignore if NAudio fails
-                            }
-                        }
-                        
-                        // Restore DurationTimeSpan from Duration string (since it's not serialized)
+
                         if (track.DurationTimeSpan == TimeSpan.Zero && !string.IsNullOrEmpty(track.Duration))
                         {
-                            try
-                            {
-                                // Parse Duration string (format: "mm:ss")
-                                var parts = track.Duration.Split(':');
-                                if (parts.Length == 2 && int.TryParse(parts[0], out int minutes) && int.TryParse(parts[1], out int seconds))
-                                {
-                                    track.DurationTimeSpan = new TimeSpan(0, minutes, seconds);
-                                }
-                            }
-                            catch
-                            {
-                                // If parsing fails, try to get duration from file
-                                try
-                                {
-                                    var atlTrack = new ATL.Track(track.FilePath);
-                                    if (atlTrack.Duration > 0)
-                                    {
-                                        track.DurationTimeSpan = TimeSpan.FromSeconds(atlTrack.Duration);
-                                    }
-                                }
-                                catch
-                                {
-                                    // If all else fails, leave it as zero
-                                }
-                            }
+                            var parts = track.Duration.Split(':');
+                            if (parts.Length == 2 && int.TryParse(parts[0], out int minutes) && int.TryParse(parts[1], out int seconds))
+                                track.DurationTimeSpan = new TimeSpan(0, minutes, seconds);
                         }
-                        
-                        // Calculate bitrate from file size and duration if still not set
+
                         if (string.IsNullOrEmpty(track.Bitrate) && track.FileSize > 0 && track.DurationTimeSpan.TotalSeconds > 0)
                         {
                             var bitrateKbps = (int)((track.FileSize * 8) / (track.DurationTimeSpan.TotalSeconds * 1000));
                             if (bitrateKbps > 0)
-                            {
                                 track.Bitrate = $"{bitrateKbps} kbps";
-                            }
                         }
 
-                        allTracks.Add(track);
-                        filteredTracks.Add(track);
-                    }
-                }
+                        valid.Add(track);
 
-                // Backfill thumbnail cache in background for tracks that don't have one yet.
-                // This avoids blocking startup; the cache paths are written back on completion.
-                var tracksNeedingThumbnails = allTracks
-                    .Where(t => string.IsNullOrEmpty(t.ThumbnailCachePath) || !File.Exists(t.ThumbnailCachePath))
-                    .ToList();
+                        if (string.IsNullOrEmpty(track.ThumbnailCachePath) || !File.Exists(track.ThumbnailCachePath))
+                            needThumb.Add(track);
+                    }
+
+                    return (valid, needThumb);
+                });
+
+                foreach (var track in validTracks)
+                {
+                    allTracks.Add(track);
+                    filteredTracks.Add(track);
+                }
 
                 if (tracksNeedingThumbnails.Count > 0)
                 {
+                    var snapshot = tracksNeedingThumbnails;
                     _ = Task.Run(async () =>
                     {
-                        var updates = new List<(Song track, string path)>(tracksNeedingThumbnails.Count);
-                        foreach (var t in tracksNeedingThumbnails)
+                        var updates = new List<(Song track, string path)>(snapshot.Count);
+                        foreach (var t in snapshot)
                         {
                             var path = AlbumArtCacheManager.GenerateAndCache(t);
                             updates.Add((t, path));
@@ -637,10 +602,7 @@ namespace musicApp
 
                 RefreshVisibleViews();
 
-                await Dispatcher.InvokeAsync(() =>
-                {
-                    UpdateStatusBar();
-                });
+                UpdateStatusBar();
             }
             catch (Exception ex)
             {
@@ -785,7 +747,9 @@ namespace musicApp
             RefreshAllViewDataSources();
             RefreshVisibleViews();
             if (contentHost != null && ReferenceEquals(contentHost.Content, albumsViewControl))
+            {
                 albumsViewControl?.RefreshAlbumGridFromLibrary();
+            }
         }
 
         /// <summary>
@@ -872,6 +836,45 @@ namespace musicApp
             {
                 progressBarFill.Visibility = Visibility.Visible;
                 progressBarFill.Width = progressBarBackground.ActualWidth * (done / (double)total);
+            }
+        }
+
+        private void UpdateStatusBarAlbumGridRebuild(AlbumsGridRebuildPhase phase, int done, int total, int songCount)
+        {
+            if (statusBarText == null)
+                return;
+
+            switch (phase)
+            {
+                case AlbumsGridRebuildPhase.Grouping:
+                    if (progressBarFill != null)
+                    {
+                        progressBarFill.Visibility = Visibility.Collapsed;
+                        progressBarFill.Width = 0;
+                    }
+                    statusBarText.Text = $"{songCount} songs, grouping albums…";
+                    break;
+                case AlbumsGridRebuildPhase.LoadingArtwork:
+                    if (total <= 0)
+                        statusBarText.Text = $"{songCount} songs, loading artwork…";
+                    else
+                        statusBarText.Text = $"{songCount} songs, loading artwork {done}/{total}…";
+                    if (progressBarBackground != null && progressBarFill != null && total > 0)
+                    {
+                        progressBarFill.Visibility = Visibility.Visible;
+                        var w = progressBarBackground.ActualWidth;
+                        if (w > 0)
+                            progressBarFill.Width = w * (done / (double)total);
+                    }
+                    break;
+                case AlbumsGridRebuildPhase.Complete:
+                    if (progressBarFill != null)
+                    {
+                        progressBarFill.Visibility = Visibility.Collapsed;
+                        progressBarFill.Width = 0;
+                    }
+                    UpdateStatusBar();
+                    break;
             }
         }
 

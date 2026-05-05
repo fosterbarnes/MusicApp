@@ -297,7 +297,11 @@ namespace musicApp.Views
         {
             _preferences = PreferencesManager.Instance.LoadPreferencesSync();
             PreferencesManager.EnsureInitialized(_preferences);
+            BindPreferencesModelToUi();
+        }
 
+        private void BindPreferencesModelToUi()
+        {
             var g = _preferences.General;
             GeneralCheckForUpdatesCheckBox.IsChecked = g.CheckForUpdates;
             GeneralAutoInstallUpdatesCheckBox.IsChecked = g.AutomaticallyInstallUpdates;
@@ -408,6 +412,24 @@ namespace musicApp.Views
             {
                 _playbackAudioOutputUiLoading = false;
             }
+        }
+
+        private void RestoreDefaultsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _generalFontUiLoading = true;
+            try
+            {
+                _preferences = PreferencesManager.CreateDefaultPreferences();
+                PreferencesManager.EnsureInitialized(_preferences);
+                BindPreferencesModelToUi();
+            }
+            finally
+            {
+                _generalFontUiLoading = false;
+            }
+
+            PreferencesManager.Instance.SavePreferencesSync(_preferences);
+            NotifyMainWindowIfOwner();
         }
 
         private bool _playbackCrossfadeRampTextLoading;

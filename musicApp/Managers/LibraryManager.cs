@@ -87,12 +87,9 @@ namespace musicApp
             {
                 if (File.Exists(LibraryCacheFilePath))
                 {
-                    var json = await File.ReadAllTextAsync(LibraryCacheFilePath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    var cache = JsonSerializer.Deserialize<LibraryCache>(json, options);
+                    using var stream = File.OpenRead(LibraryCacheFilePath);
+                    var cache = await JsonSerializer.DeserializeAsync(
+                        stream, LibraryJsonContext.Default.LibraryCache);
                     return cache ?? new LibraryCache();
                 }
             }
@@ -107,13 +104,9 @@ namespace musicApp
         {
             try
             {
-                var options = new JsonSerializerOptions 
-                { 
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var json = JsonSerializer.Serialize(cache, options);
-                await File.WriteAllTextAsync(LibraryCacheFilePath, json);
+                using var stream = File.Create(LibraryCacheFilePath);
+                await JsonSerializer.SerializeAsync(
+                    stream, cache, LibraryJsonContext.Default.LibraryCache);
             }
             catch (Exception ex)
             {
@@ -131,12 +124,9 @@ namespace musicApp
             {
                 if (File.Exists(RecentlyPlayedFilePath))
                 {
-                    var json = await File.ReadAllTextAsync(RecentlyPlayedFilePath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    var recentlyPlayed = JsonSerializer.Deserialize<RecentlyPlayedCache>(json, options);
+                    using var stream = File.OpenRead(RecentlyPlayedFilePath);
+                    var recentlyPlayed = await JsonSerializer.DeserializeAsync(
+                        stream, LibraryJsonContext.Default.RecentlyPlayedCache);
                     return recentlyPlayed ?? new RecentlyPlayedCache();
                 }
             }
@@ -151,13 +141,9 @@ namespace musicApp
         {
             try
             {
-                var options = new JsonSerializerOptions 
-                { 
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var json = JsonSerializer.Serialize(recentlyPlayed, options);
-                await File.WriteAllTextAsync(RecentlyPlayedFilePath, json);
+                using var stream = File.Create(RecentlyPlayedFilePath);
+                await JsonSerializer.SerializeAsync(
+                    stream, recentlyPlayed, LibraryJsonContext.Default.RecentlyPlayedCache);
             }
             catch (Exception ex)
             {
@@ -175,12 +161,9 @@ namespace musicApp
             {
                 if (File.Exists(LibraryFoldersFilePath))
                 {
-                    var json = await File.ReadAllTextAsync(LibraryFoldersFilePath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    var folders = JsonSerializer.Deserialize<LibraryFolders>(json, options);
+                    using var stream = File.OpenRead(LibraryFoldersFilePath);
+                    var folders = await JsonSerializer.DeserializeAsync(
+                        stream, LibraryJsonContext.Default.LibraryFolders);
                     var result = folders ?? new LibraryFolders();
                     ApplyMusicFolderNormalization(result);
                     return result;
@@ -214,13 +197,9 @@ namespace musicApp
             try
             {
                 ApplyMusicFolderNormalization(folders);
-                var options = new JsonSerializerOptions 
-                { 
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var json = JsonSerializer.Serialize(folders, options);
-                await File.WriteAllTextAsync(LibraryFoldersFilePath, json);
+                using var stream = File.Create(LibraryFoldersFilePath);
+                await JsonSerializer.SerializeAsync(
+                    stream, folders, LibraryJsonContext.Default.LibraryFolders);
             }
             catch (Exception ex)
             {
@@ -238,12 +217,9 @@ namespace musicApp
             {
                 if (File.Exists(PlaylistsFilePath))
                 {
-                    var json = await File.ReadAllTextAsync(PlaylistsFilePath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    var playlists = JsonSerializer.Deserialize<PlaylistsCache>(json, options);
+                    using var stream = File.OpenRead(PlaylistsFilePath);
+                    var playlists = await JsonSerializer.DeserializeAsync(
+                        stream, LibraryJsonContext.Default.PlaylistsCache);
                     return playlists ?? new PlaylistsCache();
                 }
             }
@@ -258,13 +234,9 @@ namespace musicApp
         {
             try
             {
-                var options = new JsonSerializerOptions 
-                { 
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var json = JsonSerializer.Serialize(playlists, options);
-                await File.WriteAllTextAsync(PlaylistsFilePath, json);
+                using var stream = File.Create(PlaylistsFilePath);
+                await JsonSerializer.SerializeAsync(
+                    stream, playlists, LibraryJsonContext.Default.PlaylistsCache);
             }
             catch (Exception ex)
             {
@@ -445,14 +417,17 @@ namespace musicApp
 
         #region Utility Methods
 
-        public async Task<bool> HasNewFilesInFolderAsync(string folderPath)
+        public Task<bool> HasNewFilesInFolderAsync(string folderPath) =>
+            HasNewFilesInFolderAsync(folderPath, null);
+
+        public async Task<bool> HasNewFilesInFolderAsync(string folderPath, LibraryFolders? preloaded)
         {
             try
             {
                 var normalized = LibraryPathHelper.TryNormalizePath(folderPath);
                 if (normalized == null) return true;
 
-                var folders = await LoadLibraryFoldersAsync();
+                var folders = preloaded ?? await LoadLibraryFoldersAsync();
                 DateTime? lastScanned = null;
                 foreach (var kv in folders.FolderLastScanned)
                 {
@@ -464,19 +439,28 @@ namespace musicApp
                 }
                 if (lastScanned == null) return true;
 
-                var directoryInfo = new DirectoryInfo(normalized);
-                var supportedExtensions = new[] { ".mp3", ".wav", ".flac", ".m4a", ".aac" };
-                foreach (var file in directoryInfo.EnumerateFiles("*.*", SearchOption.AllDirectories))
+                return await Task.Run(() =>
                 {
-                    if (!supportedExtensions.Contains(file.Extension.ToLower())) continue;
-                    if (file.LastWriteTime > lastScanned.Value) return true;
-                }
-                return false;
+                    var dirInfo = new DirectoryInfo(normalized);
+                    if (!dirInfo.Exists) return true;
+
+                    // fast check: root folder mtime updated on file add/delete
+                    if (dirInfo.LastWriteTime > lastScanned.Value)
+                        return true;
+
+                    var supportedExtensions = new[] { ".mp3", ".wav", ".flac", ".m4a", ".aac" };
+                    foreach (var file in dirInfo.EnumerateFiles("*.*", SearchOption.AllDirectories))
+                    {
+                        if (!supportedExtensions.Contains(file.Extension.ToLower())) continue;
+                        if (file.LastWriteTime > lastScanned.Value) return true;
+                    }
+                    return false;
+                });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error checking for new files: {ex.Message}");
-                return true; // Assume there are new files if we can't check
+                return true;
             }
         }
 

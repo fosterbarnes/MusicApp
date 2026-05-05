@@ -21,6 +21,7 @@ namespace musicApp.Views
     public partial class AlbumsView
     {
         private INotifyCollectionChanged? _itemsSourceCollectionNotify;
+        private bool _isStartupRebuild = true;
 
         public IEnumerable? ItemsSource
         {
@@ -363,6 +364,72 @@ namespace musicApp.Views
             return true;
         }
 
+        private static ImageSource? TryInitialAlbumArtForGrid(Song rep, string gridAlbum, string gridArtist)
+        {
+            if (!string.IsNullOrEmpty(rep.ThumbnailCachePath))
+            {
+                var fromStored = AlbumArtCacheManager.LoadFromCachePath(rep.ThumbnailCachePath);
+                if (fromStored != null)
+                    return fromStored;
+            }
+
+            var fromKey = AlbumArtCacheManager.TryGetCached(gridAlbum, gridArtist, decodePixelWidth: 0);
+            if (fromKey != null)
+                return fromKey;
+
+            var repArtist = rep.Artist ?? string.Empty;
+            if (!string.Equals(gridArtist, repArtist, StringComparison.Ordinal))
+            {
+                var legacy = AlbumArtCacheManager.TryGetCached(gridAlbum, repArtist, decodePixelWidth: 0);
+                if (legacy != null)
+                    return legacy;
+            }
+
+            return null;
+        }
+
+        private static void HydrateAllAlbumGridItems(
+            IReadOnlyList<AlbumGridItem> items,
+            int targetPx,
+            CancellationToken ct,
+            IProgress<(int done, int total)>? progress)
+        {
+            if (items.Count == 0)
+                return;
+
+            int dop = Math.Clamp(Environment.ProcessorCount, 4, 12);
+            var opts = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = dop,
+                CancellationToken = ct,
+            };
+
+            const int progressEvery = 24;
+            int doneBucket = 0;
+
+            Parallel.For(0, items.Count, opts, i =>
+            {
+                try
+                {
+                    var item = items[i];
+                    if (item.AlbumArtSource == null)
+                    {
+                        var img = AlbumArtThumbnailHelper.LoadForTrack(item.RepresentativeTrack, targetPx);
+                        if (img != null)
+                            item.PrebindSetAlbumArt(img);
+                    }
+                }
+                finally
+                {
+                    var d = Interlocked.Increment(ref doneBucket);
+                    if (progress != null && (d % progressEvery == 0 || d == items.Count))
+                        progress.Report((d, items.Count));
+                }
+            });
+
+            progress?.Report((items.Count, items.Count));
+        }
+
         private static List<AlbumGridItem> BuildGroupedAlbums(IEnumerable<Song> songsEnumerable, AlbumSortMode sortMode, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
@@ -382,9 +449,7 @@ namespace musicApp.Views
                 .Select(g =>
                 {
                     var rep = g.First();
-                    BitmapSource? art = null;
-                    if (!string.IsNullOrEmpty(rep.ThumbnailCachePath))
-                        art = AlbumArtCacheManager.LoadFromCachePath(rep.ThumbnailCachePath);
+                    var art = TryInitialAlbumArtForGrid(rep, g.Key.Album, g.Key.Artist);
                     return new AlbumGridItem(g.Key.Album, g.Key.Artist, rep, art);
                 });
 
@@ -423,9 +488,7 @@ namespace musicApp.Views
                 {
                     var maxAdded = g.Max(t => t.DateAdded).Date;
                     var rep = g.OrderByDescending(t => t.DateAdded).First();
-                    BitmapSource? art = null;
-                    if (!string.IsNullOrEmpty(rep.ThumbnailCachePath))
-                        art = AlbumArtCacheManager.LoadFromCachePath(rep.ThumbnailCachePath);
+                    var art = TryInitialAlbumArtForGrid(rep, g.Key.Album, g.Key.Artist);
                     return (new AlbumGridItem(g.Key.Album, g.Key.Artist, rep, art), maxAdded);
                 })
                 .OrderByDescending(x => x.Item2)
@@ -520,17 +583,22 @@ namespace musicApp.Views
             _rebuildCts = new CancellationTokenSource();
             var ct = _rebuildCts.Token;
 
-            if (_albumItems.Count == 0)
-                ShowLoadingIndicatorImmediate();
-            else
-                ShowLoadingIndicatorDeferred();
-
             if (_itemsSource is not IEnumerable<Song> songsRef)
             {
                 _isRebuilding = false;
-                HideLoadingIndicator();
                 return;
             }
+
+            int songCount = TryGetCount(_itemsSource);
+            if (songCount < 0 && songsRef is ICollection colSong)
+                songCount = colSong.Count;
+
+            void ReportPhase(AlbumsGridRebuildPhase phase, int done = 0, int total = 0) =>
+                AlbumGridRebuildStatus?.Invoke(phase, done, total, songCount);
+
+            try
+            {
+                ReportPhase(AlbumsGridRebuildPhase.Grouping);
 
             var sortMode = _sortMode;
             var browseMode = BrowseMode;
@@ -564,14 +632,12 @@ namespace musicApp.Views
             catch (OperationCanceledException)
             {
                 _isRebuilding = false;
-                HideLoadingIndicator();
                 return;
             }
 
             if (ct.IsCancellationRequested)
             {
                 _isRebuilding = false;
-                HideLoadingIndicator();
                 return;
             }
 
@@ -582,10 +648,11 @@ namespace musicApp.Views
                     _albumItems.Clear();
                     _lastGridBuildBrowseMode = browseMode;
                     _isRebuilding = false;
-                    HideLoadingIndicator();
                 }, DispatcherPriority.Loaded).Task.ConfigureAwait(false);
                 return;
             }
+
+            int targetArtPx = Math.Max(UILayoutConstants.AlbumArtMinimumTargetSize, (int)Math.Round(layoutHint.TileSize));
 
             int? targetIndex = null;
             if (mergedPending.HasValue)
@@ -594,20 +661,49 @@ namespace musicApp.Views
                 targetIndex = FindTargetAlbumIndex(albumsOnly, p.albumName, p.artistName);
             }
 
+            int totalRows = rows.Count;
             int prefixGoal = ComputePrefixGoal(albumsOnly, targetIndex, layoutHint);
             int prefixRowEnd = MapAlbumCountToRowExclusiveEnd(rows, prefixGoal);
-            int totalRows = rows.Count;
+
+            try
+            {
+                ReportPhase(AlbumsGridRebuildPhase.LoadingArtwork, 0, albumsOnly.Count);
+                
+                var prefixAlbums = albumsOnly.Take(prefixGoal).ToList();
+                var remainingAlbums = albumsOnly.Skip(prefixGoal).ToList();
+
+                var hydrateProgress = new Progress<(int done, int total)>(p =>
+                    ReportPhase(AlbumsGridRebuildPhase.LoadingArtwork, prefixAlbums.Count + p.done, albumsOnly.Count));
+
+                // Await ONLY the prefix albums to make startup instant
+                if (prefixAlbums.Count > 0)
+                {
+                    await Task.Run(() => HydrateAllAlbumGridItems(prefixAlbums, targetArtPx, ct, null), ct).ConfigureAwait(false);
+                }
+
+                // Fire and forget the rest in the background
+                if (remainingAlbums.Count > 0)
+                {
+                    _ = Task.Run(() => HydrateAllAlbumGridItems(remainingAlbums, targetArtPx, ct, hydrateProgress), ct);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _isRebuilding = false;
+                return;
+            }
 
             int i = 0;
             int batchLoopIndex = 0;
             int batchesSinceSample = int.MaxValue;
             SystemResourceSnapshot? lastResourceSnapshot = null;
-            int scanConcurrencySmoothed = 0;
+            int scanConcurrencySmoothed = Environment.ProcessorCount; // Default high for startup fast-path
 
             while (i < totalRows && !ct.IsCancellationRequested)
             {
                 bool inPrefixPhase = i < prefixRowEnd;
-                bool mustSample = batchLoopIndex == 0 || batchesSinceSample >= UILayoutConstants.AlbumRebuildMetricsResampleEveryNBatches;
+                bool mustSample = !_isStartupRebuild && (batchLoopIndex == 0 || batchesSinceSample >= UILayoutConstants.AlbumRebuildMetricsResampleEveryNBatches);
+                
                 if (mustSample)
                 {
                     var sampleInterval = lastResourceSnapshot.HasValue && lastResourceSnapshot.Value.CpuBusyPercent < 40
@@ -620,7 +716,6 @@ namespace musicApp.Views
                     catch (OperationCanceledException)
                     {
                         _isRebuilding = false;
-                        HideLoadingIndicator();
                         return;
                     }
 
@@ -631,7 +726,9 @@ namespace musicApp.Views
                     batchesSinceSample = 0;
                 }
                 else
+                {
                     batchesSinceSample++;
+                }
 
                 int baseBatch = AlbumRebuildUiAdvisor.ItemsPerDispatcherBatch(scanConcurrencySmoothed);
                 if (inPrefixPhase)
@@ -660,16 +757,12 @@ namespace musicApp.Views
                             _albumItems.Add(rows[j]);
 
                         if (isFirstUiBatch && endLocal > iLocal)
-                        {
-                            HideLoadingIndicator();
                             _ = LoadVisibleAlbumArtAsync();
-                        }
                     }, priority).Task.ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
                     _isRebuilding = false;
-                    HideLoadingIndicator();
                     return;
                 }
 
@@ -685,7 +778,6 @@ namespace musicApp.Views
                     catch (OperationCanceledException)
                     {
                         _isRebuilding = false;
-                        HideLoadingIndicator();
                         return;
                     }
                 }
@@ -736,9 +828,14 @@ namespace musicApp.Views
 
                     _lastGridBuildBrowseMode = browseMode;
                     _isRebuilding = false;
+                    _isStartupRebuild = false;
                     KickViewportAlbumArtNow();
-                    HideLoadingIndicator();
                 }, DispatcherPriority.Loaded).Task.ConfigureAwait(false);
+            }
+            }
+            finally
+            {
+                ReportPhase(AlbumsGridRebuildPhase.Complete);
             }
         }
 

@@ -491,8 +491,8 @@ namespace musicApp.Views
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
                 if (child is T found) return found;
-                var result = FindVisualChild<T>(child);
-                if (result != null) return result;
+                var nested = FindVisualChild<T>(child);
+                if (nested != null) return nested;
             }
             return null;
         }

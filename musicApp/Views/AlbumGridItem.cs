@@ -27,6 +27,13 @@ public sealed class AlbumGridItem : INotifyPropertyChanged
         set { _albumArtSource = value; OnPropertyChanged(); }
     }
 
+    public void PrebindSetAlbumArt(ImageSource? img)
+    {
+        if (img == null)
+            return;
+        _albumArtSource = img;
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

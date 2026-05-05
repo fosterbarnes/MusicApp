@@ -150,6 +150,7 @@ public static class TrackMetadataLoader
 
         var prevAlbum = track.Album ?? "";
         var prevArtist = track.Artist ?? "";
+        var prevAlbumArtist = track.AlbumArtist ?? "";
         var playCount = track.PlayCount;
         var lastPlayed = track.LastPlayed;
         var dateAdded = track.DateAdded;
@@ -192,9 +193,12 @@ public static class TrackMetadataLoader
             }
 
             if (!string.Equals(prevAlbum, track.Album, StringComparison.Ordinal) ||
-                !string.Equals(prevArtist, track.Artist, StringComparison.Ordinal))
+                !string.Equals(prevArtist, track.Artist, StringComparison.Ordinal) ||
+                !string.Equals(prevAlbumArtist, track.AlbumArtist ?? "", StringComparison.Ordinal))
             {
                 AlbumArtCacheManager.InvalidateAlbum(prevAlbum, prevArtist);
+                var prevCanon = !string.IsNullOrWhiteSpace(prevAlbumArtist) ? prevAlbumArtist : prevArtist;
+                AlbumArtCacheManager.InvalidateAlbum(prevAlbum, prevCanon);
             }
 
             track.ThumbnailCachePath = AlbumArtCacheManager.GenerateAndCache(track);

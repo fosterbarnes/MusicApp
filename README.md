@@ -39,12 +39,12 @@ musicApp is in early development, bugs are expected.
 <table border="0">
 <tbody>
 <tr>
-<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.0/musicApp-v0.2.0-bangarangRotting-x64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x64.svg" width="180" height="auto" alt="x64 installer"/></a></td>
-<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.0/musicApp-v0.2.0-bangarangRotting-x86-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x86.svg" width="180" height="auto" alt="x86 installer"/></a></td>
-<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.0/musicApp-v0.2.0-bangarangRotting-arm64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_arm.svg" width="180" height="auto" alt="arm64 installer"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.1/musicApp-v0.2.1-tidalDoggy-x64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x64.svg" width="180" height="auto" alt="x64 installer"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.1/musicApp-v0.2.1-tidalDoggy-x86-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x86.svg" width="180" height="auto" alt="x86 installer"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.1/musicApp-v0.2.1-tidalDoggy-arm64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_arm.svg" width="180" height="auto" alt="arm64 installer"/></a></td>
 </tr>
 <tr>
-<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.0/musicApp-v0.2.0-bangarangRotting-portable.zip"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_portable.svg" width="180" height="auto" alt="portable .zip"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/v0.2.1/musicApp-v0.2.1-tidalDoggy-portable.zip"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_portable.svg" width="180" height="auto" alt="portable .zip"/></a></td>
 </tr>
 </tbody>
 </table>
@@ -55,7 +55,7 @@ musicApp is in early development, bugs are expected.
 **124 / 166 tasks complete (74.7%)**
 [Tasks.md](https://github.com/fosterbarnes/musicApp/blob/main/.md/Tasks.md#main-window)
 
-[30,520](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
+[30,624](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
 
 # General Usage Info
 
@@ -191,7 +191,7 @@ musicApp is in early development, bugs are expected.
 - Toggle donation links (tickbox)
 
 ### About
-- Version info (e.g. musicApp v0.2.0 dollyShakeswerve x64)
+- Version info (e.g. musicApp v0.2.1 dollyShakeswerve x64)
 - Project link (https://github.com/fosterbarnes/musicApp)
 - Issues link (https://github.com/fosterbarnes/musicApp/issues/new)
 

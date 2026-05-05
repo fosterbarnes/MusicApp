@@ -98,12 +98,14 @@ namespace musicApp
 
         private void ShowLibraryView()
         {
+            EnsureOtherViewsCreated();
             contentHost.Content = songsView;
             SetSidebarNavActive(btnLibrary);
         }
 
         private void ShowQueueView()
         {
+            EnsureOtherViewsCreated();
             contentHost.Content = queueViewControl;
             UpdateQueueView();
             SetSidebarNavActive(btnQueue);
@@ -111,6 +113,7 @@ namespace musicApp
 
         private void ShowPlaylistsView(Playlist? selectPlaylist = null)
         {
+            EnsureOtherViewsCreated();
             contentHost.Content = playlistsViewControl;
             if (playlistsViewControl != null)
             {
@@ -128,12 +131,14 @@ namespace musicApp
 
         private void ShowRecentlyPlayedView()
         {
+            EnsureOtherViewsCreated();
             contentHost.Content = recentlyPlayedViewControl;
             SetSidebarNavActive(btnRecentlyPlayed);
         }
 
         private void ShowArtistsView()
         {
+            EnsureOtherViewsCreated();
             contentHost.Content = artistsViewControl;
             SetSidebarNavActive(btnArtists);
         }
@@ -164,6 +169,7 @@ namespace musicApp
 
         private void ShowGenresView()
         {
+            EnsureOtherViewsCreated();
             contentHost.Content = genresViewControl;
             SetSidebarNavActive(btnGenres);
         }

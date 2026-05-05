@@ -64,6 +64,19 @@ public static class AlbumArtCacheManager
         return Path.Combine(ThumbnailFolder, hex + ".jpg");
     }
 
+    /// <summary>Artist slice used for thumbnail filenames; matches album grid grouping (album artist when set).</summary>
+    public static string GetThumbnailCacheArtistKey(Song? track)
+    {
+        if (track == null)
+            return "";
+        return !string.IsNullOrWhiteSpace(track.AlbumArtist)
+            ? track.AlbumArtist
+            : track.Artist ?? "";
+    }
+
+    public static string GetCachedPathForTrack(Song track) =>
+        GetCachedPath(track.Album ?? "", GetThumbnailCacheArtistKey(track));
+
     /// <summary>
     /// Loads a cached thumbnail as a frozen BitmapImage, with optional WPF-side decode scaling.
     /// Returns null if no cache file exists.
@@ -147,7 +160,7 @@ public static class AlbumArtCacheManager
         if (track == null || string.IsNullOrWhiteSpace(track.FilePath))
             return "";
 
-        var cachePath = GetCachedPath(track.Album, track.Artist);
+        var cachePath = GetCachedPathForTrack(track);
 
         if (File.Exists(cachePath))
             return cachePath;

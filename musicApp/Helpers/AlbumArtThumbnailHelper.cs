@@ -37,6 +37,18 @@ public static class AlbumArtThumbnailHelper
                 return cached;
         }
 
+        var decodePx = targetSizePx > 0 ? Math.Max(targetSizePx, 64) : 0;
+        var canonArtist = AlbumArtCacheManager.GetThumbnailCacheArtistKey(track);
+        var fromAlbumKey = AlbumArtCacheManager.TryGetCached(track.Album ?? "", canonArtist, decodePx);
+        if (fromAlbumKey != null)
+            return fromAlbumKey;
+        if (!string.Equals(canonArtist, track.Artist ?? "", StringComparison.Ordinal))
+        {
+            var legacy = AlbumArtCacheManager.TryGetCached(track.Album ?? "", track.Artist ?? "", decodePx);
+            if (legacy != null)
+                return legacy;
+        }
+
         try
         {
             // Embedded art via ATL

@@ -65,6 +65,10 @@
             <Setter Property="Width" Value="Auto" />
             <Setter Property="MinWidth" Value="120" />
         </Style>
+        <Style x:Key="SettingsRestoreFooterButtonStyle" TargetType="Button" BasedOn="{StaticResource MetadataDialogFooterButtonStyle}">
+            <Setter Property="Width" Value="Auto" />
+            <Setter Property="MinWidth" Value="146" />
+        </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -270,7 +274,7 @@
                                        Grid.Row="8"
                                        Grid.Column="1"
                                        Margin="{StaticResource FieldRowGap-thk}"
-                                       Text="Preview — The quick brown fox jumps over the lazy dog."
+                                       Text="Example text"
                                        TextWrapping="Wrap"
                                        Foreground="{StaticResource TextSecondary-brush}"
                                        FontSize="{Binding ElementName=GeneralUIFontSizeSlider, Path=Value}" />
@@ -1148,6 +1152,13 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+            <Button x:Name="RestoreDefaultsButton"
+                    Grid.Column="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Content="Restore to default"
+                    Style="{StaticResource SettingsRestoreFooterButtonStyle}"
+                    Click="RestoreDefaultsButton_Click" />
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right">

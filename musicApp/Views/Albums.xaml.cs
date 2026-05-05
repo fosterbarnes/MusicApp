@@ -5,10 +5,13 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
 using musicApp;
 using musicApp.Constants;
+using musicApp.Helpers;
 
 namespace musicApp.Views
 {
@@ -16,6 +19,13 @@ namespace musicApp.Views
     {
         AllAlbums,
         RecentlyAdded
+    }
+
+    public enum AlbumsGridRebuildPhase
+    {
+        Grouping,
+        LoadingArtwork,
+        Complete,
     }
 
     public partial class AlbumsView : UserControl
@@ -252,7 +262,6 @@ namespace musicApp.Views
         private CancellationTokenSource? _rebuildCts;
         private CancellationTokenSource? _viewportArtCts;
         private CancellationTokenSource? _prefetchArtCts;
-        private CancellationTokenSource? _loadingIndicatorDelayCts;
         private Song? _contextMenuSong;
 
         private (string albumName, string? artistName, bool openDetails, string? selectedTrackFilePath)? _pendingAlbumSelection;
@@ -276,6 +285,8 @@ namespace musicApp.Views
         private AlbumsBrowseMode _lastGridBuildBrowseMode = AlbumsBrowseMode.AllAlbums;
         private bool _isRebuilding;
         private bool _suppressBrowseModeRebuild;
+
+        public Action<AlbumsGridRebuildPhase, int, int, int>? AlbumGridRebuildStatus { get; set; }
 
         public AlbumsView()
         {
@@ -369,9 +380,6 @@ namespace musicApp.Views
                 _prefetchArtCts?.Cancel();
                 _prefetchArtCts?.Dispose();
                 _prefetchArtCts = null;
-                _loadingIndicatorDelayCts?.Cancel();
-                _loadingIndicatorDelayCts?.Dispose();
-                _loadingIndicatorDelayCts = null;
                 _artLoadDebounce.Stop();
                 _flyoutResizeDebounce.Stop();
                 _resizeAnchorDebounce.Stop();
