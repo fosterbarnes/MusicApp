@@ -86,14 +86,14 @@ namespace musicApp.Views
         /// Selects (highlights) the matching song in the list and scrolls it into view.
         /// Matching prefers FilePath when available.
         /// </summary>
-        public void SelectTrack(Song track)
+        public void SelectTrack(Song track, bool grabFocus = false)
         {
             if (track == null)
                 return;
 
             if (trackList.ItemsSource == null)
             {
-                trackList.ScrollToSong(track);
+                trackList.ScrollToSong(track, grabFocus);
                 return;
             }
 
@@ -106,7 +106,7 @@ namespace musicApp.Views
                     if (!string.IsNullOrWhiteSpace(s.FilePath) &&
                         string.Equals(s.FilePath, track.FilePath, StringComparison.OrdinalIgnoreCase))
                     {
-                        trackList.ScrollToSong(s);
+                        trackList.ScrollToSong(s, grabFocus);
                         return;
                     }
                 }
@@ -120,13 +120,13 @@ namespace musicApp.Views
                     string.Equals(s.Artist, track.Artist, StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(s.Album, track.Album, StringComparison.OrdinalIgnoreCase))
                 {
-                    trackList.ScrollToSong(s);
+                    trackList.ScrollToSong(s, grabFocus);
                     return;
                 }
             }
 
             // Last resort: set selection to the provided instance.
-            trackList.ScrollToSong(track);
+            trackList.ScrollToSong(track, grabFocus);
         }
 
         public Song? SelectedTrack => trackList.SelectedTrack;

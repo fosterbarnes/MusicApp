@@ -49,6 +49,8 @@ namespace musicApp.Views
 
         public void RefreshTrackListBindings() => trackList.RefreshItemBindings();
 
+        public Song? SelectedTrack => trackList.SelectedTrack;
+
         private void TrackList_PlayTrackRequested(object? sender, Song e)
         {
             PlayTrackRequested?.Invoke(this, e);

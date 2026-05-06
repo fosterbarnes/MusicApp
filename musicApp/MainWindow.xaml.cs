@@ -81,6 +81,12 @@ namespace musicApp
         private SettingsView? _settingsWindow;
 
         // ===========================================
+        // HOTKEY MANAGEMENT
+        // ===========================================
+        private Hotkey.LocalHotkeys _localHotkeys;
+        private Hotkey.GlobalHotkeys _globalHotkeys;
+
+        // ===========================================
         // AUDIO PLAYBACK STATE
         // ===========================================
         private IWavePlayer? waveOut;
@@ -126,6 +132,9 @@ namespace musicApp
         public MainWindow()
         {
             InitializeComponent();
+
+            _localHotkeys = new Hotkey.LocalHotkeys(this);
+            _globalHotkeys = new Hotkey.GlobalHotkeys(this);
 
             windowManager = new WindowManager(this, titleBarPlayer);
 
@@ -1577,6 +1586,58 @@ namespace musicApp
                 _sessionVolumeProvider.Volume = (float)(volume0To100 / 100.0);
         }
 
+        internal void HandlePlayPauseHotkey()
+        {
+            TitleBarPlayer_PlayPauseRequested(this, EventArgs.Empty);
+        }
+
+        internal void HandlePreviousTrackHotkey()
+        {
+            TitleBarPlayer_PreviousTrackRequested(this, EventArgs.Empty);
+            SelectCurrentTrackInActiveView(true);
+        }
+
+        internal void HandleNextTrackHotkey()
+        {
+            TitleBarPlayer_NextTrackRequested(this, EventArgs.Empty);
+            SelectCurrentTrackInActiveView(true);
+        }
+
+        internal void HandlePlaySelectedTrackHotkey()
+        {
+            Song? selected = null;
+            var current = contentHost?.Content;
+
+            if (ReferenceEquals(current, songsView))
+                selected = songsView?.SelectedTrack;
+            else if (ReferenceEquals(current, queueViewControl))
+                selected = queueViewControl?.SelectedTrack;
+            else if (ReferenceEquals(current, artistsViewControl))
+                selected = artistsViewControl?.SelectedTrack;
+            else if (ReferenceEquals(current, playlistsViewControl))
+                selected = playlistsViewControl?.SelectedTrack;
+            else if (ReferenceEquals(current, recentlyPlayedViewControl))
+                selected = recentlyPlayedViewControl?.SelectedTrack;
+
+            if (selected != null)
+            {
+                PlayTrack(selected);
+            }
+        }
+
+        private void SelectCurrentTrackInActiveView(bool grabFocus = false)
+        {
+            if (currentTrack == null) return;
+            var current = contentHost?.Content;
+            
+            if (ReferenceEquals(current, songsView))
+                songsView?.SelectTrack(currentTrack, grabFocus);
+            else if (ReferenceEquals(current, queueViewControl))
+                queueViewControl?.SelectTrack(currentTrack, grabFocus);
+            else if (ReferenceEquals(current, artistsViewControl))
+                artistsViewControl?.SelectTrack(currentTrack, grabFocus);
+        }
+
         private void TitleBarPlayer_PlayPauseRequested(object? sender, EventArgs e)
         {
             if (currentTrack == null)
@@ -2746,6 +2807,7 @@ namespace musicApp
                 AddToRecentlyPlayed(track);
 
                 RefreshVisibleViews();
+                SelectCurrentTrackInActiveView(false);
             }
             catch (Exception ex)
             {

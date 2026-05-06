@@ -11,8 +11,15 @@ public sealed class KeyboardShortcutRow
 
 public static class KeyboardShortcutCatalog
 {
-    public static IReadOnlyList<KeyboardShortcutRow> InApp { get; } =
-        Array.Empty<KeyboardShortcutRow>();
+    public static IReadOnlyList<KeyboardShortcutRow> InApp { get; } = new[]
+    {
+        new KeyboardShortcutRow { Shortcut = "⎵", Action = "Play/Pause" },
+        new KeyboardShortcutRow { Shortcut = "←", Action = "Previous Track" },
+        new KeyboardShortcutRow { Shortcut = "→", Action = "Next Track" },
+        new KeyboardShortcutRow { Shortcut = "↑", Action = "Navigate Up" },
+        new KeyboardShortcutRow { Shortcut = "↓", Action = "Navigate Down" },
+        new KeyboardShortcutRow { Shortcut = "↵", Action = "Play Selected Track" }
+    };
 
     public static IReadOnlyList<KeyboardShortcutRow> Global { get; } =
         Array.Empty<KeyboardShortcutRow>();

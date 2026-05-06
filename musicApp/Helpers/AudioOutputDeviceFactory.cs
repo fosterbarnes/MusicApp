@@ -12,17 +12,17 @@ namespace musicApp.Helpers
             {
                 return backend switch
                 {
-                    AudioOutputBackend.WasapiExclusive => new WasapiOut(AudioClientShareMode.Exclusive, 200),
-                    AudioOutputBackend.DirectSound => new DirectSoundOut(),
-                    AudioOutputBackend.WaveOut => new WaveOutEvent(),
-                    _ => new WasapiOut()
+                    AudioOutputBackend.WasapiExclusive => new WasapiOut(AudioClientShareMode.Exclusive, 50),
+                    AudioOutputBackend.DirectSound => new DirectSoundOut(100),
+                    AudioOutputBackend.WaveOut => new WaveOutEvent() { DesiredLatency = 100 },
+                    _ => new WasapiOut(AudioClientShareMode.Shared, 50)
                 };
             }
             catch (Exception)
             {
                 // Exclusive can fail (device/format); shared WASAPI is the fallback.
                 if (backend == AudioOutputBackend.WasapiExclusive)
-                    return new WasapiOut();
+                    return new WasapiOut(AudioClientShareMode.Shared, 50);
                 throw;
             }
         }

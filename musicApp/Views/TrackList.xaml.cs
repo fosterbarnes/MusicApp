@@ -94,10 +94,21 @@ namespace musicApp.Views
             catch { }
         }
 
-        public void ScrollToSong(Song song)
+        public void ScrollToSong(Song song, bool grabFocus = false)
         {
             lstTracks.SelectedItem = song;
             lstTracks.ScrollIntoView(song);
+
+            if (grabFocus)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (lstTracks.ItemContainerGenerator.ContainerFromItem(song) is UIElement container)
+                    {
+                        container.Focus();
+                    }
+                }), DispatcherPriority.Loaded);
+            }
         }
 
         public Playlist? CurrentPlaylist { get; set; }

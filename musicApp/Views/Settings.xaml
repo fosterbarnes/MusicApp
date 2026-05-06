@@ -527,148 +527,111 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <Grid Grid.Row="0"
-                                  Grid.Column="0"
-                                  Grid.ColumnSpan="2"
-                                  Margin="{StaticResource FieldRowGap-thk}"
-                                  VerticalAlignment="Top"
-                                  Grid.IsSharedSizeScope="True">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"
-                                                      SharedSizeGroup="SettingsLibrarySidebarPairCol" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{StaticResource SettingsLibraryActionsPairGutter-gl}" />
-                                    <ColumnDefinition Width="Auto"
-                                                      SharedSizeGroup="SettingsLibrarySidebarPairCol" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0"
+                                        Grid.Column="0"
+                                        Grid.ColumnSpan="2"
+                                        Margin="{StaticResource FieldRowGap-thk}"
+                                        VerticalAlignment="Top">
 
-                                <TextBlock Grid.Row="0"
-                                           Grid.Column="0"
-                                           Text="Sidebar"
-                                           Style="{StaticResource FieldLabelStyle}"
-                                           TextWrapping="Wrap"
-                                           VerticalAlignment="Top"
-                                           HorizontalAlignment="Center"
-                                           Margin="{StaticResource Top2-thk}" />
-                                <TextBlock Grid.Row="0"
-                                           Grid.Column="1"
-                                           Text="Library actions"
+                                <TextBlock Text="Library actions"
                                            Style="{StaticResource FieldLabelStyle}"
                                            TextWrapping="Wrap"
                                            VerticalAlignment="Top"
                                            HorizontalAlignment="Left"
-                                           Margin="{StaticResource SettingsLibraryActionsLibraryHeaderMargin-thk}" />
-                                <TextBlock Grid.Row="0"
-                                           Grid.Column="3"
-                                           Text=""
-                                           Style="{StaticResource FieldLabelStyle}"
-                                           TextWrapping="Wrap"
-                                           VerticalAlignment="Top"
-                                           HorizontalAlignment="Center"
                                            Margin="{StaticResource Top2-thk}" />
-                                <TextBlock Grid.Row="0"
-                                           Grid.Column="4"
-                                           Text=""
+
+                                <StackPanel Orientation="Horizontal" Margin="{StaticResource Top10-thk}">
+                                    <Button x:Name="LibraryAddMusicButton"
+                                            Style="{StaticResource SettingsGeneralActionButtonStyle}"
+                                            Margin="0,0,10,0"
+                                            Click="LibraryAddMusicButton_Click">
+                                        <StackPanel Orientation="Horizontal" Margin="12,0">
+                                            <materialDesign:PackIcon Kind="FolderPlus" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
+                                            <TextBlock Text="Add Music" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button x:Name="LibraryRemoveMusicButton"
+                                            Style="{StaticResource SettingsGeneralActionButtonStyle}"
+                                            Margin="0,0,10,0"
+                                            Click="LibraryRemoveMusicButton_Click">
+                                        <StackPanel Orientation="Horizontal" Margin="12,0">
+                                            <materialDesign:PackIcon Kind="FolderRemove" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
+                                            <TextBlock Text="Remove Music" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button x:Name="LibraryRescanLibraryButton"
+                                            Style="{StaticResource SettingsGeneralActionButtonStyle}"
+                                            Margin="0,0,10,0"
+                                            Click="LibraryRescanLibraryButton_Click">
+                                        <StackPanel Orientation="Horizontal" Margin="12,0">
+                                            <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
+                                            <TextBlock Text="Re-Scan Library" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button x:Name="LibraryClearSettingsButton"
+                                            Style="{StaticResource SettingsGeneralActionButtonStyle}"
+                                            Click="LibraryClearSettingsButton_Click">
+                                        <StackPanel Orientation="Horizontal" Margin="12,0">
+                                            <materialDesign:PackIcon Kind="DeleteSweep" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
+                                            <TextBlock Text="Clear Settings" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <TextBlock Text="Sidebar quick actions"
                                            Style="{StaticResource FieldLabelStyle}"
                                            TextWrapping="Wrap"
                                            VerticalAlignment="Top"
                                            HorizontalAlignment="Left"
-                                           Margin="{StaticResource SettingsLibraryActionsLibraryHeaderMargin-thk}" />
+                                           Margin="0,24,0,0" />
 
-                                <CheckBox x:Name="SidebarAddMusicCheckBox"
-                                          Grid.Row="1"
-                                          Grid.Column="0"
-                                          Foreground="{StaticResource TextPrimary-brush}"
-                                          VerticalAlignment="Center"
-                                          HorizontalAlignment="Center"
-                                          Margin="{StaticResource SettingsLibraryActionsSidebarCheckTopRowMargin-thk}"
-                                          Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          IsChecked="False" />
-                                <Button x:Name="LibraryAddMusicButton"
-                                        Grid.Row="1"
-                                        Grid.Column="1"
-                                        Style="{StaticResource SettingsLibraryActionButtonStyle}"
-                                        Margin="{StaticResource SettingsLibraryActionButtonTopRowMargin-thk}"
-                                        Click="LibraryAddMusicButton_Click">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="FolderPlus" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
-                                        <TextBlock Text="Add Music" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
+                                <TextBlock Text="Choose which actions appear in the left sidebar:"
+                                           Foreground="{StaticResource TextSecondary-brush}"
+                                           TextWrapping="Wrap"
+                                           VerticalAlignment="Top"
+                                           HorizontalAlignment="Left"
+                                           Margin="0,4,0,0" />
 
-                                <CheckBox x:Name="SidebarRescanLibraryCheckBox"
-                                          Grid.Row="1"
-                                          Grid.Column="3"
-                                          Foreground="{StaticResource TextPrimary-brush}"
-                                          VerticalAlignment="Center"
-                                          HorizontalAlignment="Center"
-                                          Margin="{StaticResource SettingsLibraryActionsSidebarCheckTopRowMargin-thk}"
-                                          Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          IsChecked="False" />
-                                <Button x:Name="LibraryRescanLibraryButton"
-                                        Grid.Row="1"
-                                        Grid.Column="4"
-                                        Style="{StaticResource SettingsLibraryActionButtonStyle}"
-                                        Margin="{StaticResource SettingsLibraryActionButtonTopRowMargin-thk}"
-                                        Click="LibraryRescanLibraryButton_Click">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
-                                        <TextBlock Text="Re-Scan Library" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
+                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                    <CheckBox x:Name="SidebarAddMusicCheckBox"
+                                              Content="Add Music"
+                                              Foreground="{StaticResource TextPrimary-brush}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,24,0"
+                                              Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              IsChecked="False" />
+                                    
+                                    <CheckBox x:Name="SidebarRemoveMusicCheckBox"
+                                              Content="Remove Music"
+                                              Foreground="{StaticResource TextPrimary-brush}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,24,0"
+                                              Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              IsChecked="False" />
 
-                                <CheckBox x:Name="SidebarRemoveMusicCheckBox"
-                                          Grid.Row="2"
-                                          Grid.Column="0"
-                                          Foreground="{StaticResource TextPrimary-brush}"
-                                          VerticalAlignment="Center"
-                                          HorizontalAlignment="Center"
-                                          Margin="{StaticResource SettingsLibraryActionsSidebarCheckBottomRowMargin-thk}"
-                                          Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          IsChecked="False" />
-                                <Button x:Name="LibraryRemoveMusicButton"
-                                        Grid.Row="2"
-                                        Grid.Column="1"
-                                        Style="{StaticResource SettingsLibraryActionButtonStyle}"
-                                        Margin="{StaticResource SettingsLibraryActionButtonLastRowMargin-thk}"
-                                        Click="LibraryRemoveMusicButton_Click">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="FolderRemove" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
-                                        <TextBlock Text="Remove Music" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
+                                    <CheckBox x:Name="SidebarRescanLibraryCheckBox"
+                                              Content="Re-Scan Library"
+                                              Foreground="{StaticResource TextPrimary-brush}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,24,0"
+                                              Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              IsChecked="False" />
 
-                                <CheckBox x:Name="SidebarClearSettingsCheckBox"
-                                          Grid.Row="2"
-                                          Grid.Column="3"
-                                          Foreground="{StaticResource TextPrimary-brush}"
-                                          VerticalAlignment="Center"
-                                          HorizontalAlignment="Center"
-                                          Margin="{StaticResource SettingsLibraryActionsSidebarCheckBottomRowMargin-thk}"
-                                          Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
-                                          IsChecked="False" />
-                                <Button x:Name="LibraryClearSettingsButton"
-                                        Grid.Row="2"
-                                        Grid.Column="4"
-                                        Style="{StaticResource SettingsLibraryActionButtonStyle}"
-                                        Margin="{StaticResource SettingsLibraryActionButtonLastRowMargin-thk}"
-                                        Click="LibraryClearSettingsButton_Click">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="DeleteSweep" VerticalAlignment="Center" Margin="{StaticResource Right10-thk}" />
-                                        <TextBlock Text="Clear Settings" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
+                                    <CheckBox x:Name="SidebarClearSettingsCheckBox"
+                                              Content="Clear Settings"
+                                              Foreground="{StaticResource TextPrimary-brush}"
+                                              VerticalAlignment="Center"
+                                              Checked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              Unchecked="SidebarLibraryActionShowInSidebar_CheckChanged"
+                                              IsChecked="False" />
+                                </StackPanel>
+                            </StackPanel>
 
                             <Separator Grid.Row="1"
                                        Grid.ColumnSpan="2"
@@ -944,12 +907,13 @@
                     </ScrollViewer>
                 </Grid>
                 <Grid x:Name="KeyboardShortcutsSectionPanel" Visibility="Collapsed"
-                      Margin="{StaticResource SettingsGeneralContentMargin-thk}">
+                      Margin="{StaticResource SettingsGeneralContentMargin-thk}"
+                      Grid.IsSharedSizeScope="True">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" MinHeight="120" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" MinHeight="120" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0"
@@ -958,27 +922,76 @@
                                VerticalAlignment="Bottom"
                                Margin="{StaticResource Bottom8-thk}" />
 
-                    <ListView x:Name="KeyboardShortcutsInAppListView"
-                              Grid.Row="1"
-                              VerticalAlignment="Stretch"
-                              HorizontalAlignment="Stretch"
-                              ItemContainerStyle="{StaticResource CompactListViewItemStyle}"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                              ScrollViewer.VerticalScrollBarVisibility="Auto"
-                              Background="Transparent"
-                              BorderThickness="0"
-                              Foreground="{StaticResource TextPrimary-brush}">
-                        <ListView.View>
-                            <GridView ColumnHeaderContainerStyle="{StaticResource CompactGridViewHeaderStyle}">
-                                <GridViewColumn Header="Keyboard Shortcut (Placeholder)"
-                                                DisplayMemberBinding="{Binding Shortcut}"
-                                                Width="200" />
-                                <GridViewColumn Header="Action (Placeholder)"
-                                                DisplayMemberBinding="{Binding Action}"
-                                                Width="200" />
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                    <!-- In-app shortcuts table -->
+                    <Border Grid.Row="1"
+                            BorderBrush="{StaticResource BorderDefault-brush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource Sm-cr}"
+                            Background="{StaticResource ControlBackgroundAlt-brush}"
+                            ClipToBounds="True">
+                        <StackPanel>
+                            <!-- Header row -->
+                            <Grid Background="{StaticResource PanelBackground-brush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="KeyCol" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="Key"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextSecondary-brush}"
+                                           HorizontalAlignment="Center"
+                                           Margin="15,6" />
+                                <Border Grid.Column="0"
+                                        Width="1"
+                                        HorizontalAlignment="Right"
+                                        Background="{StaticResource BorderDefault-brush}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="Action"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextSecondary-brush}"
+                                           Padding="10,6" />
+                            </Grid>
+                            <!-- Header / body divider -->
+                            <Border Height="1" Background="{StaticResource BorderDefault-brush}" SnapsToDevicePixels="True" />
+                            <!-- Rows -->
+                            <ItemsControl x:Name="KeyboardShortcutsInAppListView">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <Grid Height="34">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" SharedSizeGroup="KeyCol" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Shortcut}"
+                                                           FontFamily="Consolas, Courier New"
+                                                           FontSize="16"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="15,0"
+                                                           Foreground="{StaticResource TextPrimary-brush}" />
+                                                <Border Grid.Column="0"
+                                                        Width="1"
+                                                        HorizontalAlignment="Right"
+                                                        Background="{StaticResource BorderDefault-brush}" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Action}"
+                                                           Foreground="{StaticResource TextPrimary-brush}"
+                                                           Padding="10,7" />
+                                            </Grid>
+                                            <Border Height="1"
+                                                    Background="{StaticResource BorderDefault-brush}"
+                                                    SnapsToDevicePixels="True" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
 
                     <TextBlock Grid.Row="2"
                                Text="Global shortcuts"
@@ -986,28 +999,83 @@
                                VerticalAlignment="Bottom"
                                Margin="{StaticResource FileInfoSectionBreakValueMargin-thk}" />
 
-                    <ListView x:Name="KeyboardShortcutsGlobalListView"
-                              Grid.Row="3"
-                              VerticalAlignment="Stretch"
-                              HorizontalAlignment="Stretch"
-                              ItemContainerStyle="{StaticResource CompactListViewItemStyle}"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                              ScrollViewer.VerticalScrollBarVisibility="Auto"
-                              Foreground="{StaticResource TextPrimary-brush}"
-                              Background="Transparent"
-                              BorderThickness="0">
-                        <ListView.View>
-                            <GridView ColumnHeaderContainerStyle="{StaticResource CompactGridViewHeaderStyle}">
-                                <GridViewColumn Header="Keyboard Shortcut (Placeholder)"
-                                                DisplayMemberBinding="{Binding Shortcut}"
-                                                Width="200" />
-                                <GridViewColumn Header="Action (Placeholder)"
-                                                DisplayMemberBinding="{Binding Action}"
-                                                Width="200" />
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                    <!-- Global shortcuts table -->
+                    <Border Grid.Row="3"
+                            BorderBrush="{StaticResource BorderDefault-brush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource Sm-cr}"
+                            Background="{StaticResource ControlBackgroundAlt-brush}"
+                            ClipToBounds="True">
+                        <StackPanel>
+                            <!-- Header row -->
+                            <Grid Background="{StaticResource PanelBackground-brush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="Key"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextSecondary-brush}"
+                                           HorizontalAlignment="Center"
+                                           Margin="15,6" />
+                                <Border Grid.Column="0"
+                                        Width="1"
+                                        HorizontalAlignment="Right"
+                                        Background="{StaticResource BorderDefault-brush}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="Action"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextSecondary-brush}"
+                                           Padding="10,6" />
+                            </Grid>
+                            <!-- Header / body divider -->
+                            <Border Height="1" Background="{StaticResource BorderDefault-brush}" SnapsToDevicePixels="True" />
+                            <!-- Rows -->
+                            <ItemsControl x:Name="KeyboardShortcutsGlobalListView">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <Grid Height="34">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" SharedSizeGroup="KeyCol" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Shortcut}"
+                                                           FontFamily="Consolas, Courier New"
+                                                           FontSize="16"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="15,0"
+                                                           Foreground="{StaticResource TextPrimary-brush}" />
+                                                <Border Grid.Column="0"
+                                                        Width="1"
+                                                        HorizontalAlignment="Right"
+                                                        Background="{StaticResource BorderDefault-brush}" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Action}"
+                                                           Foreground="{StaticResource TextPrimary-brush}"
+                                                           Padding="10,7" />
+                                            </Grid>
+                                            <Border Height="1"
+                                                    Background="{StaticResource BorderDefault-brush}"
+                                                    SnapsToDevicePixels="True" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <!-- Empty state (shown when no global shortcuts are registered) -->
+                            <TextBlock Text="No global shortcuts configured."
+                                       Foreground="{StaticResource TextMuted-brush}"
+                                       FontSize="12"
+                                       Padding="10,8" />
+                        </StackPanel>
+                    </Border>
                 </Grid>
+
                 <Grid x:Name="AboutSectionPanel" Visibility="Collapsed">
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">

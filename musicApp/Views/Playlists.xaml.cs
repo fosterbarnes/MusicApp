@@ -66,6 +66,8 @@ namespace musicApp.Views
 
         public Playlist? SelectedPlaylist => lstPlaylists.SelectedItem as Playlist;
 
+        public Song? SelectedTrack => trackList.SelectedTrack;
+
         public event System.EventHandler<Song>? PlayTrackRequested;
 
         public event System.EventHandler<Song>? AddToPlaylistRequested;

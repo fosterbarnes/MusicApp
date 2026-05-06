@@ -484,6 +484,11 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Row style for keyboard shortcut tables -->
+    <Style x:Key="ShortcutTableRowStyle" TargetType="ContentPresenter">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+
     <!-- Custom ListView Item Style to control content padding -->
     <Style x:Key="CompactListViewItemStyle" TargetType="ListViewItem">
         <Setter Property="Background" Value="Transparent"/>

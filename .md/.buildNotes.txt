@@ -1,8 +1,11 @@
-v0.2.1 release (bangarangRotting)
+v0.2.2 release (peepooRe7)
 
-Main Window:
-
-Album View: - Hydrate all album artwork on startup
+Local hotkeys (window active and open):
+- Spacebar: play/pause
+- Left/right arrow keys: next/last track
+- Up/down: navigate through grid/list view
+- Enter/return: play selected track
 
 Settings:
-- Add 'Restore to default' button
+- Re-work library actions and sidebar toggles
+- Start populating shortcuts menu

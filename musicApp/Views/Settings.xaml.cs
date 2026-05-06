@@ -41,8 +41,6 @@ namespace musicApp.Views
             SourceInitialized += (_, _) => WindowsTitleBarTheme.ApplyImmersiveDarkMode(this);
             KeyboardShortcutsInAppListView.ItemsSource = KeyboardShortcutCatalog.InApp;
             KeyboardShortcutsGlobalListView.ItemsSource = KeyboardShortcutCatalog.Global;
-            KeyboardShortcutsInAppListView.SizeChanged += (_, _) => BalanceKeyboardShortcutColumns(KeyboardShortcutsInAppListView);
-            KeyboardShortcutsGlobalListView.SizeChanged += (_, _) => BalanceKeyboardShortcutColumns(KeyboardShortcutsGlobalListView);
             Loaded += SettingsView_Loaded;
             ShowSection(launchSection ?? "General");
         }
@@ -58,8 +56,6 @@ namespace musicApp.Views
         {
             ApplyAboutTitle();
             ApplyAboutVersionSubtitle();
-            BalanceKeyboardShortcutColumns(KeyboardShortcutsInAppListView);
-            BalanceKeyboardShortcutColumns(KeyboardShortcutsGlobalListView);
 
             try
             {
@@ -869,29 +865,7 @@ namespace musicApp.Views
             e.Handled = true;
         }
 
-        private static void BalanceKeyboardShortcutColumns(ListView listView)
-        {
-            if (listView.View is not GridView gv || gv.Columns.Count < 2)
-            {
-                return;
-            }
 
-            var w = listView.ActualWidth;
-            if (w <= 0 || double.IsNaN(w))
-            {
-                return;
-            }
-
-            var colW = Math.Max(40, (w - 8) / 2.0);
-            gv.Columns[0].Width = colW;
-            gv.Columns[1].Width = colW;
-        }
-
-        private void BalanceAllKeyboardShortcutColumns()
-        {
-            BalanceKeyboardShortcutColumns(KeyboardShortcutsInAppListView);
-            BalanceKeyboardShortcutColumns(KeyboardShortcutsGlobalListView);
-        }
 
         private void SectionButton_Click(object sender, RoutedEventArgs e)
         {
@@ -911,11 +885,6 @@ namespace musicApp.Views
             ThemeSectionPanel.Visibility = sectionName == "Theme" ? Visibility.Visible : Visibility.Collapsed;
             KeyboardShortcutsSectionPanel.Visibility = sectionName == "KeyboardShortcuts" ? Visibility.Visible : Visibility.Collapsed;
             AboutSectionPanel.Visibility = sectionName == "About" ? Visibility.Visible : Visibility.Collapsed;
-
-            if (sectionName == "KeyboardShortcuts")
-            {
-                Dispatcher.BeginInvoke(new Action(BalanceAllKeyboardShortcutColumns), DispatcherPriority.Loaded);
-            }
 
             var idx = Array.IndexOf(SettingsSectionOrder, sectionName);
             SectionSegmentUi.ApplySegmentStates(

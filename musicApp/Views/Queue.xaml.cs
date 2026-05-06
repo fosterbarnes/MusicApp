@@ -107,7 +107,7 @@ namespace musicApp.Views
         private void QueueToolbarMoveDown_Click(object sender, System.Windows.RoutedEventArgs e) =>
             QueueToolbarMoveDownRequested?.Invoke(this, EventArgs.Empty);
 
-        public void SelectTrack(Song track)
+        public void SelectTrack(Song track, bool grabFocus = false)
         {
             if (track == null || trackList.ItemsSource == null)
                 return;
@@ -121,7 +121,7 @@ namespace musicApp.Views
                     !string.IsNullOrWhiteSpace(s.FilePath) &&
                     string.Equals(s.FilePath, track.FilePath, StringComparison.OrdinalIgnoreCase))
                 {
-                    trackList.ScrollToSong(s);
+                    trackList.ScrollToSong(s, grabFocus);
                     return;
                 }
             }
@@ -135,7 +135,7 @@ namespace musicApp.Views
                     string.Equals(s.Artist, track.Artist, StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(s.Album, track.Album, StringComparison.OrdinalIgnoreCase))
                 {
-                    trackList.ScrollToSong(s);
+                    trackList.ScrollToSong(s, grabFocus);
                     return;
                 }
             }

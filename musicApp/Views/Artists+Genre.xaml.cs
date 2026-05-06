@@ -99,10 +99,12 @@ namespace musicApp.Views
 
         public void RefreshTrackListBindings() => trackList.RefreshItemBindings();
 
+        public Song? SelectedTrack => trackList.SelectedTrack;
+
         /// <summary>
         /// Selects the track's artist in the sidebar and highlights that track in the right-side track list.
         /// </summary>
-        public void SelectTrack(Song track)
+        public void SelectTrack(Song track, bool grabFocus = false)
         {
             if (track == null) return;
             if (!string.Equals(ViewName, "Artists", StringComparison.OrdinalIgnoreCase)) return;
@@ -113,7 +115,7 @@ namespace musicApp.Views
             {
                 var matched = FindTrackInCurrentList(track);
                 if (matched != null)
-                    trackList.ScrollToSong(matched);
+                    trackList.ScrollToSong(matched, grabFocus);
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 

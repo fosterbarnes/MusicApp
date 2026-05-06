@@ -63,7 +63,29 @@ if ($remoteTags -contains "refs/tags/$tagName") {
     git push origin --delete $tagName
 }
 
+$downloadsTable = @"
+### Downloads
+
+<table border="0">
+<tbody>
+<tr>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/$tagName/musicApp-${tagName}-${releaseTagSegment}-x64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x64.svg" width="180" height="auto" alt="x64 installer"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/$tagName/musicApp-${tagName}-${releaseTagSegment}-x86-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_x86.svg" width="180" height="auto" alt="x86 installer"/></a></td>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/$tagName/musicApp-${tagName}-${releaseTagSegment}-arm64-installer.exe"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_arm.svg" width="180" height="auto" alt="arm64 installer"/></a></td>
+</tr>
+<tr>
+<td valign="top"><a href="https://github.com/fosterbarnes/musicApp/releases/download/$tagName/musicApp-${tagName}-${releaseTagSegment}-portable.zip"><img src="https://raw.githubusercontent.com/fosterbarnes/musicApp/refs/heads/main/.resources/svg/download_portable.svg" width="180" height="auto" alt="portable .zip"/></a></td>
+</tr>
+</tbody>
+</table>
+
+### Release notes
+
+"@
+
+$finalReleaseNotes = $downloadsTable + $releaseNotes
+
 git tag $tagName && git push origin $tagName
-& gh release create $tagName "$finalPortable" "$finalX64" "$finalX86" "$finalArm" --title "$releaseName" --notes "$releaseNotes" --prerelease
+& gh release create $tagName "$finalPortable" "$finalX64" "$finalX86" "$finalArm" --title "$releaseName" --notes "$finalReleaseNotes" --prerelease
 
 Remove-Item -Path $finalPortable, $finalX64, $finalX86, $finalArm, $portableZip -Recurse -Force -ErrorAction SilentlyContinue
