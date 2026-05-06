@@ -37,7 +37,8 @@ public static class AlbumArtLoader
 
             try
             {
-                var atlTrack = new Track(track.FilePath);
+                using var fs = new FileStream(track.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var atlTrack = new Track(fs);
                 var embeddedPictures = atlTrack.EmbeddedPictures;
 
                 if (embeddedPictures != null && embeddedPictures.Count > 0)

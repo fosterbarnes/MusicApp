@@ -14,5 +14,6 @@ musicApp/.updater.swap/obj
 .web/
 obj/
 .buildNotes.md
+buildNotes.md
 .resources/exe/yapBot.json
 .md/YapBot.json

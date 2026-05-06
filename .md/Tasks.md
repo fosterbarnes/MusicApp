@@ -1,5 +1,4 @@
 ## Main Window
-
 ### Title Bar
 - ~~Play/pause/skip buttons~~
 - ~~Volume control~~
@@ -24,7 +23,6 @@
 
 
 ### Main Window Buttons
-
 #### Recently Added
 - ~~Inherit albums view, but sort by most recently added songs~~
 - Option to view 'recently added' as albums, songs, or artists view
@@ -92,9 +90,7 @@
 - ~~Progress bar for song scanning and other actions~~
 
 
-
 ## Settings Menu
-
 ### General
 #### Updates
 - ~~Check for updates (tick-box)~~
@@ -108,6 +104,7 @@
 #### Import/Export
 - ~~Import/Export Settings (two buttons)~~
 - Write settings file format and import/export logic
+
 
 ### Playback
 #### EQ
@@ -127,6 +124,7 @@
 - ~~Multiple audio backends (dropdown)~~
 - ~~Sample rate (dropdown)~~
 - ~~Bits per sample (dropdown)~~
+
 
 ### Library
 #### Actions
@@ -148,8 +146,16 @@
 #### Import/Export
 - Library import/export (two buttons)
 
+
 ### Keyboard Shortcuts
-- Scrollable grid view with each shortcut as an item in the list
+#### Local
+- ~~Space (Play/pause)~~
+- ~~Left/Right (Skip back/forward)~~
+- ~~Up/Down (Move selection in grid view)~~
+- ~~Enter/Return (Play selected track)~~
+
+#### Global
+
 
 ### Theme/UI
 - Color, with options to create, import or export profiles (dropdown)
@@ -165,9 +171,7 @@
 - Donation link (https://buymeacoffee.com/fosterbarnes)
 
 
-
 ## General
-
 ### UI Stuff
 - ~~Unnecessary space between the scroll bar and track menu in artist/genre view~~
 
@@ -175,16 +179,16 @@
 - ~~Split `MainWindow.xaml.cs` into multiple components~~
 - Cut down on if statements. Use more switch/loops
 - ~~Use hard-coded custom "pop-ups" and info menus rather than built in windows pop-ups~~
-- Improve startup load times
-- Improve album art load time (WIP)
+- ~~Improve startup load times~~
+- ~~Improve album art load time~~
 
 ### Bugs
-- General sluggishness/startup time (WIP)
+- ~~General sluggishness/startup time~~
+- ~~Queue does not work as intended and needs fixing~~
 - Window sized is not always properly remembered and restored
-- Queue does not work as intended and needs fixing (WIP)
+
 
 ### Right-Click Context Menu
-
 #### General Items
 - ~~Play Next~~
 - ~~Add to Queue~~
@@ -195,53 +199,52 @@
 - ~~Show in Albums~~
 - ~~Show in Songs~~
 - ~~Show in Queue~~
+
 #### Info/Metadata
-  
-  ##### Top Info Bar
-  - ~~Song name~~
-  - ~~Artist name~~
-  - ~~Album name~~
-  - ~~Album art~~
-  
-  ##### Details
-  - ~~Song title (text field)~~
-  - ~~Artist (text field)~~
-  - ~~Album (text field)~~
-  - ~~Album artist (text field)~~
-  - ~~Composer (text field)~~
-  - ~~Genre (dropdown menu)~~
-  - ~~Year (text field)~~
-  - ~~Track "#" of "#" (two text fields)~~
-  - ~~Disc number "#" of "#" (two text fields)~~
-  - ~~Compilation (tick box)~~
-  - ~~Favorite (tick box)~~
-  - ~~Bpm (text box)~~
-  - ~~Play Count (text field)~~
-  - ~~Ability to edit metadata~~
+##### Top Info Bar
+- ~~Song name~~
+- ~~Artist name~~
+- ~~Album name~~
+- ~~Album art~~
 
-  ##### Artwork
-  - ~~Display full size, resizable artwork~~
-  - ~~Ability to change album art~~
-  - ~~Button to scan for missing artwork~~
+##### Details
+- ~~Song title (text field)~~
+- ~~Artist (text field)~~
+- ~~Album (text field)~~
+- ~~Album artist (text field)~~
+- ~~Composer (text field)~~
+- ~~Genre (dropdown menu)~~
+- ~~Year (text field)~~
+- ~~Track "#" of "#" (two text fields)~~
+- ~~Disc number "#" of "#" (two text fields)~~
+- ~~Compilation (tick box)~~
+- ~~Favorite (tick box)~~
+- ~~Bpm (text box)~~
+- ~~Play Count (text field)~~
+- ~~Ability to edit metadata~~
 
-  ##### Lyrics
-  - ~~Display lyrics if available~~
-  - ~~Ability to add lyrics~~
+##### Artwork
+- ~~Display full size, resizable artwork~~
+- ~~Ability to change album art~~
+- ~~Button to scan for missing artwork~~
 
-  ##### Options
-  - ~~Open in MP3Tag~~
-  - Start/Stop Position
-  - Remember playback position
-  - Skip when shuffling
-  - Volume slider for individual tracks
-  - EQ
+##### Lyrics
+- ~~Display lyrics if available~~
+- ~~Ability to add lyrics~~
 
-  ##### Sorting
-  - Change sorting options for specific items
+##### Options
+- ~~Open in MP3Tag~~
+- Start/Stop Position
+- Remember playback position
+- Skip when shuffling
+- Volume slider for individual tracks
+- EQ
 
-  ##### File
-  - ~~Show file-type, length, size, bit rate, and other info~~
+##### Sorting
+- Change sorting options for specific items
 
+##### File
+- ~~Show file-type, length, size, bit rate, and other info~~
 - ~~Show in Explorer~~
 - ~~Remove from Library~~
 - ~~Delete~~
@@ -266,6 +269,7 @@
 
 ##### Queue
 - ~~Hide "Show in Queue"~~
+
 
 #### Planned Features
 - Visualizer

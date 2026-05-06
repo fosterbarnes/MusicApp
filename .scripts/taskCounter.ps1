@@ -1,4 +1,46 @@
 . "$PSScriptRoot\scriptHelper.ps1"; Set-Location $root
+
+function Clear-EmptyToDoSectionHeaders {
+    param([string[]]$Lines)
+    $lst = [System.Collections.Generic.List[string]]::new()
+    foreach ($ln in @(if ($null -eq $Lines) { @() } else { @($Lines) })) {
+        [void]$lst.Add($ln)
+    }
+    do {
+        $changed = $false
+        $idx = 0
+        while ($idx -lt $lst.Count) {
+            $t = $lst[$idx].TrimStart()
+            if (-not $t.StartsWith('#')) { $idx++; continue }
+            $m = [regex]::Match($t, '^#+')
+            $L = $m.Value.Length
+            if ($L -lt 2) { $idx++; continue }
+            $endExclusive = $lst.Count
+            for ($jj = $idx + 1; $jj -lt $lst.Count; $jj++) {
+                $tt = $lst[$jj].TrimStart()
+                if (-not $tt.StartsWith('#')) { continue }
+                $nextL = ([regex]::Match($tt, '^#+')).Value.Length
+                if ($nextL -le $L) { $endExclusive = $jj; break }
+            }
+            $hollow = $true
+            for ($k = $idx + 1; $k -lt $endExclusive; $k++) {
+                $tt = $lst[$k].Trim()
+                if ($tt.Length -eq 0) { continue }
+                if ($tt.StartsWith('#')) { continue }
+                $hollow = $false
+                break
+            }
+            if ($hollow) {
+                $lst.RemoveRange($idx, $endExclusive - $idx)
+                $changed = $true
+                continue
+            }
+            $idx++
+        }
+    } while ($changed)
+    @($lst.ToArray())
+}
+
 Write-Host "`nCounting tasks..." -ForegroundColor Yellow
 $lines = @(Get-Content -LiteralPath "$root\.md\Tasks.md" -Encoding UTF8)
 $todoOut = [System.Collections.ArrayList]::new()
@@ -24,9 +66,13 @@ foreach ($line in $lines) {
 
 $pct = if ($total -eq 0) { 0 } else { [math]::Round(100 * $completed / $total, 1) }
 Write-Host "$completed/$total tasks completed ($pct%)"
+if ($notDone -eq 0) {
+    $todoOut = @('# ToDo', '', '_No undone tasks._')
+} else {
+    Write-Host "`nClearing empty ToDo section headers..." -ForegroundColor Yellow
+    $todoOut = [Collections.ArrayList]@(Clear-EmptyToDoSectionHeaders @($todoOut))
+}
 Write-Host "`nUpdating ToDo.md..." -ForegroundColor Yellow
-
-if ($notDone -eq 0) { $todoOut = @('# ToDo', '', '_No undone tasks._') }
 
 $nl = [Environment]::NewLine
 Write-RepoUtf8NoBomFile -LiteralPath "$root\.md\ToDo.md" -Content ((@($todoOut) -join $nl) + $nl)

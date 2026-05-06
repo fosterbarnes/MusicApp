@@ -1,11 +1,7 @@
-v0.2.2 release (peepooRe7)
+v0.2.3 release (kongaInstead)
 
-Local hotkeys (window active and open):
-- Spacebar: play/pause
-- Left/right arrow keys: next/last track
-- Up/down: navigate through grid/list view
-- Enter/return: play selected track
+Fixes:
+- Fix issue that caused currently playing album art not to show in info view on arm64
 
-Settings:
-- Re-work library actions and sidebar toggles
-- Start populating shortcuts menu
+Other:
+- Revamp README.md

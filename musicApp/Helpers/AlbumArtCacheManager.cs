@@ -183,7 +183,8 @@ public static class AlbumArtCacheManager
 
                 try
                 {
-                    var atlTrack = new Track(track.FilePath);
+                    using var fs = new FileStream(track.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    var atlTrack = new Track(fs);
                     var pics = atlTrack.EmbeddedPictures;
                     if (pics != null && pics.Count > 0)
                         source = TryLoadBitmapFromPictureBytes(pics[0].PictureData);

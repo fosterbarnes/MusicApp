@@ -33,7 +33,8 @@ public static class TrackMetadataLoader
 
             try
             {
-                var atlTrack = new Track(filePath);
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var atlTrack = new Track(fs);
                 CopyAtlMetadataMerge(atlTrack, track);
 
                 if (atlTrack.Duration > 0)
@@ -158,7 +159,8 @@ public static class TrackMetadataLoader
 
         try
         {
-            var atlTrack = new Track(track.FilePath);
+            using var fs = new FileStream(track.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var atlTrack = new Track(fs);
             ApplyAtlMetadataFull(atlTrack, track);
 
             if (atlTrack.Duration > 0)

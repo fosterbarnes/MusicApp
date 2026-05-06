@@ -1,40 +1,22 @@
 # ![Icon](https://i.postimg.cc/d3c9vxzF/Music-App-Icon24x24.png) musicApp - an offline music player
 
-<img src=".resources/scr/album.png" alt="Screenshot" />
 
-<details>
-<summary>More Screenshots:</summary>
+Desktop music player for Windows with a focus on functionality, efficiency, clean UI, and customization.
 
-### Artists
-<img src=".resources/scr/artist.png" alt="Artists" />
+Currently in a pre-release state, so not all intended features or behaviors have been added or thoroughly tested. You can track the current progress below.
 
-### Albums
-<img src=".resources/scr/album.png" alt="Albums" />
+## Progress
 
-### Songs
-<img src=".resources/scr/song.png" alt="Songs" />
+![Progress Bar](https://progress-bars.entcheneric.com/bar.svg?progress=78&backgroundColor=%23212121&height=40&width=800&borderRadius=10&striped=false&animated=false&gradientAnimated=false&animationSpeed=1&stripeAnimationSpeed=1&gradientAnimationSpeed=1&initialAnimationSpeed=1&color=%23705399)  
+**132 / 169 tasks complete (78.1%)**
+[Tasks.md](https://github.com/fosterbarnes/musicApp/blob/main/.md/Tasks.md#main-window)
 
-### Genres
-<img src=".resources/scr/genre.png" alt="Genres" />
+[30,838](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
 
-### Playlists
-<img src=".resources/scr/playlist.png" alt="Playlists" />
 
-### Recently Played
-<img src=".resources/scr/recent.png" alt="Recently Played" />
+## Downloads
 
-### Queue
-<img src=".resources/scr/queue.png" alt="Queue" />
-
-### Search
-<img src=".resources/scr/search.png" alt="Search" />
-
-### Info
-<img src=".resources/scr/info.png" alt="Info" />
-
-</details>
-
-musicApp is in early development, bugs are expected.
+This project is in early development, bugs are expected. Windows only (for now).
 
 <table border="0">
 <tbody>
@@ -49,151 +31,48 @@ musicApp is in early development, bugs are expected.
 </tbody>
 </table>
 
-## Progress
+## Screenshots
 
-![Progress Bar](https://progress-bars.entcheneric.com/bar.svg?progress=75&backgroundColor=%23212121&height=40&width=800&borderRadius=10&striped=false&animated=false&gradientAnimated=false&animationSpeed=1&stripeAnimationSpeed=1&gradientAnimationSpeed=1&initialAnimationSpeed=1&color=%23705399)  
-**124 / 166 tasks complete (74.7%)**
-[Tasks.md](https://github.com/fosterbarnes/musicApp/blob/main/.md/Tasks.md#main-window)
+| <h3>Albums</h3> |
+|:---:|
+| ![Albums](./.resources/scr/albums.png) |
 
-[30,838](https://github.com/fosterbarnes/musicApp/blob/main/.md/scc.txt) lines of code and counting...
+| <h3>Songs</h3> |
+|:---:|
+| ![Songs](./.resources/scr/songs.png) |
 
-# General Usage Info
+| <h3>Artists</h3> |
+|:---:|
+| ![Artists](./.resources/scr/artists.png) |
 
-## Main Window
+<details>
+<summary>More Screenshots:</summary>
 
-### Title Bar
-- Play/pause/skip buttons
-- Volume control
+| <h3>Genres</h3> |
+|:---:|
+| ![Genres](./.resources/scr/genres.png) |
 
-##### Song info view:
-  - Currently playing song info (album art, artist, album)
-  - Ability to get to song album/artist from info view
-  - Clickable, selectable seek bar
-  - Shuffle button
-  - Repeat button
+| <h3>Playlists</h3> |
+|:---:|
+| ![Playlists](./.resources/scr/playlists.png) |
 
-##### Queue button:
-  - Popout menu with re-orderable currently playing queue
-##### Search bar:
-  - Editable text area to input search
-  - Menu with search results
-  - Ability to get to search result items in main window
-  - Context menu item: show in songs/artists/genre/album
-  - Dynamically re-sizable window based on amount of results
-  - Ability to resize window
+| <h3>Recently Played</h3> |
+|:---:|
+| ![Recently Played](./.resources/scr/recent.png) |
 
+| <h3>Queue</h3> |
+|:---:|
+| ![Queue](./.resources/scr/queue.png) |
 
-### Main Window Buttons
+| <h3>Search</h3> |
+|:---:|
+| ![Search](./.resources/scr/search.png) |
 
-#### Artists
-- Scrollable, selectable artist list
-- Song list from selected artists
+| <h3>Info</h3> |
+|:---:|
+| ![Info](./.resources/scr/info.png) |
 
-#### Albums
-- Main window of album thumbnails, alphabetical
-- Popout album view with large album artwork and list of songs
-- Sort by Artist/Album
-- Album art size slider
-- Album song selection fly-out menu:
-  - Dynamically resizing columns
-  - Album length and song count info
-  - High quality album art
-  - Artist, genre and year with ability to click artist or genre
-- Improve load time
-- Cache the albums list (entire list and image data)
-- Loading indicator when building album cache
-
-#### Songs
-- List of all songs in a scrollable, selectable lists
-#### Genres
-- Scrollable, selectable genre list
-- Song list from selected genres
-
-#### Playlists
-- Scrollable, selectable playlist list
-- Add/remove buttons
-- Import/export buttons
-- Ability to pin playlists to the main button menu
-
-#### Recently Played
-- Similar to songs, but only shows recently played tracks
-#### Queue
-- List of queued songs in a scrollable, selectable list
-- Queue action buttons
-- Ability to re-order songs
-#### Add Music
-- Simple button to recursively scan a given folder, then add it to the library
-- Hidden by default, can be shown in main window (Settings > Playback)
-#### Re-Scan Library
-- Simple button to re-scan the current library folder(s)
-- Hidden by default, can be shown in main window (Settings > Playback)
-#### Remove Music
-- Simple button to remove a given folder from the library
-- Hidden by default, can be shown in main window (Settings > Playback)
-#### Clear Settings
-- Simple button to clear all app settings and libraries
-- Hidden by default, can be shown in main window (Settings > Playback)
-### Bottom Row
-- Song count
-- Album count
-- Time and size calculation
-- Progress bar for song scanning and other actions
-
-## Settings Menu
-
-### General
-#### Updates
-- Check for updates (tick-box)
-- Automatically install updates (tick-box)
-- Launch musicApp after updating (tick-box)
-
-#### Language
-- Dropdown
-#### Import/Export
-- Import/Export Settings (two buttons)
-### Playback
-#### EQ
-- Pre-made EQ options, with options to create, import or export profiles (dropdown)
-#### Volume normalization
-- Tickbox (on/off)
-#### Cross-fade songs
-- Start time (slider)
-- Length (text box)
-
-#### Audio
-- Multiple audio backends (dropdown)
-- Sample rate (dropdown)
-- Bits per sample (dropdown)
-
-### Library
-#### Actions
-- Add Music
-- Re-Scan Library
-- Remove Music
-- Clear Settings
-- Tick-boxes for each to show in sidebar
-
-#### File Storage
-- Music library location
-- Settings location
-
-#### Import/Export
-- Library import/export (two buttons)
-
-### Shortcuts
-- Scrollable grid view with each shortcut as an item in the list
-
-### Theme/UI
-- Color, with options to create, import or export profiles (dropdown)
-- Spacing, with options to create, import or export profiles (dropdown)
-- Size, with options to create, import or export profiles (dropdown)
-- List size, with options to create, import or export profiles (dropdown)
-- Toggle donation links (tickbox)
-
-### About
-- Version info (e.g. musicApp v0.2.2 dollyShakeswerve x64)
-- Project link (https://github.com/fosterbarnes/musicApp)
-- Issues link (https://github.com/fosterbarnes/musicApp/issues/new)
+</details>
 
 ## Why does this exist?
 
@@ -201,6 +80,20 @@ I dislike streaming services. I have tried many music player apps like Foobar200
 Musicbee, AIMP, Clementine, Strawberry, etc. and just they're not for me. No disrespect to the creators, they're clearly very well-built apps. I like (tolerate) iTunes, and while it IS functional and has a ui that I find better than the alternatives, it's very out of date, sluggish overall and can cause other weird issues with other applications.
 
 To be honest, this app is made so I can use as my daily music player. HOWEVER, if you agree with one or more of the previous statements, this app may also be for you too. It's made for Windows with WPF in C#, for this reason, Linux/macOS versions are not currently planned. My main concern is efficiency for my personal daily driver OS (Windows 10) not cross compatibility. The thought of making such a detailed and clean UI in Rust (my cross compat. language of choice) gives me goosebumps and shivers, ergo: WPF in C#, using XAML for styling.
+
+## Compatibility
+
+| Platform  | Architecture   |
+|------------|-----------------|
+| Windows 10 | x86, x64, arm64 |
+| Windows 11 | x86, x64, arm64 |
+
+## Planned Ports
+
+| Platform  | Architecture   |
+|------------|-----------------|
+| Debian Linux | x64, arm64 |
+| macOS | x64, arm64 |
 
 ## Support
 
