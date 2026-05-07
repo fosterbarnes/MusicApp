@@ -4,16 +4,22 @@ $appRoot = "$root\musicApp"
 $version = "$appRoot\Version"
 $versionBuild = "$appRoot\VersionBuild"
 $versionTag = "$appRoot\VersionTag"
+$buildNotes = "$root\.md\.buildNotes.txt"
 $versionContents = [System.IO.File]::ReadAllText($version).Trim()
 $versionBuildContents = [System.IO.File]::ReadAllText($versionBuild).Trim()
 $versionTagContents = [System.IO.File]::ReadAllText($versionTag).Trim()
+$buildNotesContents = if (Test-Path -LiteralPath $buildNotes) {
+    [System.IO.File]::ReadAllText($buildNotes).Trim()
+} else { "" }
 $updater = "$appRoot\.updater"
 $updaterSwap = "$appRoot\.updater.swap"
-$webMainPage = "$root\.web\mainPage"
+$scripts = "$root\.scripts"
+$webRoot = "$root\.web"
+$webMainPage = "$webRoot\mainPage"
+$webScripts = "$webMainPage\.scripts"
 $readme = "$root\README.md"
 $tasks = "$root\.md\Tasks.md"
 $features = "$root\.md\Features.md"
-$readmeRaw = Get-Content -LiteralPath $readme -Raw -Encoding UTF8
 $tasksRaw = Get-Content -LiteralPath $tasks -Raw -Encoding UTF8
 $featuresRaw = Get-Content -LiteralPath $features -Raw -Encoding UTF8
 $musicAppCsproj = "$appRoot\musicApp.csproj"
@@ -349,76 +355,4 @@ function Merge-FeaturesFromTasks {
         [void]$rendered.AddRange([string[]](Get-FeatureTreeNodeLines -Node $top -SourceFeatureLines $FeatureLines))
     }
     $rendered.ToArray()
-}
-
-function Sync-ReadmeGeneralUsageFromFeatures {
-    param(
-        [string[]]$ReadmeLines,
-        [string[]]$FeaturesUpdatedLines
-    )
-
-    $reH2 = '^##\s+(.+?)\s*$'
-
-    $markerIdx = -1
-    for ($i = 0; $i -lt $ReadmeLines.Length; $i++) {
-        if ($ReadmeLines[$i] -match '^\#\s+General Usage Info\s*$') {
-            $markerIdx = $i
-            break
-        }
-    }
-    if ($markerIdx -lt 0) {
-        throw "Could not find '# General Usage Info' in README.md"
-    }
-
-    $featureTopHeadings = [System.Collections.Generic.HashSet[string]]::new()
-    foreach ($line in $FeaturesUpdatedLines) {
-        if ($line -match $reH2) {
-            [void]$featureTopHeadings.Add($Matches[1].Trim())
-        }
-    }
-
-    $startIdx = -1
-    for ($i = $markerIdx + 1; $i -lt $ReadmeLines.Length; $i++) {
-        if ($ReadmeLines[$i] -notmatch $reH2) { continue }
-
-        if ($featureTopHeadings.Contains($Matches[1].Trim())) {
-            $startIdx = $i
-            break
-        }
-    }
-
-    if ($startIdx -lt 0) {
-        $startIdx = $markerIdx + 1
-    }
-
-    $endIdx = $ReadmeLines.Length - 1
-    for ($i = $startIdx + 1; $i -lt $ReadmeLines.Length; $i++) {
-        if ($ReadmeLines[$i] -notmatch $reH2) { continue }
-
-        if (-not $featureTopHeadings.Contains($Matches[1].Trim())) {
-            $endIdx = $i - 1
-            break
-        }
-    }
-
-    $trimmedFeatures = Trim-TrailingBlankLines $FeaturesUpdatedLines
-
-    $prefix = if ($startIdx -gt 0) {
-        Trim-TrailingBlankLines @($ReadmeLines[0..($startIdx - 1)])
-    }
-    else { @() }
-
-    $suffixStart = $endIdx + 1
-    $suffix = if ($suffixStart -lt $ReadmeLines.Length) {
-        Trim-LeadingBlankLines @($ReadmeLines[$suffixStart..($ReadmeLines.Length - 1)])
-    }
-    else { @() }
-
-    $out = [System.Collections.Generic.List[string]]::new()
-    [void]$out.AddRange([string[]]$prefix)
-    if ($trimmedFeatures.Count -gt 0 -and $out.Count -gt 0) { [void]$out.Add('') }
-    [void]$out.AddRange([string[]]$trimmedFeatures)
-    if ($suffix.Count -gt 0 -and $out.Count -gt 0) { [void]$out.Add('') }
-    [void]$out.AddRange([string[]]$suffix)
-    $out.ToArray()
 }

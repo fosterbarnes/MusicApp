@@ -1,7 +1,2 @@
-v0.2.3 release (kongaInstead)
+v0.2.4 release (diabetusPepperjack)
 
-Fixes:
-- Fix issue that caused currently playing album art not to show in info view on arm64
-
-Other:
-- Revamp README.md

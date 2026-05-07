@@ -11,7 +11,9 @@ musicApp/.updater/obj
 musicApp/.updater.swap/obj
 .installer/Output/
 .vs/
-.web/
+.web/mainPage/public/
+.web/mainPage/resources/
+.web/mainPage/*.lock
 obj/
 .buildNotes.md
 buildNotes.md
