@@ -10,6 +10,10 @@ namespace musicApp
 {
     public partial class MainWindow
     {
+        /// <summary>
+        /// Disposes output devices/readers only. Keeps contextual queue (
+        /// <see cref="MainWindow.ClearContextualPlaybackQueue"/>) so skip/load-next does not drop a Songs/playlist session.
+        /// </summary>
         private void CleanupAudioObjects()
         {
             try
@@ -217,12 +221,35 @@ namespace musicApp
 
             if (titleBarPlayer.IsShuffleEnabled)
             {
-                RegenerateShuffledTracks();
-                if (shuffledTracks.Count == 0)
-                    return false;
+                if (shuffledTracks.Count == 0 ||
+                    shuffledTracks.Count != filteredTracks.Count)
+                {
+                    RegenerateShuffledTracks();
+                    if (shuffledTracks.Count == 0)
+                        return false;
+                }
+
                 currentShuffledIndex = 0;
-                currentTrackIndex = filteredTracks.IndexOf(shuffledTracks[0]);
                 startTrack = shuffledTracks[0];
+                if (startTrack == null)
+                    return false;
+
+                int li = filteredTracks.IndexOf(startTrack);
+                if (li < 0)
+                {
+                    RegenerateShuffledTracks();
+                    if (shuffledTracks.Count == 0)
+                        return false;
+                    currentShuffledIndex = 0;
+                    startTrack = shuffledTracks[0];
+                    if (startTrack == null)
+                        return false;
+                    li = filteredTracks.IndexOf(startTrack);
+                    if (li < 0)
+                        return false;
+                }
+
+                currentTrackIndex = li;
             }
             else
             {

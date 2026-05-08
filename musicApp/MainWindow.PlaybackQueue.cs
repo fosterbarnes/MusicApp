@@ -15,6 +15,7 @@ public partial class MainWindow
     private readonly List<Song> contextualPlaybackHistoryMru = new();
     private List<Song>? contextualSessionOrderedFull;
     private readonly HashSet<Song> userQueuedSongs = new();
+    private List<string>? contextualShuffleWrapPathOrder;
 
     private static void FisherYatesRange(IList<Song> list, int loInclusive, int hiInclusive, Random? rnd = null)
     {
@@ -168,6 +169,121 @@ public partial class MainWindow
             contextualShuffledFuture.Add(t);
     }
 
+    private void CaptureContextualShuffleWrapPathOrder()
+    {
+        contextualShuffleWrapPathOrder = contextualShuffledFuture.Count == 0
+            ? null
+            : contextualShuffledFuture
+                .Where(t => t != null && !string.IsNullOrWhiteSpace(t.FilePath))
+                .Select(t => t!.FilePath)
+                .ToList();
+    }
+
+    private static Dictionary<string, Queue<Song>> ContextualShufflePathConsumptionPools(IReadOnlyList<Song> session)
+    {
+        var d = new Dictionary<string, Queue<Song>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var t in session)
+        {
+            if (t == null || string.IsNullOrWhiteSpace(t.FilePath))
+                continue;
+            if (!d.TryGetValue(t.FilePath, out var q))
+            {
+                q = new Queue<Song>();
+                d[t.FilePath] = q;
+            }
+            q.Enqueue(t);
+        }
+        return d;
+    }
+
+    private bool ContextualShuffleWrapPathsMatchSessionMultiset(IReadOnlyList<string> wrapPaths)
+    {
+        if (contextualSessionOrderedFull == null)
+            return false;
+
+        var sessionCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var t in contextualSessionOrderedFull)
+        {
+            if (t == null || string.IsNullOrWhiteSpace(t.FilePath))
+                continue;
+            sessionCounts.TryGetValue(t.FilePath, out var c);
+            sessionCounts[t.FilePath] = c + 1;
+        }
+
+        var wrapCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in wrapPaths)
+        {
+            if (string.IsNullOrWhiteSpace(p))
+                return false;
+            wrapCounts.TryGetValue(p, out var c);
+            wrapCounts[p] = c + 1;
+        }
+
+        if (sessionCounts.Count != wrapCounts.Count)
+            return false;
+        foreach (var kv in sessionCounts)
+        {
+            if (!wrapCounts.TryGetValue(kv.Key, out var wc) || wc != kv.Value)
+                return false;
+        }
+        return true;
+    }
+
+    private bool TryRebuildContextualShuffledFutureFromWrapPathOrder(Song anchor)
+    {
+        var order = contextualShuffleWrapPathOrder;
+        if (order == null || order.Count == 0 || contextualSessionOrderedFull == null || anchor == null)
+            return false;
+
+        string anchorPath = anchor.FilePath ?? "";
+        if (string.IsNullOrWhiteSpace(anchorPath))
+            return false;
+
+        if (!ContextualShuffleWrapPathsMatchSessionMultiset(order))
+            return false;
+
+        int rot = -1;
+        for (int i = 0; i < order.Count; i++)
+        {
+            if (string.Equals(order[i], anchorPath, StringComparison.OrdinalIgnoreCase))
+            {
+                rot = i;
+                break;
+            }
+        }
+        if (rot < 0)
+            return false;
+
+        var rotated = new List<string>(order.Count);
+        for (int i = 0; i < order.Count; i++)
+            rotated.Add(order[(rot + i) % order.Count]);
+
+        if (!string.Equals(rotated[0], anchorPath, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var pools = ContextualShufflePathConsumptionPools(contextualSessionOrderedFull);
+        var rebuilt = new List<Song>(rotated.Count);
+
+        foreach (var p in rotated)
+        {
+            if (!pools.TryGetValue(p, out var deck) || deck.Count == 0)
+                return false;
+            rebuilt.Add(deck.Dequeue());
+        }
+
+        foreach (var q in pools.Values)
+        {
+            if (q.Count != 0)
+                return false;
+        }
+
+        contextualShuffledFuture.Clear();
+        foreach (var t in rebuilt)
+            contextualShuffledFuture.Add(t);
+
+        return true;
+    }
+
     /// <summary>
     /// Repopulates <see cref="contextualPlaybackFuture"/> from the active source (shuffled tail or
     /// natural derivation), with <paramref name="anchor"/> as the implied head.
@@ -209,10 +325,12 @@ public partial class MainWindow
         contextualPlaybackHistoryMru.Clear();
         contextualShuffledFuture.Clear();
         userQueuedSongs.Clear();
+        contextualShuffleWrapPathOrder = null;
 
         if (titleBarPlayer.IsShuffleEnabled)
         {
             BuildShuffledFutureForAnchor(selected);
+            CaptureContextualShuffleWrapPathOrder();
         }
         else
         {
@@ -356,6 +474,7 @@ public partial class MainWindow
         contextualShuffledFuture.Clear();
         contextualPlaybackHistoryMru.Clear();
         contextualSessionOrderedFull = null;
+        contextualShuffleWrapPathOrder = null;
     }
 
     /// <summary>
@@ -375,9 +494,18 @@ public partial class MainWindow
         contextualPlaybackHistoryMru.Clear();
 
         if (titleBarPlayer.IsShuffleEnabled)
-            BuildShuffledFutureForAnchor(first);
+        {
+            if (!TryRebuildContextualShuffledFutureFromWrapPathOrder(first))
+            {
+                BuildShuffledFutureForAnchor(first);
+                CaptureContextualShuffleWrapPathOrder();
+            }
+        }
         else
+        {
+            contextualShuffleWrapPathOrder = null;
             contextualShuffledFuture.Clear();
+        }
 
         SetActivePlaybackFuture(first);
 

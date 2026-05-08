@@ -345,6 +345,7 @@ namespace musicApp
             playlistsViewControl.RemoveFromPlaylistRequested += OnRemoveFromPlaylistRequested;
 
             ApplyInitialMainView(appSettings.LastActiveView);
+            UpdateUI();
         }
 
         private string GetCurrentMainViewKey()
@@ -1384,7 +1385,7 @@ namespace musicApp
             }
         }
 
-        private void ResyncLibraryShuffledUpcomingOrder(Song track)
+        private void ValidateAndSyncLibraryShuffleIndices(Song track)
         {
             if (track == null || filteredTracks == null)
                 return;
@@ -1410,9 +1411,6 @@ namespace musicApp
                 return;
             }
             currentShuffledIndex = si;
-
-            if (si < shuffledTracks.Count - 1)
-                ShuffleRangeUntilOrderDiffersFromLinear(shuffledTracks, filteredTracks, si + 1, shuffledTracks.Count - 1);
         }
 
         private void EnsureShuffledTracksInitialized()
@@ -1466,7 +1464,7 @@ namespace musicApp
             if (!titleBarPlayer.IsShuffleEnabled || HasContextualPlaybackQueue())
                 return;
 
-            ResyncLibraryShuffledUpcomingOrder(track);
+            ValidateAndSyncLibraryShuffleIndices(track);
         }
 
         private ObservableCollection<Song> GetCurrentPlayQueue()
@@ -1718,6 +1716,7 @@ namespace musicApp
         private void ResetPlaybackToIdleAndRefreshQueue()
         {
             CleanupAudioObjects();
+            ClearContextualPlaybackQueue();
         }
 
         private void TitleBarPlayer_NextTrackRequested(object? sender, EventArgs e)
@@ -1949,9 +1948,15 @@ namespace musicApp
             if (HasContextualPlaybackQueue())
             {
                 if (isShuffleEnabled)
+                {
                     BuildShuffledFutureForAnchor(currentTrack);
+                    CaptureContextualShuffleWrapPathOrder();
+                }
                 else
+                {
+                    contextualShuffleWrapPathOrder = null;
                     contextualShuffledFuture.Clear();
+                }
 
                 SetActivePlaybackFuture(currentTrack);
             }
@@ -2871,6 +2876,10 @@ namespace musicApp
             }
         }
 
+        /// <summary>
+        /// UI/indices idle while there's no decoded track; does not clear contextual playback (
+        /// <see cref="MainWindow.ClearContextualPlaybackQueue"/>).
+        /// </summary>
         private void ResetToIdleState()
         {
             try
@@ -2878,7 +2887,6 @@ namespace musicApp
                 currentTrack = null;
                 currentTrackIndex = -1;
                 currentShuffledIndex = -1;
-                ClearContextualPlaybackQueue();
 
                 titleBarPlayer.SetTrackInfo("No track selected", "", "");
                 RefreshVisibleViews();
